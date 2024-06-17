@@ -136,7 +136,7 @@ async def upload_file(file: UploadFile = File(...)):
         validated_df.to_excel(os.path.join(temp_dir, 'validacion_inicial.xlsx'), index=False)
 
         # Convert DataFrame to JSON serializable format
-        response_data = jsonable_encoder(validated_df.to_dict(orient="records"))
+        validated_df.to_dict(orient="records")
 
         return {
             "filename": file.filename,
