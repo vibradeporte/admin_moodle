@@ -125,16 +125,18 @@ async def upload_file(file: UploadFile = File(...)):
         # Primera Validacion
         validated_df = evaluar_validaciones(df)
         correos_validar = validated_df['CORREO']
-        si_rows_count = (validated_df == 'SI').any(axis=1).sum()
+        si_rows_count = int((validated_df == 'SI').any(axis=1).sum())
         total_rows = len(validated_df)
-        matriculated_students = total_rows - si_rows_count
+        matriculated_students = int(total_rows - si_rows_count)
 
+        # Guardar resultados en archivos temporales
         temp_dir = "temp_files"
         os.makedirs(temp_dir, exist_ok=True)
         correos_validar.to_csv(os.path.join(temp_dir, 'correos_validar.csv'), index=False, header=False)
         validated_df.to_excel(os.path.join(temp_dir, 'validacion_inicial.xlsx'), index=False)
 
-        response_data = validated_df.to_dict(orient="records")
+        # Convert DataFrame to JSON serializable format
+        response_data = jsonable_encoder(validated_df.to_dict(orient="records"))
 
         return {
             "filename": file.filename,
@@ -148,4 +150,3 @@ async def upload_file(file: UploadFile = File(...)):
         return {"error": f"Error reading Excel file: {e}"}
     except Exception as e:
         return {"error": f"An unexpected error occurred: {e}"}
-
