@@ -8,6 +8,7 @@ import os
 import json
 import unidecode
 import nltk
+import xlrd
 import requests
 from nltk.tokenize import word_tokenize
 from fuzzywuzzy import fuzz
@@ -141,8 +142,13 @@ def upload_file(file: UploadFile = File(...)):
     #Directorio para archivos temporales
     temp_dir = "temp_files"
     os.makedirs(temp_dir, exist_ok=True)
+    file_extension = file.filename.split('.')[-1]
+    if file_extension == 'xlsx':
+        engine = 'openpyxl'
+    elif file_extension == 'xls':
+        engine = 'xlrd'
     #Leer archivo Excel
-    df = pd.read_excel(file.file,engine='openpyxl')
+    df = pd.read_excel(file.file,engine=engine)
     file.file.close()
     #Primera Validacion
     validated_df = evaluar_validaciones(df)
