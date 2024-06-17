@@ -155,5 +155,4 @@ def upload_file(file: UploadFile = File(...)):
     correos_validar.to_csv('temp_files/correos_validar.csv',index = False,header = False)
     validated_df.to_excel('temp_files/validacion_inicial.xlsx',index = False)
 
-    return {"filename": file.filename,"validation": "success" }
-    #return {"filename": file.filename, , "data": validated_df.to_dict(orient="records")}
+    return {"filename": file.filename,"validation": "success","Número de Estudiantes que no seran aprobados": si_rows_count}
