@@ -134,24 +134,25 @@ def evaluar_validaciones(df_prueba):
     return df_prueba
 
 @upload_file_matricula.post("/uploadfile/", tags=['Moodle'])
-async def upload_file(file: UploadFile = File(...)):
-    try:
-        temp_dir = "temp_files"
-        os.makedirs(temp_dir, exist_ok=True)
 
-        df = pd.read_excel(file.file)
-        file.file.close()
+def upload_file(file: UploadFile = File(...)):
+    
+    #Directorio para archivos temporales
+    temp_dir = "temp_files"
+    os.makedirs(temp_dir, exist_ok=True)
+    #Leer archivo Excel
+    df = pd.read_excel(file.file)
+    file.file.close()
+    #Primera Validacion
+    validated_df = evaluar_validaciones(df)
+    correos_validar = validated_df['CORREO']
+    si_rows_count = (validated_df == 'SI').any(axis=1).sum()
+    total_rows = len(validated_df)
+    matriculated_students = total_rows - si_rows_count
+    #print("Estudiantes que serán Matriculados:", matriculated_students)
+    #print("Estudiantes que NO serán Matriculados:", si_rows_count)
+    correos_validar.to_csv('temp_files/correos_validar.csv',index = False,header = False)
+    validated_df.to_excel('temp_files/validacion_inicial.xlsx',index = False)
 
-        validated_df = evaluar_validaciones(df)
-        correos_validar = validated_df['CORREO']
-        si_rows_count = (validated_df == 'SI').any(axis=1).sum()
-        total_rows = len(validated_df)
-        matriculated_students = total_rows - si_rows_count
-
-        correos_validar.to_csv(os.path.join(temp_dir, 'correos_validar.csv'), index=False, header=False)
-        validated_df.to_excel(os.path.join(temp_dir, 'validacion_inicial.xlsx'), index=False)
-
-        return {"filename": file.filename, "validation": "success"}
-    except Exception as e:
-        logger.error(f"Error procesando el archivo: {e}")
-        return {"error": str(e)}
+    return {"filename": file.filename,"validation": "success" }
+    #return {"filename": file.filename, , "data": validated_df.to_dict(orient="records")}
