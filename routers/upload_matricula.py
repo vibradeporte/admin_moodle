@@ -135,15 +135,12 @@ async def upload_file(file: UploadFile = File(...)):
         correos_validar.to_csv(os.path.join(temp_dir, 'correos_validar.csv'), index=False, header=False)
         validated_df.to_excel(os.path.join(temp_dir, 'validacion_inicial.xlsx'), index=False)
 
-        # Convert DataFrame to JSON serializable format
-        validated_df.to_dict(orient="records")
 
         return {
             "filename": file.filename,
             "validation": "success",
             "Número de Estudiantes que no serán aprobados": si_rows_count,
-            "Estudiantes a matricular": matriculated_students,
-            "data": response_data
+            "Estudiantes a matricular": matriculated_students
         }
 
     except ValueError as e:
