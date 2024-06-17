@@ -1,6 +1,5 @@
 from fastapi import FastAPI, File, UploadFile,APIRouter
 import pandas as pd
-import openpyxl
 from io import StringIO ,BytesIO
 import re
 import time
@@ -8,7 +7,6 @@ import os
 import json
 import unidecode
 import nltk
-import xlrd
 import requests
 from nltk.tokenize import word_tokenize
 from fuzzywuzzy import fuzz
@@ -142,23 +140,16 @@ def upload_file(file: UploadFile = File(...)):
     #Directorio para archivos temporales
     temp_dir = "temp_files"
     os.makedirs(temp_dir, exist_ok=True)
-    file_extension = file.filename.split('.')[-1]
-    if file_extension == 'xlsx':
-        engine = 'openpyxl'
-    elif file_extension == 'xls':
-        engine = 'xlrd'
     #Leer archivo Excel
-    df = pd.read_excel(file.file,engine=engine)
+    df = pd.read_excel(file.file)
     file.file.close()
     #Primera Validacion
     validated_df = evaluar_validaciones(df)
     correos_validar = validated_df['CORREO']
-    si_rows_count = int((validated_df == 'SI').any(axis=1).sum())
+    si_rows_count = (validated_df == 'SI').any(axis=1).sum()
     total_rows = len(validated_df)
-    matriculated_students = int(total_rows - si_rows_count)
-    #print("Estudiantes que serán Matriculados:", matriculated_students)
-    #print("Estudiantes que NO serán Matriculados:", si_rows_count)
+    matriculated_students = total_rows - si_rows_count
     correos_validar.to_csv('temp_files/correos_validar.csv',index = False,header = False)
     validated_df.to_excel('temp_files/validacion_inicial.xlsx',index = False)
 
-    return {"filename": file.filename,"validation": "success","Número de Estudiantes que no seran matriculados": si_rows_count, "Estudiantes a matricular": matriculated_students}
+    return {"filename": file.filename,"validation": "success","Número de Estudiantes que no seran aprobados": si_rows_count, "Estudiantes a matricular": matriculated_students}
