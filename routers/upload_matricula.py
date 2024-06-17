@@ -142,7 +142,7 @@ def upload_file(file: UploadFile = File(...)):
     temp_dir = "temp_files"
     os.makedirs(temp_dir, exist_ok=True)
     #Leer archivo Excel
-    df = pd.read_excel(file.file)
+    df = pd.read_excel(file.file, engine='openpyxl')
     file.file.close()
     #Primera Validacion
     validated_df = evaluar_validaciones(df)
