@@ -147,7 +147,7 @@ def upload_file(file: UploadFile = File(...)):
     #Primera Validacion
     validated_df = evaluar_validaciones(df)
     correos_validar = validated_df['CORREO']
-    si_rows_count = (validated_df == 'SI').any(axis=1).sum()
+    si_rows_count = int((validated_df == 'SI').any(axis=1).sum())
     total_rows = len(validated_df)
     matriculated_students = total_rows - si_rows_count
     #print("Estudiantes que serán Matriculados:", matriculated_students)
