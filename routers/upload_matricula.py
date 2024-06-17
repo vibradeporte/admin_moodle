@@ -149,7 +149,10 @@ def upload_file(file: UploadFile = File(...)):
     si_rows_count = (validated_df == 'SI').any(axis=1).sum()
     total_rows = len(validated_df)
     matriculated_students = total_rows - si_rows_count
+    #print("Estudiantes que serán Matriculados:", matriculated_students)
+    #print("Estudiantes que NO serán Matriculados:", si_rows_count)
     correos_validar.to_csv('temp_files/correos_validar.csv',index = False,header = False)
     validated_df.to_excel('temp_files/validacion_inicial.xlsx',index = False)
 
     return {"filename": file.filename,"validation": "success","Número de Estudiantes que no seran aprobados": si_rows_count, "Estudiantes a matricular": matriculated_students}
+    #return {"filename": file.filename, , "data": validated_df.to_dict(orient="records")}
