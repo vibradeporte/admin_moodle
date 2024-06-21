@@ -1,9 +1,10 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException
 import pandas as pd
 import requests
 import time
 import os
 
+verificar_correos = APIRouter()
 api_key = "5b2m3Wogyo8jKi8Zafdk09cjd"
 file_path = 'temp_files/correos_validar.csv'
 resultado_file_path = 'temp_files/Resultado_Validacion_Correos.csv'
@@ -69,10 +70,9 @@ async def verificar_correos_endpoint():
         validated_df['QUALITY'] = validated_df['QUALITY'].apply(lambda x: 'SI' if x == 'bad' else 'NO')
         validated_df.to_excel(validacion_inicial_file_path, index=False)
 
-        # Contar el número de filas que tienen "SI" en la columna QUALITY
-        count_si = validated_df[validated_df == 'SI'].any(axis=1).sum()
+        count_si = validated_df[validated_df['QUALITY'] == 'SI'].shape[0]
         
-        return count_si
+        return {"count_si": count_si}
 
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"El archivo en la ruta '{file_path}' no fue encontrado.")
