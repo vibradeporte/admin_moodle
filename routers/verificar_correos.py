@@ -4,7 +4,6 @@ import requests
 import time
 import os
 
-verificar_correos = APIRouter()
 api_key = "5b2m3Wogyo8jKi8Zafdk09cjd"
 file_path = 'temp_files/correos_validar.csv'
 resultado_file_path = 'temp_files/Resultado_Validacion_Correos.csv'
@@ -67,14 +66,15 @@ async def verificar_correos_endpoint():
         validated_df = pd.read_excel(validacion_inicial_file_path)
         validated_df['QUALITY'] = quality['quality']
         os.remove(resultado_file_path)
-        validated_df['QUALITY'] = validated_df['QUALITY'].apply(lambda x: 'SI' if x in ['bad'] else 'NO')
+        validated_df['QUALITY'] = validated_df['QUALITY'].apply(lambda x: 'SI' if x == 'bad' else 'NO')
         validated_df.to_excel(validacion_inicial_file_path, index=False)
+
+        # Contar el número de filas que tienen "SI" en la columna QUALITY
+        count_si = validated_df[validated_df == 'SI'].any(axis=1).sum()
         
-        return {"filename": 'correos_validar.csv', "quality": "Success"}
+        return count_si
 
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"El archivo en la ruta '{file_path}' no fue encontrado.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
-
-
