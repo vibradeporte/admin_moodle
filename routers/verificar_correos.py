@@ -72,7 +72,7 @@ async def verificar_correos_endpoint():
 
         count_si = validated_df[validated_df['QUALITY'] == 'SI'].shape[0]
         
-        return {"count_si": count_si}
+        return count_si
 
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"El archivo en la ruta '{file_path}' no fue encontrado.")
