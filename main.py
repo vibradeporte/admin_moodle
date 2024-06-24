@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 #from routers.matricular_Usuarios import *
 from routers.upload_matricula import *
 from routers.verificar_correos import *
-#from routers.validar_cursos import *
+from routers.validar_cursos import *
 
 app = FastAPI()
 app.title = "Universal Learning ADMIN MOODLE API "
