@@ -72,9 +72,8 @@ async def verificar_correos_endpoint():
         validated_df.to_excel(validacion_inicial_file_path, index=False)
 
         count_si = validated_df[validated_df['QUALITY'] == 'SI'].shape[0]
-        
-        return JSONResponse(status_code=200, content={'message': "Los estudiantes que no pasaron exitosamente la verificación fueron:.",'info': count_si})
-
+        message = f"Los estudiantes que no pasaron exitosamente la verificación fueron: {count_si}"
+        return JSONResponse(content=message)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"El archivo en la ruta '{file_path}' no fue encontrado.")
     except Exception as e:
