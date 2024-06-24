@@ -135,5 +135,3 @@ async def validate_courses():
         print(f"Error durante la validación de cursos: {e}")
         raise HTTPException(status_code=500, detail=f"Error durante la validación de cursos: {e}")
 
-# Include the router in the FastAPI application
-app.include_router(validacion_cursos)
