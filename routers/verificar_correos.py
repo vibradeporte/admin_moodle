@@ -1,12 +1,14 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
+from dotenv import load_dotenv
 import pandas as pd
 import requests
 import time
 import os
 
+load_dotenv()
 verificar_correos = APIRouter()
-api_key = "5b2m3Wogyo8jKi8Zafdk09cjd"
+api_key = os.getenv("API_KEY_MILLION")
 file_path = 'temp_files/correos_validar.csv'
 resultado_file_path = 'temp_files/Resultado_Validacion_Correos.csv'
 validacion_inicial_file_path = 'temp_files/validacion_inicial.xlsx'
