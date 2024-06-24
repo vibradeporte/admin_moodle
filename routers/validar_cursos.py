@@ -5,24 +5,24 @@ import os
 from urllib.parse import quote_plus
 from dotenv import load_dotenv
 
-app = FastAPI()
 validacion_cursos = APIRouter()
-
-# Load environment variables from .env file
 load_dotenv()
+
 usuario = os.getenv("USER_DB_UL")
 contrasena = os.getenv("PASS_DB_UL")
 host = os.getenv("HOST_DB")
 nombre_base_datos = os.getenv("NAME_DB_UL")
+
+if None in [usuario, contrasena, host, nombre_base_datos]:
+    raise ValueError("One or more environment variables are missing or not set correctly.")
+
 contrasena_codificada = quote_plus(contrasena)
 DATABASE_URL = f"mysql+mysqlconnector://{usuario}:{contrasena_codificada}@{host}/{nombre_base_datos}"
 
-# Define file paths
 cursos_file_path = 'temp_files/registros_cursos.csv'
 validacion_inicial_file_path = 'temp_files/validacion_inicial.xlsx'
 cursos_certificados_file_path = 'temp_files/registros_cursos_certificados.csv'
 
-# SQL queries
 consulta_sql_traer_cursos = """
 SELECT
 c.shortname as CourseShortName,
@@ -71,7 +71,10 @@ def obtener_registros_y_guardar_como_csv(consulta, file_path):
 
 def validar_cursos(datos):
     try:
+        print(f"Reading cursos from: {cursos_file_path}")
         cursos_existentes = pd.read_csv(cursos_file_path)
+        print(f"Cursos existentes: {cursos_existentes.head()}")
+
         existing_courses = cursos_existentes['CourseShortName'].tolist()
         datos['nombre_De_Curso_Invalido'] = datos['NOMBRE_CORTO_CURSO'].apply(
             lambda x: "NO" if x in existing_courses else "SI"
@@ -83,7 +86,10 @@ def validar_cursos(datos):
 
 def validar_existencia_certificado_cursos(datos):
     try:
+        print(f"Reading cursos certificados from: {cursos_certificados_file_path}")
         cursos_certificado = pd.read_csv(cursos_certificados_file_path)
+        print(f"Cursos certificados: {cursos_certificado.head()}")
+
         cursos_certificado = cursos_certificado.dropna(subset=["UserCedula"])
         
         datos['IDENTIFICACION'] = datos['IDENTIFICACION'].astype(str)
@@ -112,7 +118,9 @@ async def validate_courses():
         obtener_registros_y_guardar_como_csv(consulta_sql_traer_cursos, cursos_file_path)
         obtener_registros_y_guardar_como_csv(consulta_sql_traer_cursos_certificados, cursos_certificados_file_path)
         
+        print(f"Reading initial validation data from: {validacion_inicial_file_path}")
         validated_df = pd.read_excel(validacion_inicial_file_path)
+        print(f"Initial validation data: {validated_df.head()}")
 
         # Validar cursos
         validated_df_result = validar_cursos(validated_df)
@@ -127,4 +135,5 @@ async def validate_courses():
         print(f"Error durante la validación de cursos: {e}")
         raise HTTPException(status_code=500, detail=f"Error durante la validación de cursos: {e}")
 
+# Include the router in the FastAPI application
 app.include_router(validacion_cursos)
