@@ -4,6 +4,7 @@ import pandas as pd
 import os
 from urllib.parse import quote_plus
 from dotenv import load_dotenv
+import mysql.connector
 
 validacion_cursos = APIRouter()
 load_dotenv()
