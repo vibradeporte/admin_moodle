@@ -14,7 +14,7 @@ app.version = "0.0.1"
 #app.include_router(enrol_manual_enrol_users_router)
 app.include_router(upload_file_matricula)
 app.include_router(verificar_correos)
-#app.include_router(validacion_cursos)
+app.include_router(validacion_cursos)
 @app.get('/', tags=['home'])
 def message():
     return HTMLResponse('<h1>Universal Learning ADMIN MOODLE API</h1>')
