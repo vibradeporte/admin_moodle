@@ -14,31 +14,6 @@ import unidecode
 
 validacion_final = APIRouter()
 
-load_dotenv()
-usuario = os.getenv("USER_DB_UL")
-contrasena = os.getenv("PASS_DB_UL")
-host = os.getenv("HOST_DB")
-nombre_base_datos = os.getenv("NAME_DB_UL")
-contrasena_codificada = quote_plus(contrasena)
-DATABASE_URL = f"mysql+mysqlconnector://{usuario}:{contrasena_codificada}@{host}/{nombre_base_datos}"
-
-# SQL query to fetch user data
-consulta_sql_traer_cursos = """
-SELECT
-    u.username as username,
-    u.firstname as firstname,
-    u.lastname as lastname,
-    u.email as email,
-    u.phone1 as phone
-FROM
-    mdl_user as u
-WHERE
-    (u.username REGEXP '^[0-9]+$')
-"""
-
-# Fetch data from the database
-engine = create_engine(DATABASE_URL)
-df = pd.read_sql(consulta_sql_traer_cursos, engine)
 
 class StringScoreCalculator:
     def __init__(self):
@@ -114,7 +89,7 @@ estudiantes_matricular = estudiantes_matricular.astype(str)
 print(estudiantes_matricular.shape[0])
 
 # BUSCAR CEDULA DE ESTUDIANTE NUEVO EN LA BASE DE DATOS DE TODOS LOS ESTUDIANTES
-BD_USUARIOS = df
+BD_USUARIOS = pd.read_csv('temp_files/BD_USUARIOS.csv')
 BD_USUARIOS['username'] = BD_USUARIOS['username'].astype(str)
 estudiantes_matricular['username'] = estudiantes_matricular['username'].astype(str)
 BD_USUARIOS.sort_values('username', inplace=True)
