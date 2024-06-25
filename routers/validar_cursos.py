@@ -6,24 +6,38 @@ from urllib.parse import quote_plus
 from dotenv import load_dotenv
 import mysql.connector
 
+# Create APIRouter instance for validacion_cursos
 validacion_cursos = APIRouter()
+
+# Load environment variables from .env file
 load_dotenv()
 
+# Load environment variables
 usuario = os.getenv("USER_DB_UL")
 contrasena = os.getenv("PASS_DB_UL")
 host = os.getenv("HOST_DB")
 nombre_base_datos = os.getenv("NAME_DB_UL")
 
+# Debugging: Print environment variables to check if they are loaded correctly
+print(f"Usuario: {usuario}")
+print(f"Contrasena: {contrasena}")
+print(f"Host: {host}")
+print(f"Nombre Base Datos: {nombre_base_datos}")
+
+# Check if any of the environment variables are None
 if None in [usuario, contrasena, host, nombre_base_datos]:
     raise ValueError("One or more environment variables are missing or not set correctly.")
 
+# Encode the password for URL
 contrasena_codificada = quote_plus(contrasena)
 DATABASE_URL = f"mysql+mysqlconnector://{usuario}:{contrasena_codificada}@{host}/{nombre_base_datos}"
 
+# Define file paths
 cursos_file_path = 'temp_files/registros_cursos.csv'
 validacion_inicial_file_path = 'temp_files/validacion_inicial.xlsx'
 cursos_certificados_file_path = 'temp_files/registros_cursos_certificados.csv'
 
+# SQL queries
 consulta_sql_traer_cursos = """
 SELECT
 c.shortname as CourseShortName,
@@ -135,4 +149,3 @@ async def validate_courses():
     except Exception as e:
         print(f"Error durante la validación de cursos: {e}")
         raise HTTPException(status_code=500, detail=f"Error durante la validación de cursos: {e}")
-
