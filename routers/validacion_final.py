@@ -11,9 +11,8 @@ from dotenv import load_dotenv
 import math
 import unidecode
 
-
+app = FastAPI()
 validacion_final = APIRouter()
-
 
 class StringScoreCalculator:
     def __init__(self):
@@ -69,32 +68,8 @@ def solo_numeros(numero):
         return ''
     return int(numero_str)
 
-validacion = 'temp_files/validacion_inicial.xlsx'
-prueba = pd.read_excel(validacion)
-prueba['Hay_Datos_Invalidos'] = prueba.apply(lambda row: 'SI' in row.values, axis=1)
-matriculas_aceptadas = prueba[~prueba['Hay_Datos_Invalidos']]
-calculator = StringScoreCalculator()
-
-# NORMALIZACION DE ESTUDIANTES A MATRICULAR
-estudiantes_matricular = pd.DataFrame()
-estudiantes_matricular['username'] = matriculas_aceptadas['IDENTIFICACION']
-estudiantes_matricular['email'] = matriculas_aceptadas['CORREO']
-estudiantes_matricular['firstname'] = matriculas_aceptadas['NOMBRES'].str.upper()
-estudiantes_matricular['lastname'] = matriculas_aceptadas['APELLIDOS'].str.upper()
-estudiantes_matricular['phone1'] = matriculas_aceptadas['NUMERO_MOVIL_WS_SIN_PAIS'].apply(solo_numeros)
-estudiantes_matricular['city'] = matriculas_aceptadas['CIUDAD'].astype(str).str.upper().str.strip().apply(unidecode.unidecode)
-estudiantes_matricular = estudiantes_matricular.astype(str)
-
-# NUMERO DE MATRICULAS QUE SON VALIDAS
-print(estudiantes_matricular.shape[0])
-
-# BUSCAR CEDULA DE ESTUDIANTE NUEVO EN LA BASE DE DATOS DE TODOS LOS ESTUDIANTES
-BD_USUARIOS = pd.read_csv('temp_files/BD_USUARIOS.csv')
-BD_USUARIOS['username'] = BD_USUARIOS['username'].astype(str)
-estudiantes_matricular['username'] = estudiantes_matricular['username'].astype(str)
-BD_USUARIOS.sort_values('username', inplace=True)
-
 def sonMuyParecidos(nombre1, nombre2, threshold=80):
+    calculator = StringScoreCalculator()
     similarity = calculator.calculate_similarity_score(nombre1.strip(), nombre2.strip())
     return similarity >= threshold
 
@@ -112,7 +87,7 @@ def buscarCedula(cedula, df):
             limiteInferior = filaUsuarioActual + 1
     return -1
 
-def buscarPorNombresApellidosCorreo(nombre, apellido, correo, bd_usuarios):
+def buscarNombresSimilares(nombre, apellido, correo, bd_usuarios):
     for index, row in bd_usuarios.iterrows():
         if (sonMuyParecidos(row['firstname'], nombre) and
             sonMuyParecidos(row['lastname'], apellido) and
@@ -120,18 +95,14 @@ def buscarPorNombresApellidosCorreo(nombre, apellido, correo, bd_usuarios):
             return index
     return -1
 
-nombreColumnaQueRegistraSiElEstudEstaEnLaBD = 'Estado'
-estudiantes_matricular[nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = 'NO está en la BD esa cédula'
-
-@validacion_final.post("/validacion_final/", tags=['Moodle'])
-async def validate_students():
+def procesar_matriculas(estudiantes_matricular, BD_USUARIOS, nombreColumnaQueRegistraSiElEstudEstaEnLaBD):
     for index, row in estudiantes_matricular.iterrows():
         cedulaUsuarioAMatricular = row['username']
         strApellido = row['lastname']
         strNombre = row['firstname']
         correoUsuario = row['email']
         filaUsuarioActual = buscarCedula(cedulaUsuarioAMatricular, BD_USUARIOS)
-
+        
         if filaUsuarioActual != -1:
             usuario_encontrado = BD_USUARIOS.iloc[filaUsuarioActual]
             if sonMuyParecidos(strApellido, usuario_encontrado['lastname']):
@@ -148,9 +119,49 @@ async def validate_students():
                 datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']}"
                 estudiantes_matricular.at[index, nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = f"@ID: {datosCompletosUsuarioEnBd} [Apellido DIFERENTE]"
         else:
-            estudiantes_matricular.at[index, nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = 'NO está en la BD esa cédula'
+            filaConNombresSimilares = buscarNombresSimilares(strNombre, strApellido, correoUsuario, BD_USUARIOS)
+            if filaConNombresSimilares != -1:
+                usuario_encontrado = BD_USUARIOS.iloc[filaConNombresSimilares]
+                if usuario_encontrado['email'].lower() == correoUsuario.lower():
+                    datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']}"
+                    estudiantes_matricular.at[index, nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = f"@ID: {datosCompletosUsuarioEnBd} [Cédula DIFERENTE, nombres y apellidos MUY SIMILARES, correo IGUAL]"
+                else:
+                    datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']}"
+                    estudiantes_matricular.at[index, nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = f"@ID: {datosCompletosUsuarioEnBd} [Cédula DIFERENTE, nombres y apellidos muy SIMILARES]"
+            else:
+                estudiantes_matricular.at[index, nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = 'NO está en la BD esa cédula'
     
     return estudiantes_matricular.to_dict(orient='records')
 
+@validacion_final.post("/validacion_final/", tags=['Moodle'])
+async def validate_students():
+    # Cargar archivos necesarios y realizar preprocesamiento
+    validacion = 'temp_files/validacion_inicial.xlsx'
+    prueba = pd.read_excel(validacion)
+    prueba['Hay_Datos_Invalidos'] = prueba.apply(lambda row: 'SI' in row.values, axis=1)
+    matriculas_aceptadas = prueba[~prueba['Hay_Datos_Invalidos']]
+    
+    # NORMALIZACION DE ESTUDIANTES A MATRICULAR
+    estudiantes_matricular = pd.DataFrame()
+    estudiantes_matricular['username'] = matriculas_aceptadas['IDENTIFICACION']
+    estudiantes_matricular['email'] = matriculas_aceptadas['CORREO']
+    estudiantes_matricular['firstname'] = matriculas_aceptadas['NOMBRES'].str.upper()
+    estudiantes_matricular['lastname'] = matriculas_aceptadas['APELLIDOS'].str.upper()
+    estudiantes_matricular['phone1'] = matriculas_aceptadas['NUMERO_MOVIL_WS_SIN_PAIS'].apply(solo_numeros)
+    estudiantes_matricular['city'] = matriculas_aceptadas['CIUDAD'].astype(str).str.upper().str.strip().apply(unidecode.unidecode)
+    estudiantes_matricular = estudiantes_matricular.astype(str)
+    
+    # BUSCAR CEDULA DE ESTUDIANTE NUEVO EN LA BASE DE DATOS DE TODOS LOS ESTUDIANTES
+    BD_USUARIOS = pd.read_csv('temp_files/BD_USUARIOS.csv')
+    BD_USUARIOS['username'] = BD_USUARIOS['username'].astype(str)
+    estudiantes_matricular['username'] = estudiantes_matricular['username'].astype(str)
+    BD_USUARIOS.sort_values('username', inplace=True)
+    
+    nombreColumnaQueRegistraSiElEstudEstaEnLaBD = 'Estado'
+    estudiantes_matricular[nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = 'NO está en la BD esa cédula'
+    
+    resultado = procesar_matriculas(estudiantes_matricular, BD_USUARIOS, nombreColumnaQueRegistraSiElEstudEstaEnLaBD)
+    
+    return resultado
 
 
