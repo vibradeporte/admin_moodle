@@ -130,8 +130,8 @@ def validar_existencia_certificado_cursos(datos):
 @validacion_cursos.post("/validar_cursos/", tags=['Moodle'])
 async def validate_courses():
     try:
-        obtener_registros_y_guardar_como_csv(consulta_sql_traer_cursos, cursos_file_path)
-        obtener_registros_y_guardar_como_csv(consulta_sql_traer_cursos_certificados, cursos_certificados_file_path)
+        #obtener_registros_y_guardar_como_csv(consulta_sql_traer_cursos, cursos_file_path)
+        #obtener_registros_y_guardar_como_csv(consulta_sql_traer_cursos_certificados, cursos_certificados_file_path)
         
         print(f"Reading initial validation data from: {validacion_inicial_file_path}")
         validated_df = pd.read_excel(validacion_inicial_file_path)
