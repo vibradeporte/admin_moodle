@@ -11,7 +11,6 @@ from dotenv import load_dotenv
 import math
 import unidecode
 
-app = FastAPI()
 validacion_final = APIRouter()
 
 class StringScoreCalculator:
