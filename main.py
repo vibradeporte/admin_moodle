@@ -6,11 +6,13 @@ from routers.upload_matricula import *
 from routers.verificar_correos import *
 from routers.validar_cursos import *
 from routers.validacion_final import *
+from routers.subida_Archivos import *
+
 app = FastAPI()
 app.title = "Universal Learning ADMIN MOODLE API "
 app.version = "0.0.1"
 
-
+app.include_router(verificacion_inicial_archivo)
 #app.include_router(core_user_create_users_router)
 #app.include_router(enrol_manual_enrol_users_router)
 app.include_router(upload_file_matricula)
