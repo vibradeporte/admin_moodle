@@ -8,7 +8,7 @@ from routers.validar_cursos import *
 from routers.validacion_final import *
 from routers.subida_Archivos import *
 #from routers.validacion_identidad import *
-from router.obtener_ip import *
+from routers.obtener_ip import *
 app = FastAPI()
 app.title = "Universal Learning ADMIN MOODLE API "
 app.version = "0.0.1"
