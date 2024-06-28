@@ -3,11 +3,7 @@ from sqlalchemy import create_engine, MetaData, Table, select
 from sqlalchemy.orm import sessionmaker, Session
 from urllib.parse import quote_plus
 import requests
-import logging
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 usuario = "elasistenteia_aiaadmmoodle"
 contrasena = "Un1vl3@rn1ngAdm0nM00dl3"
