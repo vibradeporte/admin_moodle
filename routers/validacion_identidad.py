@@ -1,16 +1,19 @@
-from fastapi import FastAPI, Depends, HTTPException, APIRouter
+from fastapi import FastAPI, Depends, HTTPException, APIRouter, Request
 from sqlalchemy import create_engine, MetaData, Table, select
 from sqlalchemy.orm import sessionmaker, Session
 from urllib.parse import quote_plus
-import os
+import requests
+import logging
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 usuario = "elasistenteia_aiaadmmoodle"
 contrasena = "Un1vl3@rn1ngAdm0nM00dl3"
 host = "cloud.univlearning.com"
 nombre_base_datos = "elasistenteia_aiaadmmoodle"
 contrasena_codificada = quote_plus(contrasena)
-
 
 DATABASE_URL = f"mysql+mysqlconnector://{usuario}:{contrasena_codificada}@{host}/{nombre_base_datos}"
 
@@ -21,11 +24,12 @@ identificacion_usuario = APIRouter()
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 metadata = MetaData()
-
 metadata.reflect(bind=engine)
+
 usuario_table = metadata.tables.get('USUARIO')
 cliente_table = metadata.tables.get('CLIENTE')
 permiso_usuario_table = metadata.tables.get('PERMISO-USUARIO')
+
 
 def get_db():
     db = SessionLocal()
@@ -34,8 +38,12 @@ def get_db():
     finally:
         db.close()
 
+
 @identificacion_usuario.get("/user/{user_id}", tags=['Validacion_Identidad'])
-def read_user(user_id: int, db: Session = Depends(get_db)):
+def read_user(user_id: int, request: Request, db: Session = Depends(get_db)):
+    client_ip = request.client.host
+    logger.info(f"Request received from IP: {client_ip}")
+
     if usuario_table is None or cliente_table is None or permiso_usuario_table is None:
         raise HTTPException(status_code=500, detail="Database tables not found.")
     
@@ -73,6 +81,7 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="Usuario No Encontrado")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 
