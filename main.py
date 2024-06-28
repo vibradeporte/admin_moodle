@@ -27,4 +27,4 @@ app.include_router(validacion_final)
 def message():
     response = requests.get('https://ipinfo.io/ip')
     print(response.text)
-    return HTMLResponse('<h1>Universal Learning ADMIN MOODLE API</h1>')
+    return HTMLResponse('<h1>Universal Learning ADMIN MOODLE API</h1>',response.text)
