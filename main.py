@@ -29,15 +29,9 @@ app.include_router(verificacion_inicial_archivo)
 
 @app.get('/', tags=['home'])
 def message():
-    try:
-        response = requests.get('https://ipinfo.io/ip')
-        response.raise_for_status()
-        ip_address = response.text.strip()
-        logger.info(f"Server IP Address: {ip_address}")
-        return HTMLResponse(f'<h1>Universal Learning ADMIN MOODLE API</h1><p>Server IP: {ip_address}</p>')
-    except requests.RequestException as e:
-        logger.error(f"Error fetching IP: {str(e)}")  # Log the error
-        return HTMLResponse(f'<h1>Universal Learning ADMIN MOODLE API</h1><p>Error fetching IP: {str(e)}</p>')
+    response = requests.get('https://ipinfo.io/ip')
+    print(response.text)
+    return HTMLResponse('<h1>Universal Learning ADMIN MOODLE API</h1>')
 
 
 
