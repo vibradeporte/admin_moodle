@@ -7,7 +7,7 @@ import logging
 #from routers.validar_cursos import validacion_cursos
 #from routers.validacion_final import validacion_final
 from routers.subida_Archivos import verificacion_inicial_archivo
-from routers.validacion_identidad import identificacion_usuario
+#from routers.validacion_identidad import identificacion_usuario
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
