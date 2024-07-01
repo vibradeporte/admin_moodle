@@ -18,7 +18,7 @@ app = FastAPI(
 )
 
 
-app.include_router(identificacion_usuario)
+#app.include_router(identificacion_usuario)
 app.include_router(verificacion_inicial_archivo)
 # app.include_router(core_user_create_users_router)
 # app.include_router(enrol_manual_enrol_users_router)
