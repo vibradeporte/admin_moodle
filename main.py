@@ -2,10 +2,10 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 import requests
 
-
+from routers.validacion_nombres_apellidos import *
 from routers.verificar_correos import *
 from routers.subida_Archivos import *
-from routers.validacion_identidad import identificacion_usuario
+from routers.validacion_identidad import *
 from routers.validacion_cedula import *
 
 
@@ -29,7 +29,7 @@ app = FastAPI(
 app.include_router(validacion_cedula_router)
 app.include_router(identificacion_usuario)
 app.include_router(verificacion_inicial_archivo)
-#app.include_router(upload_file_matricula)
+app.include_router(validacion_nombres_apellidos_router)
 app.include_router(verificar_correos)
 
 #app.include_router(validacion_cursos)
