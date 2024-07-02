@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, APIRouter
 from sqlalchemy import create_engine, MetaData, Table, select
 from sqlalchemy.orm import sessionmaker, Session
 from urllib.parse import quote_plus
+from dotenv import load_dotenv
 import os
 
 load_dotenv()
