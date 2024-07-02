@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse,PlainTextResponse
 from dotenv import load_dotenv
 import pandas as pd
 import requests
@@ -103,7 +103,7 @@ async def verificar_correos_endpoint():
             f"Los estudiantes que no pasaron exitosamente la verificación fueron: {count_si}. "
             f"Los estudiantes que pasaron exitosamente la verificación fueron: {count_no}."
         )
-        return JSONResponse(content={"message": message})
+        return PlainTextResponse(content=message)
 
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"El archivo en la ruta '{file_path}' no fue encontrado.")
