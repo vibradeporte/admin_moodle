@@ -35,9 +35,6 @@ app.include_router(verificar_correos)
 #app.include_router(validacion_cursos)
 #app.include_router(validacion_final)
 
-app.include_router(validacion_cursos)
-app.include_router(validacion_final)
-
 
 #moodle
 app.include_router(est_matriculados_curso_con_certificados_router)
