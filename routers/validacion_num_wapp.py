@@ -13,6 +13,14 @@ def get_country_code(country_name):
     except:
         return None
 
+def prepend_country_code(phone_number, country_code):
+    try:
+        country_prefix = phonenumbers.country_code_for_region(country_code)
+        full_number = f"+{country_prefix}{phone_number}"
+        return full_number
+    except:
+        return phone_number
+
 @validacion_numeros_whatsapp_router.post("/validar_numeros_whatsapp/", tags=['Validacion_Secundaria'])
 async def validar_numeros_whatsapp():
     try:
@@ -20,8 +28,11 @@ async def validar_numeros_whatsapp():
         invalid_file_path = 'temp_files/invalidos_matricula_por_wapp.xlsx'
         df = pd.read_excel(file_path)
         
+        # Ensure the columns exist
         if 'Numero_Wapp_Incorrecto' not in df.columns:
             df['Numero_Wapp_Incorrecto'] = None
+        if 'Numero_Con_Prefijo' not in df.columns:
+            df['Numero_Con_Prefijo'] = None
         
         for index, row in df.iterrows():
             phone_number = row['NUMERO_MOVIL_WS_SIN_PAIS']
@@ -33,8 +44,11 @@ async def validar_numeros_whatsapp():
                 df.at[index, 'Numero_Wapp_Incorrecto'] = 'SI'
                 continue
             
+            full_phone_number = prepend_country_code(phone_number, country_code)
+            df.at[index, 'Numero_Con_Prefijo'] = full_phone_number
+            
             try:
-                parsed_number = phonenumbers.parse(phone_number, country_code)
+                parsed_number = phonenumbers.parse(full_phone_number)
                 if not phonenumbers.is_valid_number(parsed_number):
                     df.at[index, 'Numero_Wapp_Incorrecto'] = 'SI'
                     continue
@@ -64,9 +78,6 @@ async def validar_numeros_whatsapp():
         return JSONResponse(content={"message": message})
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Un error ocurrió: {e}")
-
-
-
 
 
 
