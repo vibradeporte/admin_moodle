@@ -1,12 +1,12 @@
 import os
 from dotenv import load_dotenv
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
 from fastapi import APIRouter, HTTPException
-from datetime import datetime
 from return_codes import *
 import pandas as pd
+import openpyxl
 
 # Cargar variables de entorno
 load_dotenv()
@@ -53,15 +53,36 @@ def nombres_cursos_bd():
         result = connection.execute(consulta_sql)
         rows = result.fetchall()
         column_names = result.keys()
-
-        # Convert the result to a DataFrame
-        df = pd.DataFrame(rows, columns=column_names)
+        cursos_existentes = pd.DataFrame(rows, columns=column_names)
         
-        if not df.empty:
-            df.to_csv('temp_files/nombres_cursos.csv', index=False)
-            
-            return JSONResponse(content=df.to_dict(orient='records'))
-        else:
-            codigo = SIN_INFORMACION
-            mensaje = HTTP_MESSAGES.get(codigo)
-            raise HTTPException(codigo, mensaje)
+    datos = pd.read_excel('temp_files/validacion_inicial.xlsx')
+    
+    existing_courses = cursos_existentes['shortname'].tolist()
+    datos['nombre_De_Curso_Invalido'] = datos['NOMBRE_CORTO_CURSO'].apply(
+        lambda x: "NO" if x in existing_courses else "SI"
+    )
+    
+    invalid_df = datos[datos['nombre_De_Curso_Invalido'] == 'SI']
+    valid_df = datos[datos['nombre_De_Curso_Invalido'] == 'NO']
+    
+    invalid_file_path = 'temp_files/cursos_invalidos.xlsx'
+    valid_file_path = 'temp_files/validacion_inicial.xlsx'
+    invalid_df.to_excel(invalid_file_path, index=False, engine='openpyxl')
+    valid_df.to_excel(valid_file_path, index=False, engine='openpyxl')
+    
+    si_rows_count = len(invalid_df)
+    no_rows_count = len(valid_df)
+    
+    if not datos.empty:
+        message = (
+            f"VALIDACIÓN DE NOMBRES DE CURSOS: \n"
+            f"{si_rows_count} NOMBRES DE CURSOS CORRECTOS \n"
+            f"{no_rows_count} NOMBRES DE CURSOS INVALIDOS \n"
+        )
+
+        return PlainTextResponse(content=message)
+    else:
+        codigo = SIN_INFORMACION
+        mensaje = HTTP_MESSAGES.get(codigo)
+        raise HTTPException(codigo, mensaje)
+
