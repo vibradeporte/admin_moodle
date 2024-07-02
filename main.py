@@ -8,7 +8,7 @@ from routers.subida_Archivos import *
 #from routers.validacion_identidad import *
 from routers.validacion_cedula import *
 from routers.validacion_num_wapp import *
-from router.normalizacion import *
+from routers.normalizacion import *
 
 #moodle
 from routers.est_matriculados_curso_con_certificados import est_matriculados_curso_con_certificados_router
