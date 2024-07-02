@@ -1,14 +1,19 @@
-from fastapi import FastAPI, APIRouter, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, File, UploadFile,APIRouter
 import pandas as pd
-from io import BytesIO
+from io import StringIO ,BytesIO
 import re
+import time
 import os
+import json
 import unidecode
 import nltk
+import requests
 from nltk.tokenize import word_tokenize
-
+from fuzzywuzzy import fuzz
+from fuzzywuzzy import process
+from collections import Counter
 nltk.download('punkt')
+
 
 validacion_nombres_apellidos_router = APIRouter()
 
