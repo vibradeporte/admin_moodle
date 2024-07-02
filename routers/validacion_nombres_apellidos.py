@@ -99,7 +99,7 @@ async def validar_nombres_apellidos():
             f"{no_rows_count} NOMBRES Y APELLIDOS CORRECTOS."
         )
 
-        return JSONResponse(content={"message": message})
+        return JSONResponse(content={'message': message})
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Un error occurrio: {e}")
 
