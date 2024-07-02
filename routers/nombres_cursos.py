@@ -3,9 +3,10 @@ from dotenv import load_dotenv
 from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 from datetime import datetime
 from return_codes import *
+import pandas as pd
 
 # Cargar variables de entorno
 load_dotenv()
@@ -21,7 +22,6 @@ engine = create_engine(DATABASE_URL)
 
 # Crear el enrutador de FastAPI
 nombres_cursos_router = APIRouter()
-
 
 @nombres_cursos_router.get("/nombres_cursos", tags=['Funciones_Moodle'], status_code=200)
 def nombres_cursos_bd():
@@ -40,8 +40,6 @@ def nombres_cursos_bd():
         - shortname -> Nombre corto del curso.
         - fullname -> Nombre largo del curso.
         - visible -> Tipo de visibilidad del curso.
-        
-        
     """
     with engine.connect() as connection:
         consulta_sql = text("""
@@ -56,15 +54,13 @@ def nombres_cursos_bd():
         rows = result.fetchall()
         column_names = result.keys()
 
+        # Convert the result to a DataFrame
+        df = pd.DataFrame(rows, columns=column_names)
         
-        result_dicts = []
-        for row in rows:
-            row_dict = dict(zip(column_names, row))
+        if not df.empty:
+            df.to_excel('temp_files/nombres_cursos.xslx', index=False)
             
-            result_dicts.append(row_dict)
-
-        if result_dicts:
-            return JSONResponse(content=result_dicts)
+            return JSONResponse(content=df.to_dict(orient='records'))
         else:
             codigo = SIN_INFORMACION
             mensaje = HTTP_MESSAGES.get(codigo)
