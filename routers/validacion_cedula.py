@@ -1,6 +1,7 @@
 from fastapi import FastAPI, APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 import pandas as pd
+import openpyxl
 import os
 
 validacion_cedula_router = APIRouter()
