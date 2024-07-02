@@ -50,7 +50,7 @@ async def validar_cedula():
         valid_df = df[df['cedula_es_invalida'] == 'NO']
 
         df.to_excel(file_path, index=False)
-        invalid_file_path = 'temp_files/invalidos_matricula.xlsx'
+        invalid_file_path = 'temp_files/invalidos_matricula_cedula.xlsx'
         invalid_df.to_excel(invalid_file_path, index=False)
         valid_df.to_excel(file_path, index=False)
 
