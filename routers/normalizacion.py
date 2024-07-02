@@ -1,13 +1,12 @@
 from fastapi import FastAPI, APIRouter, HTTPException
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse
 import pandas as pd
 import os
-from fuzzywuzzy import fuzz, process
+from fuzzywuzzy import process
 from collections import Counter
 import numpy as np
 import math
-import time
-
+import uvicorn
 
 normalizacion_router = APIRouter()
 
@@ -59,6 +58,8 @@ class StringScoreCalculator:
 def find_representative_city(city_list, threshold):
     clusters = {}
     for city in city_list:
+        if not isinstance(city, str):
+            city = str(city)
         added_to_cluster = False
         for rep_city in clusters:
             calculator = StringScoreCalculator()
@@ -80,7 +81,9 @@ def map_cities_to_representative(city_list, representative_names, threshold):
     city_mapping = []
     calculator = StringScoreCalculator()
     for city in city_list:
-        match = process.extractOne(city, representative_names.keys(), scorer= calculator.calculate_similarity_score)
+        if not isinstance(city, str):
+            city = str(city)
+        match = process.extractOne(city, representative_names.keys(), scorer=calculator.calculate_similarity_score)
         if match[1] > threshold:
             city_mapping.append((city, representative_names[match[0]]))
         else:
@@ -102,9 +105,11 @@ async def normalizar():
         empresa_mapping = map_cities_to_representative(df['EMPRESA'], representative_names_empresa, threshold=similarity_threshold)
         ciudad_mapping = map_cities_to_representative(df['CIUDAD'], representative_names_ciudad, threshold=similarity_threshold)
 
-        df['EMPRESA'] = [mapped[1] for mapped in empresa_mapping]
-        df['CIUDAD'] = [mapped[1] for mapped in ciudad_mapping]
-        df.to_excel(file_path, index=False)
+        df['EMPRESA_NORMALIZADA'] = [mapped[1] for mapped in empresa_mapping]
+        df['CIUDAD_NORMALIZADA'] = [mapped[1] for mapped in ciudad_mapping]
+
+        output_file_path = 'temp_files/validacion_normalizada.xlsx'
+        df.to_excel(output_file_path, index=False)
 
         message = (
             f"NORMALIZACIÓN DE CIUDAD Y EMPRESA COMPLETADA EXITOSAMENTE"
