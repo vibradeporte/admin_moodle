@@ -1,5 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse,PlainTextResponse
 import pandas as pd
 import os
 from fuzzywuzzy import process
@@ -114,7 +114,7 @@ async def normalizar():
         message = (
             f"NORMALIZACIÓN DE CIUDAD Y EMPRESA COMPLETADA EXITOSAMENTE"
         )
-        return JSONResponse(content={"message": message})   
+        return PlainTextResponse(content=message)  
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
