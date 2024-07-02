@@ -58,7 +58,7 @@ def nombres_cursos_bd():
         df = pd.DataFrame(rows, columns=column_names)
         
         if not df.empty:
-            df.to_excel('temp_files/nombres_cursos.xslx', index=False)
+            df.to_csv('temp_files/nombres_cursos.csv', index=False)
             
             return JSONResponse(content=df.to_dict(orient='records'))
         else:
