@@ -4,13 +4,12 @@ from sqlalchemy.orm import sessionmaker, Session
 from urllib.parse import quote_plus
 import os
 
-
-usuario = "elasistenteia_aiaadmmoodle"
-contrasena = "Un1vl3@rn1ngAdm0nM00dl3"
-host = "cloud.univlearning.com"
-nombre_base_datos = "elasistenteia_aiaadmmoodle"
+load_dotenv()
+usuario = os.getenv("USER_DB_UL_ADMIN")
+contrasena = os.getenv("PASS_DB_UL_ADMIN")
+host = os.getenv("HOST_DB_ADMIN")
+nombre_base_datos = os.getenv("NAME_DB_UL_ADMIN")
 contrasena_codificada = quote_plus(contrasena)
-
 
 DATABASE_URL = f"mysql+mysqlconnector://{usuario}:{contrasena_codificada}@{host}/{nombre_base_datos}"
 
