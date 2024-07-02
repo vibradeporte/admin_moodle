@@ -85,7 +85,7 @@ async def validar_nombres_apellidos():
         invalid_df = df[(df['Nombre_Invalido'] == 'SI') | (df['Apellido_Invalido'] == 'SI') | (df['estan_cruzados'] == 'SI')]
         valid_df = df[(df['Nombre_Invalido'] == 'NO') & (df['Apellido_Invalido'] == 'NO') & (df['estan_cruzados'] == 'NO')]
 
-        invalid_file_path = 'temp_files/invalidos_matricula.xlsx'
+        invalid_file_path = 'temp_files/invalidos_matricula_nom_apel.xlsx'
 
         invalid_df.to_excel(invalid_file_path, index=False)
         valid_df.to_excel(file_path, index=False)
