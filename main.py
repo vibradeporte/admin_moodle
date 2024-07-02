@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 import requests
-import logging
+
 
 from routers.verificar_correos import *
 from routers.subida_Archivos import *
@@ -48,12 +48,12 @@ app.include_router(usuarios_bd_router)
 app.include_router(duracion_curso_y_descripcion_router)
 app.include_router(nombres_cursos_router)
 
-
 @app.get('/', tags=['home'])
 def message():
     response = requests.get('https://ipinfo.io/ip')
-    print(response.text)
-    return HTMLResponse('<h1>Universal Learning ADMIN MOODLE API</h1>')
+    ip_address = response.text.strip()
+    print(ip_address)
+    return HTMLResponse(f'<h1>Universal Learning ADMIN MOODLE API</h1><p>Client IP: {ip_address}</p>')
 
 
 
