@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, UploadFile,APIRouter,HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse,JSONResponse
 import pandas as pd
 from io import StringIO ,BytesIO
 import re
