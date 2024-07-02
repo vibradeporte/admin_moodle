@@ -8,7 +8,7 @@ import numpy as np
 import math
 import time
 
-app = FastAPI()
+
 normalizacion_router = APIRouter()
 
 class StringScoreCalculator:
@@ -104,9 +104,7 @@ async def normalizar():
 
         df['EMPRESA'] = [mapped[1] for mapped in empresa_mapping]
         df['CIUDAD'] = [mapped[1] for mapped in ciudad_mapping]
-
-        output_file_path = 'temp_files/validacion_normalizada.xlsx'
-        df.to_excel(output_file_path, index=False)
+        df.to_excel(file_path, index=False)
 
         message = (
             f"NORMALIZACIÓN DE CIUDAD Y EMPRESA COMPLETADA EXITOSAMENTE"
