@@ -53,7 +53,7 @@ def descargar_resultado(api_key, file_id):
         file.write(response.content)
     print(f"Results have been saved to {resultado_file_path}")
 
-@verificar_correos.post("/verificar_correos/", tags=['Moodle'])
+@verificar_correos.post("/verificar_correos/", tags=['Correo'])
 async def verificar_correos_endpoint():
     try:
         # Read and clean emails from the initial validation file
