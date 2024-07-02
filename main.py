@@ -27,7 +27,7 @@ app = FastAPI(
 )
 
 app.include_router(validacion_cedula_router)
-#app.include_router(identificacion_usuario)
+app.include_router(identificacion_usuario)
 app.include_router(verificacion_inicial_archivo)
 #app.include_router(upload_file_matricula)
 app.include_router(verificar_correos)
