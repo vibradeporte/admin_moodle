@@ -32,3 +32,5 @@ python-multipart==0.0.9
 python-Levenshtein==0.25.1
 fuzzywuzzy==0.18.0
 openpyxl
+phonenumbers
+pycountry
