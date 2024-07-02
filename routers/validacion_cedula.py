@@ -58,9 +58,10 @@ async def validar_cedula():
         no_rows_count = len(valid_df)
 
         message = (
-            f"VALIDACIÓN DE CÉDULAS: "
-            f"{si_rows_count} cédulas incorrectas. "
-            f"{no_rows_count} cédulas correctas."
+            f"VALIDACIÓN DE CÉDULAS:\n"
+            f"{no_rows_count} cédulas correctas \n"
+            f"{si_rows_count} cédulas incorrectas \n"
+            
         )
 
         return PlainTextResponse(content=message)
