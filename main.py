@@ -9,9 +9,6 @@ from routers.subida_Archivos import *
 from routers.validacion_cedula import *
 
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 #moodle
 from routers.est_matriculados_curso_con_certificados import est_matriculados_curso_con_certificados_router
 from routers.usuarios_bd import usuarios_bd_router
