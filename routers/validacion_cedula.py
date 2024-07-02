@@ -1,5 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse,PlainTextResponse
 import pandas as pd
 import openpyxl
 import os
@@ -63,7 +63,7 @@ async def validar_cedula():
             f"{no_rows_count} cédulas correctas."
         )
 
-        return JSONResponse(content={"message": message})
+        return PlainTextResponse(content=message)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
 
