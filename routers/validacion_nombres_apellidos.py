@@ -14,7 +14,6 @@ from fuzzywuzzy import process
 from collections import Counter
 nltk.download('punkt')
 
-
 validacion_nombres_apellidos_router = APIRouter()
 
 def verificar_cruzados(row):
