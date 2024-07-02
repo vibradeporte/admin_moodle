@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, UploadFile,APIRouter,HTTPException
-from fastapi.responses import HTMLResponse,JSONResponse
+from fastapi.responses import HTMLResponse,JSONResponse,PlainTextResponse
 import pandas as pd
 from io import StringIO ,BytesIO
 import re
@@ -94,12 +94,13 @@ async def validar_nombres_apellidos():
         no_rows_count = len(valid_df)
 
         message = (
-            f"VALIDACIÓN DE NOMBRES Y APELLIDOS INVERTIDOS: "
-            f"{si_rows_count} NOMBRES Y APELLIDOS INVERTIDOS. "
-            f"{no_rows_count} NOMBRES Y APELLIDOS CORRECTOS."
+            f"VALIDACIÓN DE NOMBRES Y APELLIDOS INVERTIDOS: \n"
+            f"{no_rows_count} NOMBRES Y APELLIDOS CORRECTOS \n"
+            f"{si_rows_count} NOMBRES Y APELLIDOS INVERTIDOS \n"
+            
         )
 
-        return JSONResponse(content={'message': message})
+        return PlainTextResponse(content=message)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Un error occurrio: {e}")
 
