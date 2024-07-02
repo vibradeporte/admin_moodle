@@ -75,7 +75,7 @@ async def validar_numeros_whatsapp():
             f"{no_rows_count} NÚMEROS TELEFÓNICOS VALIDOS"
         )
 
-        return JSONResponse(content={"message": message})
+        return JSONResponse(content={'message': message})
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Un error ocurrió: {e}")
 
