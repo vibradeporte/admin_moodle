@@ -7,6 +7,7 @@ from routers.verificar_correos import *
 from routers.subida_Archivos import *
 #from routers.validacion_identidad import *
 from routers.validacion_cedula import *
+from routers.validacion_num_wapp import *
 
 
 #moodle
@@ -31,6 +32,7 @@ app.include_router(validacion_cedula_router)
 app.include_router(verificacion_inicial_archivo)
 app.include_router(validacion_nombres_apellidos_router)
 app.include_router(verificar_correos)
+app.include_router(validacion_numeros_whatsapp_router)
 
 #app.include_router(validacion_cursos)
 #app.include_router(validacion_final)
