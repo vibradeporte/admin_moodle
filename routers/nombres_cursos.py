@@ -76,8 +76,8 @@ def nombres_cursos_bd():
     if not datos.empty:
         message = (
             f"VALIDACIÓN DE NOMBRES DE CURSOS: \n"
-            f"{si_rows_count} NOMBRES DE CURSOS CORRECTOS \n"
-            f"{no_rows_count} NOMBRES DE CURSOS INVALIDOS \n"
+            f"{no_rows_count} NOMBRES DE CURSOS CORRECTOS \n"
+            f"{si_rows_count} NOMBRES DE CURSOS INVALIDOS \n"
         )
 
         return PlainTextResponse(content=message)
