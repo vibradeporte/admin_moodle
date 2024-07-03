@@ -1,9 +1,12 @@
-from fastapi import FastAPI, Depends, HTTPException, APIRouter
-from sqlalchemy import create_engine, text
-from sqlalchemy.exc import SQLAlchemyError
-from urllib.parse import quote_plus
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
+from fastapi.responses import JSONResponse, PlainTextResponse
+from sqlalchemy import create_engine, text
+from urllib.parse import quote_plus
+from fastapi import APIRouter, HTTPException
+from return_codes import *
+import pandas as pd
+import openpyxl
 
 
 identificacion_usuario = APIRouter()
@@ -39,23 +42,24 @@ def encontrar_usuario(user_id: int):
         WHERE 
             usuario.ID_USUARIO = :user_id
     """)
-        result = connection.execute(consulta_sql)
-        rows = result.fetchall()
-        column_names = result.keys()
+    
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(query, {"user_id": user_id})
+            rows = result.fetchall()
+            column_names = result.keys()
 
-        
-        result_dicts = []
-        for row in rows:
-            row_dict = dict(zip(column_names, row))
-            
-            result_dicts.append(row_dict)
+            result_dicts = []
+            for row in rows:
+                row_dict = dict(zip(column_names, row))
+                result_dicts.append(row_dict)
 
-        if result_dicts:
-            return JSONResponse(content=result_dicts)
-        else:
-            codigo = SIN_INFORMACION
-            mensaje = HTTP_MESSAGES.get(codigo)
-            raise HTTPException(codigo, mensaje)
+            if result_dicts:
+                return JSONResponse(content=result_dicts)
+            else:
+                codigo = SIN_INFORMACION
+                mensaje = HTTP_MESSAGES.get(codigo)
+                raise HTTPException(codigo, mensaje)
 
 
 
