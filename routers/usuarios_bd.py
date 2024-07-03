@@ -1,11 +1,11 @@
+from return_codes import *
 import os
 from dotenv import load_dotenv
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
-from fastapi import APIRouter, HTTPException, Query
-from datetime import datetime
-from return_codes import *
+from fastapi import APIRouter, HTTPException
+import pandas as pd
 
 # Cargar variables de entorno
 load_dotenv()
@@ -55,16 +55,21 @@ def lista_usuarios_bd():
         rows = result.fetchall()
         column_names = result.keys()
 
-        
         result_dicts = []
         for row in rows:
             row_dict = dict(zip(column_names, row))
-            
             result_dicts.append(row_dict)
 
         if result_dicts:
-            return JSONResponse(content=result_dicts)
+            # Guardar los resultados en un DataFrame de pandas y luego en un archivo CSV
+            df = pd.DataFrame(result_dicts)
+            csv_file_path = "/temp_files/usuarios_completos.csv"
+            df.to_csv(csv_file_path, index=False)
+
+            # Devolver el archivo CSV como respuesta
+            return FileResponse(csv_file_path, filename="usuarios_completos.csv")
         else:
             codigo = SIN_INFORMACION
             mensaje = HTTP_MESSAGES.get(codigo)
             raise HTTPException(codigo, mensaje)
+
