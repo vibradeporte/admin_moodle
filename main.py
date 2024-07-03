@@ -5,7 +5,7 @@ import requests
 from routers.validacion_nombres_apellidos import *
 from routers.verificar_correos import *
 from routers.subida_Archivos import *
-from routers.validacion_identidad import *
+from routers.validacion_identidad import identificacion_usuario
 from routers.validacion_cedula import *
 from routers.validacion_num_wapp import *
 from routers.normalizacion import *
