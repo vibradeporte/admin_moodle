@@ -36,16 +36,17 @@ def encontrar_usuario(user_id: int):
             cliente.URL_MOODLE,
             cliente.TOKEN_MOODLE,
             cliente.CADENA_CONEXION_BD,
-            permiso_usuario.FID_PERMISO AS ID_PERMISO,
-            permiso_usuario.FECHA AS FECHA_PERMISO
+            `permiso_usuario`.FID_PERMISO AS ID_PERMISO,
+            `permiso_usuario`.FECHA AS FECHA_PERMISO
         FROM 
             USUARIO AS usuario
         JOIN 
             CLIENTE AS cliente ON usuario.FID_CLIENTE = cliente.ID_CLIENTE
         JOIN 
-            PERMISO_USUARIO AS permiso_usuario ON usuario.ID_USUARIO = permiso_usuario.FID_USUARIO
+            `permiso_usuario` AS PERMISO_USUARIO ON usuario.ID_USUARIO = PERMISO_USUARIO.FID_USUARIO
         WHERE 
-            usuario.ID_USUARIO = :user_id; 
+            usuario.ID_USUARIO = :user_id;
+
 """)
     
     try:
