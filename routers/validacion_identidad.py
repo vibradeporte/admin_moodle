@@ -61,9 +61,8 @@ def encontrar_usuario(user_id: int):
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-
-
+app = FastAPI()
+app.include_router(identificacion_usuario)
 
 
 
