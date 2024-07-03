@@ -25,21 +25,28 @@ def encontrar_usuario(user_id: int):
         SELECT 
             usuario.ID_USUARIO,
             usuario.IDENTIFICACION,
-            usuario.MOVIL,
-            usuario.CORREO,
+            usuario.NOMBRE,
+            usuario.APELLIDO,
+            usuario.MOVIL AS MOVIL_USUARIO,
+            usuario.CORREO AS CORREO_USUARIO,
+            cliente.NOMBRE AS NOMBRE_CLIENTE,
+            cliente.CORREO_ADMON,
+            cliente.CORREO_OPERACION,
+            cliente.MOVIL AS MOVIL_CLIENTE,
             cliente.URL_MOODLE,
             cliente.TOKEN_MOODLE,
             cliente.CADENA_CONEXION_BD,
-            permiso_usuario.FID_PERMISO AS ID_PERMISO
+            permiso_usuario.FID_PERMISO AS ID_PERMISO,
+            permiso_usuario.FECHA AS FECHA_PERMISO
         FROM 
-            usuario
+            USUARIO AS usuario
         JOIN 
-            cliente ON usuario.FID_CLIENTE = cliente.ID_CLIENTE
+            CLIENTE AS cliente ON usuario.FID_CLIENTE = cliente.ID_CLIENTE
         JOIN 
-            permiso_usuario ON usuario.ID_USUARIO = permiso_usuario.FID_USUARIO
+            PERMISO_USUARIO AS permiso_usuario ON usuario.ID_USUARIO = permiso_usuario.FID_USUARIO
         WHERE 
-            usuario.ID_USUARIO = :user_id
-    """)
+            usuario.ID_USUARIO = :user_id; 
+""")
     
     try:
         with engine.connect() as connection:
