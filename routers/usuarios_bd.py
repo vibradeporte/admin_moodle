@@ -63,7 +63,7 @@ def lista_usuarios_bd():
         if result_dicts:
             # Guardar los resultados en un DataFrame de pandas y luego en un archivo CSV
             df = pd.DataFrame(result_dicts)
-            csv_file_path = "/temp_files/usuarios_completos.csv"
+            csv_file_path = "temp_files/usuarios_completos.csv"
             df.to_csv(csv_file_path, index=False)
 
             # Devolver el archivo CSV como respuesta
