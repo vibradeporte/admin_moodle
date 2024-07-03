@@ -1,13 +1,11 @@
-import os
-from dotenv import load_dotenv
-from fastapi.responses import JSONResponse, PlainTextResponse
-from sqlalchemy import create_engine, text
-from urllib.parse import quote_plus
-from fastapi import APIRouter, HTTPException
 from return_codes import *
-import pandas as pd
-import openpyxl
-
+from fastapi import FastAPI, Depends, HTTPException, APIRouter
+from fastapi.responses import JSONResponse
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
+from urllib.parse import quote_plus
+from dotenv import load_dotenv
+import os
 
 identificacion_usuario = APIRouter()
 
@@ -60,6 +58,9 @@ def encontrar_usuario(user_id: int):
                 codigo = SIN_INFORMACION
                 mensaje = HTTP_MESSAGES.get(codigo)
                 raise HTTPException(codigo, mensaje)
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 
