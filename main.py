@@ -9,6 +9,7 @@ from routers.validacion_identidad import *
 from routers.validacion_cedula import *
 from routers.validacion_num_wapp import *
 from routers.normalizacion import *
+from routers.validacion_final import *
 
 #moodle
 from routers.est_matriculados_curso_con_certificados import est_matriculados_curso_con_certificados_router
@@ -34,7 +35,7 @@ app.include_router(validacion_nombres_apellidos_router)
 app.include_router(verificar_correos)
 app.include_router(validacion_numeros_whatsapp_router)
 app.include_router(normalizacion_router)
-#app.include_router(validacion_final)
+app.include_router(validacion_final)
 
 
 #moodle
