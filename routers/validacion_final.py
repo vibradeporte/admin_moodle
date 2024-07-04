@@ -86,11 +86,20 @@ def buscarCedula(cedula, df):
             limiteInferior = filaUsuarioActual + 1
     return -1
 
-def buscarNombresSimilares(nombre, apellido, correo, bd_usuarios):
+def buscarPorNombresApellidosCorreo(nombre, apellido, correo, bd_usuarios):
     for index, row in bd_usuarios.iterrows():
         if (sonMuyParecidos(row['firstname'], nombre) and
             sonMuyParecidos(row['lastname'], apellido) and
             row['email'].lower() == correo.lower()):
+            return index
+    return -1
+
+def buscarPorNombresApellidosCorreoTelefono(nombre, apellido, correo, telefono, bd_usuarios):
+    for index, row in bd_usuarios.iterrows():
+        if (sonMuyParecidos(row['firstname'], nombre) and
+            sonMuyParecidos(row['lastname'], apellido) and
+            row['email'].lower() == correo.lower() and
+            sonMuyParecidos(row['phone1'], telefono)):
             return index
     return -1
 
@@ -100,6 +109,7 @@ def procesar_matriculas(estudiantes_matricular, BD_USUARIOS, nombreColumnaQueReg
         strApellido = row['lastname']
         strNombre = row['firstname']
         correoUsuario = row['email']
+        telefonoUsuario = row['phone1']
         filaUsuarioActual = buscarCedula(cedulaUsuarioAMatricular, BD_USUARIOS)
         
         if filaUsuarioActual != -1:
@@ -113,34 +123,31 @@ def procesar_matriculas(estudiantes_matricular, BD_USUARIOS, nombreColumnaQueReg
                         estudiantes_matricular.at[index, nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = f"@ID: {datosCompletosUsuarioEnBd} [Apellido y nombre SIMILARES, correo DIFERENTE]"
                 else:
                     datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']}"
-                    estudiantes_matricular.at[index, nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = f"@ID: {datosCompletosUsuarioEnBd} [Apellido SIMILAR y nombre DIFERENTE]"
+                    estudiantes_matricular.at[index, nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = f"@ID: {datosCompletosUsuarioEnBd} [Misma Cedula Apellido SIMILAR y nombre DIFERENTE]"
             else:
                 datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']}"
-                estudiantes_matricular.at[index, nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = f"@ID: {datosCompletosUsuarioEnBd} [Apellido DIFERENTE]"
+                estudiantes_matricular.at[index, nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = f"@ID: {datosCompletosUsuarioEnBd} [Misma Cedula Apellido DIFERENTE]"
         else:
-            filaConNombresSimilares = buscarNombresSimilares(strNombre, strApellido, correoUsuario, BD_USUARIOS)
+            filaConNombresSimilares = buscarPorNombresApellidosCorreo(strNombre, strApellido, correoUsuario, BD_USUARIOS)
             if filaConNombresSimilares != -1:
                 usuario_encontrado = BD_USUARIOS.iloc[filaConNombresSimilares]
                 if usuario_encontrado['email'].lower() == correoUsuario.lower():
                     datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']}"
                     estudiantes_matricular.at[index, nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = f"@ID: {datosCompletosUsuarioEnBd} [Cédula DIFERENTE, nombres y apellidos MUY SIMILARES, correo IGUAL]"
                 else:
-                    datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']}"
-                    estudiantes_matricular.at[index, nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = f"@ID: {datosCompletosUsuarioEnBd} [Cédula DIFERENTE, nombres y apellidos muy SIMILARES]"
+                    filaConNombresSimilares = buscarPorNombresApellidosCorreoTelefono(strNombre, strApellido, correoUsuario, telefonoUsuario, BD_USUARIOS)
+                    datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']} Telefono: {usuario_encontrado['phone1']}"
+                    estudiantes_matricular.at[index, nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = f"@ID: {datosCompletosUsuarioEnBd} [Cédula DIFERENTE, nombres, apellidos y teléfono muy SIMILARES]"
             else:
                 estudiantes_matricular.at[index, nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = 'NO está en la BD esa cédula'
     
-    return estudiantes_matricular.to_dict(orient='records')
+    return estudiantes_matricular
 
 @validacion_final.post("/validacion_final/", tags=['Moodle'])
 async def validate_students():
-    # Cargar archivos necesarios y realizar preprocesamiento
     validacion = 'temp_files/validacion_inicial.xlsx'
-    prueba = pd.read_excel(validacion)
-    prueba['Hay_Datos_Invalidos'] = prueba.apply(lambda row: 'SI' in row.values, axis=1)
-    matriculas_aceptadas = prueba[~prueba['Hay_Datos_Invalidos']]
+    matriculas_aceptadas = pd.read_excel(validacion)
     
-    # NORMALIZACION DE ESTUDIANTES A MATRICULAR
     estudiantes_matricular = pd.DataFrame()
     estudiantes_matricular['username'] = matriculas_aceptadas['IDENTIFICACION']
     estudiantes_matricular['email'] = matriculas_aceptadas['CORREO']
@@ -148,19 +155,23 @@ async def validate_students():
     estudiantes_matricular['lastname'] = matriculas_aceptadas['APELLIDOS'].str.upper()
     estudiantes_matricular['phone1'] = matriculas_aceptadas['NUMERO_MOVIL_WS_SIN_PAIS'].apply(solo_numeros)
     estudiantes_matricular['city'] = matriculas_aceptadas['CIUDAD'].astype(str).str.upper().str.strip().apply(unidecode.unidecode)
+    estudiantes_matricular['country'] = matriculas_aceptadas['PAIS_DE_RESIDENCIA'].astype(str).str.upper().str.strip().apply(unidecode.unidecode)
     estudiantes_matricular = estudiantes_matricular.astype(str)
     
-    # BUSCAR CEDULA DE ESTUDIANTE NUEVO EN LA BASE DE DATOS DE TODOS LOS ESTUDIANTES
-    BD_USUARIOS = pd.read_csv('temp_files/BD_USUARIOS.csv')
+    # CARGAR BASE DE DATOS DE USUARIOS
+    BD_USUARIOS = pd.read_csv('temp_files/usuarios_completos.csv')
     BD_USUARIOS['username'] = BD_USUARIOS['username'].astype(str)
     estudiantes_matricular['username'] = estudiantes_matricular['username'].astype(str)
     BD_USUARIOS.sort_values('username', inplace=True)
     
     nombreColumnaQueRegistraSiElEstudEstaEnLaBD = 'Estado'
     estudiantes_matricular[nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = 'NO está en la BD esa cédula'
-    
     resultado = procesar_matriculas(estudiantes_matricular, BD_USUARIOS, nombreColumnaQueRegistraSiElEstudEstaEnLaBD)
+    estudiantes_matricular.to_csv('temp_files/estudiantes_validados.csv', index=False)
     
-    return resultado
+    inconsistencias = estudiantes_matricular[estudiantes_matricular[nombreColumnaQueRegistraSiElEstudEstaEnLaBD] != 'NO está en la BD esa cédula'].shape[0]
+    correctos = estudiantes_matricular[estudiantes_matricular[nombreColumnaQueRegistraSiElEstudEstaEnLaBD] == 'NO está en la BD esa cédula'].shape[0]
+    
+    return f"VERIFICACIÓN DE INCONSISTENCIAS: {correctos} ESTUDIANTES CORRECTOS / {inconsistencias} ESTUDIANTES CON INCONSISTENCIAS"
 
 
