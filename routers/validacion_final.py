@@ -168,10 +168,12 @@ async def validate_students():
     estudiantes_matricular[nombreColumnaQueRegistraSiElEstudEstaEnLaBD] = 'NO está en la BD esa cédula'
     resultado = procesar_matriculas(estudiantes_matricular, BD_USUARIOS, nombreColumnaQueRegistraSiElEstudEstaEnLaBD)
     estudiantes_matricular.to_csv('temp_files/estudiantes_validados.csv', index=False)
-    
+    estudiantes_que_no_seran_matriculados = estudiantes_matricular[estudiantes_matricular[nombreColumnaQueRegistraSiElEstudEstaEnLaBD] != 'NO está en la BD esa cédula']
+    estudiantes_que_no_seran_matriculados.to_excel('temp_files/estudiantes_invalidos.xlsx', index=False)
+
     inconsistencias = estudiantes_matricular[estudiantes_matricular[nombreColumnaQueRegistraSiElEstudEstaEnLaBD] != 'NO está en la BD esa cédula'].shape[0]
     correctos = estudiantes_matricular[estudiantes_matricular[nombreColumnaQueRegistraSiElEstudEstaEnLaBD] == 'NO está en la BD esa cédula'].shape[0]
-    
+
     return f"VERIFICACIÓN DE INCONSISTENCIAS: {correctos} ESTUDIANTES CORRECTOS / {inconsistencias} ESTUDIANTES CON INCONSISTENCIAS"
 
 
