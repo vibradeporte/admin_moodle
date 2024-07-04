@@ -3,7 +3,7 @@ from fastapi.responses import PlainTextResponse
 import pandas as pd
 import numpy as np
 import os
-from routers.est_matriculados_curso_con_certificados import estudiantes_matriculados_con_cer
+from routers.est_matriculados_curso_con_certificados import *
 
 validacion_inicial_file_path = 'temp_files/validacion_inicial.xlsx'
 validacion_cursos_certificado_router = APIRouter()
@@ -56,7 +56,7 @@ async def validate_courses():
     try:
         validated_df = pd.read_excel(validacion_inicial_file_path)
         # Validar cursos
-        datos = validar_existencia_certificado_cursos(validated_df)
+        datos = est_matriculados_curso_con_certificados.validar_existencia_certificado_cursos(validated_df)
 
         validos_matricular = datos[datos['ADVERTENCIA_CURSO_CULMINADO'] == 'NO']
         validos_matricular = validos_matricular.drop(columns=['CourseShortName', 'UserCedula', 'CertificadoFechaEmision',
