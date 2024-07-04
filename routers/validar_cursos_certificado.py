@@ -51,7 +51,7 @@ def validar_existencia_certificado_cursos(datos):
     
     return resultado
 
-@validacion_cursos.post("/validar_cursos_certificado/", tags=['Cursos'])
+@validacion_cursos_certificado_router.post("/validar_cursos_certificado/", tags=['Cursos'])
 async def validate_courses():
     try:
         validated_df = pd.read_excel(validacion_inicial_file_path)
