@@ -89,7 +89,8 @@ def estudiantes_matriculados_con_certificados(curso: str = Query(max_length=max_
             result_dicts.append(row_dict)
 
         if result_dicts:
-            return JSONResponse(content=result_dicts)
+            df = pd.DataFrame(result_dicts)
+            return JSONResponse(content=df.to_dict(orient="records"))
         else:
             codigo = SIN_INFORMACION
             mensaje = HTTP_MESSAGES.get(codigo)
