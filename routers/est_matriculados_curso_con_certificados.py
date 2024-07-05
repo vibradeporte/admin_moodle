@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import pandas as pd
 from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
