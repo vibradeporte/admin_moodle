@@ -11,6 +11,7 @@ from routers.validacion_num_wapp import *
 from routers.normalizacion import *
 from routers.validacion_final import *
 from routers.validar_cursos_certificado import *
+from routers.Crear_Usuarios import *
 
 #moodle
 from routers.est_matriculados_curso_con_certificados import est_matriculados_curso_con_certificados_router
@@ -38,6 +39,7 @@ app.include_router(validacion_numeros_whatsapp_router)
 app.include_router(normalizacion_router)
 app.include_router(validacion_final)
 app.include_router(validacion_cursos_certificado_router)
+app.include_router(core_user_create_users_router)
 
 #moodle
 app.include_router(est_matriculados_curso_con_certificados_router)
