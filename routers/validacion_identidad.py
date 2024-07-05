@@ -22,32 +22,27 @@ engine = create_engine(DATABASE_URL)
 @identificacion_usuario.get("/user/{user_id}", tags=['Validacion_Identidad'])
 def encontrar_usuario(user_id: int):
     query = text("""
-        SELECT 
-            usuario.ID_USUARIO,
-            usuario.IDENTIFICACION,
-            usuario.NOMBRE,
-            usuario.APELLIDO,
-            usuario.MOVIL AS MOVIL_USUARIO,
-            usuario.CORREO AS CORREO_USUARIO,
-            cliente.NOMBRE AS NOMBRE_CLIENTE,
-            cliente.CORREO_ADMON,
-            cliente.CORREO_OPERACION,
-            cliente.MOVIL AS MOVIL_CLIENTE,
-            cliente.URL_MOODLE,
-            cliente.TOKEN_MOODLE,
-            cliente.CADENA_CONEXION_BD,
-            `permiso_usuario`.FID_PERMISO AS ID_PERMISO,
-            `permiso_usuario`.FECHA AS FECHA_PERMISO
-        FROM 
-            USUARIO AS usuario
-        JOIN 
-            CLIENTE AS cliente ON usuario.FID_CLIENTE = cliente.ID_CLIENTE
-        JOIN 
-            `permiso_usuario` AS PERMISO_USUARIO ON usuario.ID_USUARIO = PERMISO_USUARIO.FID_USUARIO
-        WHERE 
-            usuario.ID_USUARIO = :user_id;
-
-""")
+        SELECT
+        c.URL_MOODLE as URL_MOODLE,
+        c.TOKEN_MOODLE as TOKEN_MOODLE,
+        c.PREFIJO_TABLAS as PREFIJO_TABLAS,
+        c.CADENA_CONEXION_BD as CADENA_CONEXION_BD,
+        u.IDENTIFICACION as IDENTIFICACION,
+        u.NOMBRE as NOMBRE,
+        u.APELLIDO as APELLIDO,
+        u.MOVIL as MOVIL,
+        u.CORREO as CORREO,
+        p.NOMBRE as NOMBRE_PERMISO
+        
+        FROM
+        USUARIO AS u
+        JOIN CLIENTE c ON (u.FID_CLIENTE=c.ID_CLIENTE)
+        JOIN `PERMISO-USUARIO` pu ON (u.ID_USUARIO=pu.FID_USUARIO)
+        JOIN PERMISO p ON (p.ID_PERMISO=pu.FID_PERMISO)
+        
+        WHERE
+        u.IDENTIFICACION = :user_id; 
+        """)
     
     try:
         with engine.connect() as connection:
