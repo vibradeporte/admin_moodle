@@ -74,9 +74,3 @@ def message():
     ip_address = response.text.strip()
     print(ip_address)
     return HTMLResponse(f'<h1>Universal Learning ADMIN MOODLE API</h1><p>Client IP: {ip_address}</p>')
-
-
-
-
-
-
