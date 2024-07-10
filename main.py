@@ -14,7 +14,7 @@ from routers.validacion_final import *
 from routers.validar_cursos_certificado import *
 from routers.validacion_identidad import *
 
-from  routers.core_group_create_groups import *
+#from  routers.core_group_create_groups import *
 
 from routers.core_user_create_users import *
 
@@ -41,7 +41,7 @@ app = FastAPI(
     version="0.0.1"
 )
 
-app.include_router(core_group_create_groups_router)
+#app.include_router(core_group_create_groups_router)
 
 app.include_router(enrol_manual_enrol_users_router)
 
