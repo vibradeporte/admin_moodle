@@ -49,18 +49,12 @@ async def core_group_create_groups():
 
 
     """
-    data = {}
-    fecha = datetime.now().strftime('%Y-%m-%d')
-    df = pd.read_csv('temp_files/estudiantes_validados.csv')
-    unique_course_ids = df['CourseId'].unique()
-
-    for i, course_id in enumerate(unique_course_ids):
+        for i, course_id in enumerate(unique_course_ids):
         data[f"groups[{i}][courseid]"] = course_id
         data[f"groups[{i}][name]"] = datetime.now().strftime('%B_%d_%Y').capitalize()
         data[f"groups[{i}][description]"] = f"Este grupo se compone de los estudiantes matriculados el día {fecha}"
         # Agregar otros parámetros opcionales si es necesario
         # data[f"groups[{i}][descriptionformat]"] = 1  # Por ejemplo, si quieres usar HTML
-
 
     url = f"{MOODLE_URL}/webservice/rest/server.php"
     params = {
@@ -68,19 +62,20 @@ async def core_group_create_groups():
         "wsfunction": WS_FUNCTION,
         "moodlewsrestformat": "json"
     }
-   
+
     response = requests.post(url, params=params, data=data)
     response_dict = response.json()
+    for i, group in enumerate(response_dict):
+        df.loc[df['CourseId'] == unique_course_ids[i], 'GroupId'] = group['id']
+    df.to_csv('temp_files/estudiantes_actualizados.csv', index=False)
+
     if 'message' in response_dict and response_dict['message'] == 'Detectado valor de parámetro no válido':
-        codigo = GRUPO_YA_EXISTE
+        codigo = 482  # GRUPO_YA_EXISTE
+        mensaje = HTTP_MESSAGES.get(codigo)
+        raise HTTPException(codigo, mensaje)
+    elif 'exception' in response_dict and response_dict['exception'] == 'moodle_exception':
+        codigo = 477  # COURSE_NO_EXISTE
         mensaje = HTTP_MESSAGES.get(codigo)
         raise HTTPException(codigo, mensaje)
 
-    elif 'exception' in response_dict and response_dict['exception'] == 'moodle_exception':
-        codigo = COURSE_NO_EXISTE
-        mensaje = HTTP_MESSAGES.get(codigo)
-        raise HTTPException(codigo, mensaje)
-    
-    for i, group in enumerate(response_dict):
-    df.loc[df['CourseId'] == unique_course_ids[i], 'GroupId'] = group['id']
-    return {"output": response.json()}     
+
