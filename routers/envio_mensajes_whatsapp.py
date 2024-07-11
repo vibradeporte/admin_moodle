@@ -19,7 +19,7 @@ class MessageRequest(BaseModel):
     numero: str
     parametros: List[str]
 
-@envio_mensajes_whatsapp_router.post("/envio_mensajes_whatsapp", tags=['Whatsapp'])
+@envio_mensajes_whatsapp_router.post("/envio_mensajes_whatsapp",tags=['Whatsapp'])
 async def send_messages(plantilla: str, id_telefono: str, mensajes: List[MessageRequest]=None):
     """
     ## **Descripción:**
@@ -33,16 +33,16 @@ async def send_messages(plantilla: str, id_telefono: str, mensajes: List[Message
     """
     regex = r'^[0-9]+$'
     
-    #for mensaje in mensajes:
-        #if len(mensaje.numero) > 20:
-            #codigo = SOBRAN_CARACTERES_20
-            #mensaje_texto = HTTP_MESSAGES.get(codigo)
-            #raise HTTPException(codigo, mensaje_texto)
+    for mensaje in mensajes:
+        if len(mensaje.numero) > 20:
+            codigo = SOBRAN_CARACTERES_20
+            mensaje_texto = HTTP_MESSAGES.get(codigo)
+            raise HTTPException(codigo, mensaje_texto)
         
-        #if not re.match(regex, mensaje.numero):
-            #codigo = TELEFONO_INCORRECTO
-            #mensaje_texto = HTTP_MESSAGES.get(codigo)
-            #raise HTTPException(codigo, mensaje_texto)
+        if not re.match(regex, mensaje.numero):
+            codigo = TELEFONO_INCORRECTO
+            mensaje_texto = HTTP_MESSAGES.get(codigo)
+            raise HTTPException(codigo, mensaje_texto)
     
     FACEBOOK_API_URL = f"https://graph.facebook.com/v19.0/{id_telefono}/messages"
 
@@ -85,6 +85,7 @@ async def send_messages(plantilla: str, id_telefono: str, mensajes: List[Message
             results.append(response.json())
     
     return results
+
 
 @envio_mensajes_whatsapp_bienvenida_router.post("/envio_mensajes_whatsapp_bienvenida_csv" ,tags=['Whatsapp'])
 async def send_messages_csv(id_telefono: str):
