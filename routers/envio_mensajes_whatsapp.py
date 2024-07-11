@@ -7,11 +7,10 @@ from typing import List
 import pandas as pd
 import re
 
-# Cargar variables de entorno desde el archivo .env
 load_dotenv()
 
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
-id_telefono = os.getenv('ID_TELEFONO')
+id_telefono_env = os.getenv('ID_TELEFONO_WAPP')
 
 envio_mensajes_whatsapp_bienvenida_router = APIRouter()
 envio_mensajes_whatsapp_router = APIRouter()
@@ -20,8 +19,8 @@ class MessageRequest(BaseModel):
     numero: str
     parametros: List[str]
 
-@envio_mensajes_whatsapp_router.post("/envio_mensajes_whatsapp",tags=['Whatsapp'])
-async def send_messages(plantilla: str, id_telefono = id_telefono, mensajes: List[MessageRequest]=None):
+@envio_mensajes_whatsapp_router.post("/envio_mensajes_whatsapp", tags=['Whatsapp'])
+async def send_messages(plantilla: str, mensajes: List[MessageRequest]=None):
     """
     ## **Descripción:**
     Esta función permite enviar mensajes a whatsapp colectivamente.
@@ -45,7 +44,7 @@ async def send_messages(plantilla: str, id_telefono = id_telefono, mensajes: Lis
             mensaje_texto = HTTP_MESSAGES.get(codigo)
             raise HTTPException(codigo, mensaje_texto)
     
-    FACEBOOK_API_URL = f"https://graph.facebook.com/v19.0/{id_telefono}/messages"
+    FACEBOOK_API_URL = f"https://graph.facebook.com/v19.0/{id_telefono_env}/messages"
 
     headers = {
         'Authorization': f'Bearer {ACCESS_TOKEN}',
