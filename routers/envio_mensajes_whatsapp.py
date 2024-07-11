@@ -11,6 +11,7 @@ import re
 load_dotenv()
 
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
+id_telefono = os.getenv('ID_TELEFONO')
 
 envio_mensajes_whatsapp_bienvenida_router = APIRouter()
 envio_mensajes_whatsapp_router = APIRouter()
@@ -20,7 +21,7 @@ class MessageRequest(BaseModel):
     parametros: List[str]
 
 @envio_mensajes_whatsapp_router.post("/envio_mensajes_whatsapp",tags=['Whatsapp'])
-async def send_messages(plantilla: str, id_telefono: str, mensajes: List[MessageRequest]=None):
+async def send_messages(plantilla: str, id_telefono = id_telefono, mensajes: List[MessageRequest]=None):
     """
     ## **Descripción:**
     Esta función permite enviar mensajes a whatsapp colectivamente.
@@ -85,35 +86,3 @@ async def send_messages(plantilla: str, id_telefono: str, mensajes: List[Message
             results.append(response.json())
     
     return results
-
-
-@envio_mensajes_whatsapp_bienvenida_router.post("/envio_mensajes_whatsapp_bienvenida_csv" ,tags=['Whatsapp'])
-async def send_messages_csv(id_telefono: str):
-    """
-    ## **Descripción:**
-    Esta función permite enviar mensajes a WhatsApp colectivamente desde un archivo CSV.
-
-    ## **Parámetros obligatorios:**
-        - file -> Archivo CSV que contiene todos los campos a enviar en la plantilla.
-    """
-    # Leer el archivo CSV
-    df = pd.read_csv('temp_files/estudiantes_validados.csv')
-
-    telefonos = "+" + df['phone1'].astype(str)
-    nombres = df['firstname']
-    apellidos = df['lastname']
-    cursos = df['NOMBRE_LARGO_CURSO']
-    mensaje_plantilla = "Hola {}, {}. Te has inscrito en el siguiente curso: {}. ¡Esperamos verte pronto!"
-
-    # Crear una lista de mensajes
-    mensajes = [
-        MessageRequest(
-            numero=telefono,
-            parametros=[nombre, apellido, curso]
-        ) for telefono, nombre, apellido, curso in zip(telefonos, nombres, apellidos, cursos)
-    ]
-
-    # Llamar a la función de envío de mensajes
-    response = await send_messages(mensaje_plantilla, id_telefono, mensajes)
-
-    return response
