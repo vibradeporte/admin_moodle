@@ -4,11 +4,9 @@ import os
 from return_codes import *
 import pandas as pd
 from datetime import datetime
-import locale
+
 
 core_group_create_groups_router = APIRouter()
-
-locale.setlocale(locale.LC_TIME, 'es_ES.utf8')
 MOODLE_URL = os.getenv("MOODLE_URL")
 MOODLE_TOKEN = os.getenv("MOODLE_TOKEN")
 
