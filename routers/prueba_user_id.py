@@ -27,8 +27,8 @@ HTTP_MESSAGES = {
 def calcular_fechas_matricula(row):
     semanas_inscripcion = row['NRO_SEMANAS_DE_MATRICULA']
     dias_curso = row['CourseDaysDuration']
-    semanas_inscripcion = int(float(semanas_inscripcion))
-    dias_curso = int(float(dias_curso))
+    semanas_inscripcion = int(float(semanas_inscripcion)) if not pd.isna(semanas_inscripcion) else None
+    dias_curso = int(float(dias_curso)) if not pd.isna(dias_curso) else 20
     fecha_actual = datetime.now()
     
     if semanas_inscripcion is None or semanas_inscripcion == "":
