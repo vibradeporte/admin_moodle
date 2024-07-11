@@ -10,7 +10,7 @@ import re
 load_dotenv()
 
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
-id_telefono_env = os.getenv('ID_TELEFONO_WAPP')
+id_telefono_env = os.getenv('id_telefono')
 
 envio_mensajes_whatsapp_bienvenida_router = APIRouter()
 envio_mensajes_whatsapp_router = APIRouter()
