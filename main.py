@@ -19,6 +19,8 @@ from routers.validacion_num_wapp import *
 from routers.normalizacion import *
 from routers.validacion_final import *
 
+#JSON
+from routers.Parametros_bienvenida import *
 
 
 #Grupos
@@ -62,7 +64,10 @@ app.include_router(identificacion_usuario)
 
 app.include_router(prueba_conseguir_id)
 app.include_router(validacion_cedula_router)
-app.include_router(enrol_manual_enrol_users_router)
+
+#JSON
+app.include_router(Bienvenida_wapp_estudiantes_router)
+
 app.include_router(verificacion_inicial_archivo)
 app.include_router(validacion_nombres_apellidos_router)
 app.include_router(verificar_correos)
@@ -79,7 +84,6 @@ app.include_router(nombres_cursos_router)
 
 #whatsapp
 app.include_router(envio_mensajes_whatsapp_router)
-app.include_router(envio_mensajes_whatsapp_bienvenida_router)
 
 @app.get('/', tags=['home'])
 def message():
