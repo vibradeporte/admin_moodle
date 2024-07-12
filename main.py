@@ -35,8 +35,8 @@ from routers.usuarios_bd import usuarios_bd_router
 #moodle
 from routers.est_matriculados_curso_con_certificados import est_matriculados_curso_con_certificados_router
 
-
-
+#SQL
+from routers.poblar_tabla_matricula import *
 
 #Whatsapp
 from routers.envio_mensajes_whatsapp import *
@@ -51,6 +51,8 @@ app = FastAPI(
     version="0.0.1"
 )
 
+#SQL
+app.include_router(poblar_tabla_matricula_router)
 
 #Grupos
 app.include_router(core_group_create_groups_router)
