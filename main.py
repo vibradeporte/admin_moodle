@@ -70,7 +70,6 @@ app.include_router(identificacion_usuario)
 
 app.include_router(prueba_conseguir_id)
 app.include_router(validacion_cedula_router)
-app.include_router(enrol_manual_enrol_users_router)
 app.include_router(verificacion_inicial_archivo)
 app.include_router(validacion_nombres_apellidos_router)
 app.include_router(verificar_correos)
