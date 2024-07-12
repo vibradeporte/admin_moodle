@@ -5,9 +5,12 @@ import requests
 #Validacion Inicial
 from routers.validacion_identidad import *
 from routers.validacion_nombres_apellidos import *
-from routers.verificar_correos import *
 from routers.subida_Archivos import *
 from routers.validacion_cedula import *
+
+#CORREOS
+from routers.Envio_Correo import *
+from routers.verificar_correos import *
 
 #Cursos
 from routers.validar_cursos_certificado import *
@@ -21,6 +24,7 @@ from routers.validacion_final import *
 
 #JSON
 from routers.Parametros_bienvenida import *
+from routers.estructura_correo_bienvenida import *
 
 #Grupos
 from  routers.core_group_create_groups import *
@@ -30,6 +34,7 @@ from routers.core_user_create_users import *
 from routers.enrol_manual_enrol_users import *
 from routers.prueba_user_id import prueba_conseguir_id
 from routers.usuarios_bd import usuarios_bd_router
+
 
 
 #moodle
@@ -51,6 +56,8 @@ app = FastAPI(
     version="0.0.1"
 )
 
+
+
 #SQL
 app.include_router(poblar_tabla_matricula_router)
 
@@ -61,6 +68,9 @@ app.include_router(core_group_add_group_members_router)
 #JSON
 app.include_router(Bienvenida_wapp_estudiantes_router)
 
+#CORREO
+app.include_router(correo_router)
+app.include_router(Bienvenida_correo_estudiantes_router)
 
 app.include_router(enrol_manual_enrol_users_router)
 
