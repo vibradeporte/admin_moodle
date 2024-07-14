@@ -1,19 +1,32 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import requests
 from dotenv import load_dotenv
 import os
 from typing import List
-import pandas as pd
 import re
+import logging
+import pandas as pd
 
 load_dotenv()
 
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 id_telefono_env = os.getenv('id_telefono')
 
-envio_mensajes_whatsapp_bienvenida_router = APIRouter()
+# Error codes and messages
+SOBRAN_CARACTERES_20 = 422
+TELEFONO_INCORRECTO = 422
+HTTP_MESSAGES = {
+    SOBRAN_CARACTERES_20: "El número de teléfono excede los 20 caracteres permitidos.",
+    TELEFONO_INCORRECTO: "El número de teléfono contiene caracteres no válidos."
+}
+
+# Setting up routers
 envio_mensajes_whatsapp_router = APIRouter()
+
+# Logging configuration
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class MessageRequest(BaseModel):
     numero: str
@@ -37,12 +50,14 @@ async def send_messages(plantilla: str, mensajes: List[MessageRequest]=None):
         if len(mensaje.numero) > 20:
             codigo = SOBRAN_CARACTERES_20
             mensaje_texto = HTTP_MESSAGES.get(codigo)
-            raise HTTPException(codigo, mensaje_texto)
+            logger.error(f"Error {codigo}: {mensaje_texto} - {mensaje.numero}")
+            raise HTTPException(status_code=codigo, detail=mensaje_texto)
         
         if not re.match(regex, mensaje.numero):
             codigo = TELEFONO_INCORRECTO
             mensaje_texto = HTTP_MESSAGES.get(codigo)
-            raise HTTPException(codigo, mensaje_texto)
+            logger.error(f"Error {codigo}: {mensaje_texto} - {mensaje.numero}")
+            raise HTTPException(status_code=codigo, detail=mensaje_texto)
     
     FACEBOOK_API_URL = f"https://graph.facebook.com/v19.0/{id_telefono_env}/messages"
 
@@ -76,12 +91,25 @@ async def send_messages(plantilla: str, mensajes: List[MessageRequest]=None):
 
         response = requests.post(FACEBOOK_API_URL, headers=headers, json=data)
         if response.status_code != 200:
+            logger.error(f"Failed to send message to {mensaje.numero}: {response.status_code} - {response.text}")
             results.append({
                 "numero": mensaje.numero,
                 "status": response.status_code,
                 "error": response.text
             })
         else:
-            results.append(response.json())
+            response_json = response.json()
+            message_status = response_json.get("messages", [{}])[0].get("message_status", "unknown")
+            logger.info(f"Message sent to {mensaje.numero} with status {message_status}")
+            results.append({
+                "numero": mensaje.numero,
+                "message_status": message_status
+            })
+    
+    # Convert results to DataFrame
+    df = pd.DataFrame(results)
+    
+    # Save DataFrame to CSV
+    df.to_csv('temp_files/message_status.csv', index=False)
     
     return results
