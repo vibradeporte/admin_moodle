@@ -38,7 +38,7 @@ def estudiantes_matriculados():
     return df
 
 def estudiantes_no_matriculados():
-    df = pd.read_excel('temp_files/estudiantes_invalidados.xlsx', usecols=['username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
+    df = pd.read_excel('temp_files/estudiantes_invalidos.xlsx', usecols=['username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
                                                                            'phone1', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
                                                                            'NRO_SEMANAS_DE_MATRICULA', 'NOMBRE_CORTO_CURSO'])
     
