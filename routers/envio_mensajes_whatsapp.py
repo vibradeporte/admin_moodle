@@ -5,13 +5,15 @@ from dotenv import load_dotenv
 import os
 from typing import List
 import re
-import logging
 import pandas as pd
 
 load_dotenv()
 
 ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 id_telefono_env = os.getenv('id_telefono')
+
+if not ACCESS_TOKEN or not id_telefono_env:
+    raise RuntimeError("ACCESS_TOKEN or id_telefono_env not set in environment variables")
 
 # Error codes and messages
 SOBRAN_CARACTERES_20 = 422
@@ -24,16 +26,12 @@ HTTP_MESSAGES = {
 # Setting up routers
 envio_mensajes_whatsapp_router = APIRouter()
 
-# Logging configuration
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 class MessageRequest(BaseModel):
     numero: str
     parametros: List[str]
 
 @envio_mensajes_whatsapp_router.post("/envio_mensajes_whatsapp", tags=['Whatsapp'])
-async def send_messages(plantilla: str, mensajes: List[MessageRequest]=None):
+async def send_messages(plantilla: str, mensajes: List[MessageRequest] = None):
     """
     ## **Descripción:**
     Esta función permite enviar mensajes a whatsapp colectivamente.
@@ -45,18 +43,18 @@ async def send_messages(plantilla: str, mensajes: List[MessageRequest]=None):
         - 200 -> Los mensajes se enviaron correctamente.
     """
     regex = r'^[0-9]+$'
-    
+
     for mensaje in mensajes:
         if len(mensaje.numero) > 20:
             codigo = SOBRAN_CARACTERES_20
             mensaje_texto = HTTP_MESSAGES.get(codigo)
-            logger.error(f"Error {codigo}: {mensaje_texto} - {mensaje.numero}")
+            print(f"Error {codigo}: {mensaje_texto} - {mensaje.numero}")
             raise HTTPException(status_code=codigo, detail=mensaje_texto)
         
         if not re.match(regex, mensaje.numero):
             codigo = TELEFONO_INCORRECTO
             mensaje_texto = HTTP_MESSAGES.get(codigo)
-            logger.error(f"Error {codigo}: {mensaje_texto} - {mensaje.numero}")
+            print(f"Error {codigo}: {mensaje_texto} - {mensaje.numero}")
             raise HTTPException(status_code=codigo, detail=mensaje_texto)
     
     FACEBOOK_API_URL = f"https://graph.facebook.com/v19.0/{id_telefono_env}/messages"
@@ -91,7 +89,7 @@ async def send_messages(plantilla: str, mensajes: List[MessageRequest]=None):
 
         response = requests.post(FACEBOOK_API_URL, headers=headers, json=data)
         if response.status_code != 200:
-            logger.error(f"Failed to send message to {mensaje.numero}: {response.status_code} - {response.text}")
+            print(f"Failed to send message to {mensaje.numero}: {response.status_code} - {response.text}")
             results.append({
                 "numero": mensaje.numero,
                 "status": response.status_code,
@@ -99,17 +97,19 @@ async def send_messages(plantilla: str, mensajes: List[MessageRequest]=None):
             })
         else:
             response_json = response.json()
+            message_id = response_json.get("messages", [{}])[0].get("id", "unknown")
             message_status = response_json.get("messages", [{}])[0].get("message_status", "unknown")
-            logger.info(f"Message sent to {mensaje.numero} with status {message_status}")
+            print(f"Mensaje enviado a {mensaje.numero} con estatus {message_status} y id {message_id}")
             results.append({
                 "numero": mensaje.numero,
-                "message_status": message_status
+                "message_status": message_status,
+                "id": message_id
             })
     
     # Convert results to DataFrame
     df = pd.DataFrame(results)
     
     # Save DataFrame to CSV
-    df.to_csv('temp_files/message_status.csv', index=False)
+    df.to_csv('temp_files/message_status_wapp.csv', index=False)
     
     return results
