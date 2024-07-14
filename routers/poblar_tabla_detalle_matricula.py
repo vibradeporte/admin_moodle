@@ -61,7 +61,7 @@ def create_matricula(fid_matricula: int):
     df_estudiantes_invalidos = estudiantes_no_matriculados()
     
     df = pd.concat([df_estudiantes_validos, df_estudiantes_invalidos], ignore_index=True)
-    
+    df['FID_MATRICULA'] = fid_matricula
     try:
         df.to_sql('DETALLE_MATRICULA', con=engine, if_exists='append', index=False)
     except Exception as e:
