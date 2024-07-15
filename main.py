@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 import requests
 
+#Archivos
+from routers.Archivo_base64 import *
+
 #Validacion Inicial
 from routers.validacion_identidad import *
 from routers.validacion_nombres_apellidos import *
@@ -11,7 +14,7 @@ from routers.validacion_cedula import *
 #CORREOS
 from routers.Envio_Correo import *
 from routers.verificar_correos import *
-
+from routers.Envio_Correo_Archivo_Adjunto import *
 #Cursos
 from routers.validar_cursos_certificado import *
 from routers.duracion_curso_y_descripcion import duracion_curso_y_descripcion_router
@@ -55,7 +58,8 @@ app = FastAPI(
     title="Universal Learning ADMIN MOODLE API",
     version="0.0.1"
 )
-
+Archivos
+app.include_router(Archivo_base64_router)
 
 
 #SQL
@@ -72,6 +76,7 @@ app.include_router(Bienvenida_wapp_estudiantes_router)
 #CORREO
 app.include_router(correo_router)
 app.include_router(Bienvenida_correo_estudiantes_router)
+app.include_router(correo_archivo_adjunto_router)
 
 app.include_router(enrol_manual_enrol_users_router)
 
