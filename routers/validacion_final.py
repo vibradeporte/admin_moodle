@@ -70,7 +70,9 @@ def solo_numeros(numero):
 
 def sonMuyParecidos(nombre1, nombre2, threshold=80):
     calculator = StringScoreCalculator()
-    similarity = calculator.calculate_similarity_score(nombre1.strip(), nombre2.strip())
+    nombre1 = str(nombre1).strip()
+    nombre2 = str(nombre2).strip()
+    similarity = calculator.calculate_similarity_score(nombre1, nombre2)
     return similarity >= threshold
 
 def buscarCedula(cedula, df):
