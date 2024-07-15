@@ -33,7 +33,7 @@ AUTH_PASS_TSMTP = os.getenv("AUTH_PASS_TSMTP")
 correo_archivo_adjunto_router = APIRouter()
 
 # Servicio para realizar envio de correos con la plataforma turboSMTP
-@correo_archivo_adjunto_router.post("/send_email", tags=['correo'], status_code=200)
+@correo_archivo_adjunto_router.post("/enviar_correo_archivo_adjunto", tags=['correo'], status_code=200)
 def enviar_correo(email: EmailSchema):
     data = {
         "authuser": AUTH_USER_TSMTP,
