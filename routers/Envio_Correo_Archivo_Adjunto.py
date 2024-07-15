@@ -30,10 +30,10 @@ API_URL = "https://api.turbo-smtp.com/api/v2/mail/send"
 AUTH_USER_TSMTP = os.getenv("AUTH_USER_TSMTP")
 AUTH_PASS_TSMTP = os.getenv("AUTH_PASS_TSMTP")
 
-correo_router = APIRouter()
+correo_archivo_adjunto_router = APIRouter()
 
 # Servicio para realizar envio de correos con la plataforma turboSMTP
-@correo_router.post("/send_email", tags=['correo'], status_code=200)
+@correo_archivo_adjunto_router.post("/send_email", tags=['correo'], status_code=200)
 def enviar_correo(email: EmailSchema):
     data = {
         "authuser": AUTH_USER_TSMTP,
