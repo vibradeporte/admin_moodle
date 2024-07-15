@@ -58,7 +58,7 @@ app = FastAPI(
     title="Universal Learning ADMIN MOODLE API",
     version="0.0.1"
 )
-Archivos
+#Archivos
 app.include_router(Archivo_base64_router)
 
 
