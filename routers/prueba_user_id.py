@@ -26,22 +26,32 @@ HTTP_MESSAGES = {
 
 def calcular_fechas_matricula(row):
     semanas_inscripcion = row['NRO_SEMANAS_DE_MATRICULA']
-    dias_curso = row['CourseDaysDuration']
-    semanas_inscripcion = int(float(semanas_inscripcion)) if not pd.isna(semanas_inscripcion) else None
-    dias_curso = int(float(dias_curso)) if not pd.isna(dias_curso) else 20
+    dias_curso = int(row['CourseDaysDuration'])
+    
+    if pd.isna(semanas_inscripcion) or semanas_inscripcion == "":
+        semanas_inscripcion = None
+    else:
+        try:
+            semanas_inscripcion = int(float(semanas_inscripcion))
+        except ValueError:
+            semanas_inscripcion = None
+    
+    
+    if semanas_inscripcion is None:
+        semanas_inscripcion = dias_curso // 7
+    else:
+        semanas_inscripcion = int(semanas_inscripcion)
+    
     fecha_actual = datetime.now()
     
-    if semanas_inscripcion is None or semanas_inscripcion == "":
-        semanas_inscripcion = dias_curso // 7
-    
-    fecha_inicio_matricula = fecha_actual + timedelta(weeks=int(semanas_inscripcion))
-    
+    fecha_inicio_matricula = fecha_actual + timedelta(weeks=semanas_inscripcion)
     fecha_fin_curso = fecha_inicio_matricula + timedelta(days=dias_curso)
     
     timestart = int(fecha_inicio_matricula.timestamp())
     timeend = int(fecha_fin_curso.timestamp())
     
-    return pd.Series([timestart, timeend])
+    return pd.Series([timestart, timeend], index=['timestart', 'timeend'])
+
 
 @prueba_conseguir_id.post("/prueba_conseguir_id/", tags=['Moodle'], status_code=200)
 async def id_estudiante():
@@ -91,5 +101,3 @@ async def id_estudiante():
         raise HTTPException(status_code=400, detail=f"Error converting DataFrame to JSON: {str(e)}")
 
     return JSONResponse(content=json_response)
-
-
