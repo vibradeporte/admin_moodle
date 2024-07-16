@@ -20,6 +20,7 @@ class EmailSchema(BaseModel):
     from_e: str = Field(..., max_length=MAX_LENGTH_CORREO)
     to: str = Field(..., max_length=MAX_LENGTH_CORREO)
     subject: str
+    cc: str
     html_content: str
     content: str
 
@@ -42,6 +43,7 @@ def enviar_correos(batch: EmailBatchSchema):
             "from": email.from_e,
             "to": email.to,
             "subject": email.subject,
+            "cc": email.cc,
             "content": email.content,
             "html_content": email.html_content
         }
