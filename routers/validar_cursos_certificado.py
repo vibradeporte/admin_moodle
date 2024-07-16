@@ -1,9 +1,9 @@
 import os
 from dotenv import load_dotenv
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import PlainTextResponse
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
-from fastapi import APIRouter, HTTPException
 import pandas as pd
 from datetime import datetime
 
@@ -23,12 +23,14 @@ engine = create_engine(DATABASE_URL)
 validacion_inicial_file_path = 'temp_files/validacion_inicial.xlsx'
 validacion_cursos_certificado_router_prueba = APIRouter()
 
-def estudiantes_matriculados_con_certificados(curso: str):
+def estudiantes_matriculados_con_certificados(cursos: list) -> pd.DataFrame:
     """
-    Retorna la lista de estudiantes matriculados en un curso específico que han obtenido certificados.
+    Retorna la lista de estudiantes matriculados en varios cursos específicos que han obtenido certificados.
     """
+    cursos_str = '/'.join([f"'{curso.strip()}'" for curso in cursos])
+    print(f"Consulting courses: {cursos_str}")
     with engine.connect() as connection:
-        consulta_sql = text("""
+        consulta_sql = text(f"""
             SELECT DISTINCT
                 c.shortname as CourseShortName,
                 c.fullname as CourseFullName,
@@ -48,12 +50,16 @@ def estudiantes_matriculados_con_certificados(curso: str):
             WHERE
                 (m.name='customcert') AND (cc.visible>=0) AND
                 (u.username REGEXP '^[0-9]+$') AND
-                c.shortname = :curso
+                c.shortname IN ({cursos_str})
             ORDER BY cc.name, c.shortname;
-        """).params(curso=curso)
+        """)
         result = connection.execute(consulta_sql)
         rows = result.fetchall()
         column_names = result.keys()
+
+        if not rows:
+            print("No data found for the specified courses.")
+            return pd.DataFrame()
 
         result_dicts = [
             {
@@ -64,28 +70,39 @@ def estudiantes_matriculados_con_certificados(curso: str):
             for row in rows
         ]
 
-        if result_dicts:
-            return pd.DataFrame(result_dicts)
-        return pd.DataFrame()
+        df_result = pd.DataFrame(result_dicts)
+        if 'UserCedula' not in df_result.columns:
+            print("UserCedula column not found in the result DataFrame.")
+        return df_result
 
 def validar_existencia_certificado_cursos(datos: pd.DataFrame) -> pd.DataFrame:
     """
-    Valida la existencia de certificados para cursos específicos y retorna un DataFrame con los resultados.
+    Valida la existencia de certificados para varios cursos específicos y retorna un DataFrame con los resultados.
     """
     all_cursos_certificado = pd.DataFrame()
 
     datos['IDENTIFICACION'] = datos['IDENTIFICACION'].astype(str)
     datos['NOMBRE_CORTO_CURSO'] = datos['NOMBRE_CORTO_CURSO'].astype(str)
 
-    for curso in datos['NOMBRE_CORTO_CURSO'].unique():
-        cursos_certificado = estudiantes_matriculados_con_certificados(curso)
-        if not cursos_certificado.empty:
-            cursos_certificado = cursos_certificado.dropna(subset=["UserCedula"])
-            cursos_certificado['UserCedula'] = cursos_certificado['UserCedula'].astype(str)
-            cursos_certificado['CourseShortName'] = cursos_certificado['CourseShortName'].astype(str)
-            all_cursos_certificado = pd.concat([all_cursos_certificado, cursos_certificado], ignore_index=True)
+    cursos_unicos = datos['NOMBRE_CORTO_CURSO'].unique().tolist()
+    print(f"Cursos únicos: {cursos_unicos}")
+    cursos_certificado = estudiantes_matriculados_con_certificados(cursos_unicos)
+    
+    if cursos_certificado.empty:
+        print("No certificates found for any course.")
+    else:
+        cursos_certificado = cursos_certificado.dropna(subset=["UserCedula"])
+        cursos_certificado['UserCedula'] = cursos_certificado['UserCedula'].astype(str)
+        cursos_certificado['CourseShortName'] = cursos_certificado['CourseShortName'].astype(str)
+        all_cursos_certificado = pd.concat([all_cursos_certificado, cursos_certificado], ignore_index=True)
 
-    resultado = pd.merge(datos, all_cursos_certificado, left_on='IDENTIFICACION', right_on='UserCedula', how='left')
+    if all_cursos_certificado.empty:
+        print("All courses certificates DataFrame is empty.")
+    else:
+        print("All courses certificates DataFrame is not empty.")
+        print(all_cursos_certificado.head())
+
+    resultado = pd.merge(datos, all_cursos_certificado, left_on=['IDENTIFICACION', 'NOMBRE_CORTO_CURSO'], right_on=['UserCedula', 'CourseShortName'], how='left')
     resultado['ADVERTENCIA_CURSO_CULMINADO'] = resultado.apply(
         lambda row: f"{row['CourseShortName']},{row['UserCedula']},{row['CertificadoFechaEmision']}" 
         if pd.notna(row['UserCedula']) else 'NO', axis=1
@@ -100,18 +117,18 @@ async def validate_courses():
         os.makedirs(os.path.dirname(validacion_inicial_file_path), exist_ok=True)
 
         validated_df = pd.read_excel(validacion_inicial_file_path)
+        if validated_df.empty:
+            return PlainTextResponse(content="El archivo de validación está vacío.")
+
+        print("Validated DataFrame loaded successfully.")
+        print(validated_df.head())
+
         datos = validar_existencia_certificado_cursos(validated_df)
 
-        validos_matricular = datos[datos['ADVERTENCIA_CURSO_CULMINADO'] == 'NO'].drop(
-            columns=['CourseShortName', 'UserCedula', 'CertificadoFechaEmision', 'CourseFullName', 'UserNombre', 'UserApellido', 'CertificadoCodigo']
-        )
-        no_seran_matriculados = datos[datos['ADVERTENCIA_CURSO_CULMINADO'] != 'NO']
+        datos.to_excel(validacion_inicial_file_path, index=False)
 
-        validos_matricular.to_excel(validacion_inicial_file_path, index=False)
-        no_seran_matriculados.to_excel('temp_files/tienen_vertificado_curso.xlsx', index=False)
-
-        si_rows_count = len(no_seran_matriculados)
-        no_rows_count = len(validos_matricular)
+        si_rows_count = (datos['ADVERTENCIA_CURSO_CULMINADO'] != 'NO').sum()
+        no_rows_count = (datos['ADVERTENCIA_CURSO_CULMINADO'] == 'NO').sum()
 
         message = (
             f"VALIDACIÓN DE CERTIFICADOS DE CURSOS: \n"
@@ -121,5 +138,6 @@ async def validate_courses():
 
         return PlainTextResponse(content=message)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error durante la validación de cursos: {e}")
+        raise HTTPException(status_code=500, detail=f"Error durante la validación de cursos: {str(e)}")
+
 
