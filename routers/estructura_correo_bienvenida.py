@@ -5,7 +5,7 @@ import pandas as pd
 app = FastAPI()
 Bienvenida_correo_estudiantes_router = APIRouter()
 
-def transformar_datos(datos: pd.DataFrame) -> List[Dict]:
+def transformar_datos_bienvenida(datos: pd.DataFrame) -> List[Dict]:
     estructura_deseada = []    
     for _, fila in datos.iterrows():
         html_content = f"""
@@ -40,6 +40,7 @@ def transformar_datos(datos: pd.DataFrame) -> List[Dict]:
             "from_e": "aulasvirtuales@fasecolda.com",
             "to": fila['email'],
             "subject": f"Bienvenida al Curso {fila['NOMBRE_LARGO_CURSO']}",
+            "cc": fila['CORREO_SOLICITANTE']
             "html_content": html_content,
             "content": f"Apreciado(a) {fila['firstname']} {fila['lastname']},\nReciba un cordial saludo de bienvenida al curso {fila['NOMBRE_LARGO_CURSO']}.\nEl ingreso al aula virtual se hace por la siguiente dirección: https://elaulavirtual.com/ins\nSu usuario es su número de cédula: {fila['username']} y su contraseña es: P@SsW0RD123 \nTodos los recursos de estudio y evaluaciones estarán disponibles hasta el {fila['timeend']}, dado que el usuario y contraseña estarán habilitados por un plazo de {fila['enrolperiod']} días.\nAl finalizar el curso encontrará una encuesta de satisfacción, para nosotros es muy importante su diligenciamiento ya que nos permitirá conocer su opinión y hacer las mejoras correspondientes.\nSi necesita apoyo técnico puede hacer clic aquí para ir al CHAT de soporte de WhatsApp o puede escribirnos al correo AulasVirtuales@Fasecolda.com\nCordialmente,\nSoporte de Aula Virtuales INS."
         }
