@@ -59,7 +59,7 @@ async def bienvenida_correo():
         datos['timestart_date'] = datos['timestart'].dt.date
         datos['timeend_date'] = datos['timeend'].dt.date
         datos['enrolperiod'] = (datos['timeend'] - datos['timestart']).dt.days
-        estructura_deseada = transformar_datos(datos)
+        estructura_deseada = transformar_datos_bienvenida(datos)
         return estructura_deseada
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
