@@ -34,3 +34,4 @@ fuzzywuzzy==0.18.0
 openpyxl
 phonenumbers
 pycountry
+pydantic==2.8.2 
