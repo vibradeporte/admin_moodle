@@ -11,7 +11,6 @@ httptools==0.6.1
 hypercorn==0.15.0
 idna==3.6
 mysql-connector-python==8.3.0
-pydantic==2.6.1
 pydantic_core==2.16.2
 PyJWT==2.8.0
 python-dotenv==1.0.1
