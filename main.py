@@ -40,8 +40,6 @@ from routers.usuarios_bd import usuarios_bd_router
 
 
 
-#moodle
-from routers.est_matriculados_curso_con_certificados import est_matriculados_curso_con_certificados_router
 
 #SQL
 from routers.poblar_tabla_matricula import *
@@ -95,7 +93,6 @@ app.include_router(validacion_final)
 app.include_router(validacion_cursos_certificado_router_prueba)
 
 #moodle
-app.include_router(est_matriculados_curso_con_certificados_router)
 app.include_router(usuarios_bd_router)
 app.include_router(duracion_curso_y_descripcion_router)
 app.include_router(nombres_cursos_router)
