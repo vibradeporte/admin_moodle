@@ -74,7 +74,7 @@ async def enrol_manual_enrol_users(moodle_url: str = Form(...), moodle_token: st
         data[f"enrolments[{i}][courseid]"]= COURSEID
         data[f"enrolments[{i}][timestart]"]= TIMESTART
         data[f"enrolments[{i}][timeend]"]= TIMEEND
-        #data[f"enrolments[{i}][suspend]"]= SUSPEND
+        data[f"enrolments[{i}][suspend]"]= 0
         i += 1
 
 
