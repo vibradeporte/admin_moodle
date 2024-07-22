@@ -70,7 +70,7 @@ def estudiantes_estatus(cursos: list, usuario: str, contrasena: str, host: str, 
     return pd.DataFrame(result_dicts)
 
 @validacion_estudiantes_estatus_router.post("/validar_estatus/", tags=['Validacion_Final'])
-async def validacion_estudiantes_estatus_final(datos: dict, usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str):
+async def validacion_estudiantes_estatus_final(usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str):
     try:
         datos_df = pd.read_excel(validacion_inicial_file_path)
         datos_df['IDENTIFICACION'] = datos_df['IDENTIFICACION'].astype(str)
