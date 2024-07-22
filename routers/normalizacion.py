@@ -111,7 +111,7 @@ async def normalizar():
         df.to_excel(file_path, index=False)
 
         message = (
-            f"NORMALIZACIÓN DE CIUDAD Y EMPRESA COMPLETADA EXITOSAMENTE"
+            f"Normalización de ciudad y empresa completada exitosamente."
         )
         return PlainTextResponse(content=message)  
     except Exception as e:
