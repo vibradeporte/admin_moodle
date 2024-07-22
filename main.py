@@ -25,7 +25,7 @@ from routers.nombres_cursos import nombres_cursos_router
 from routers.validacion_num_wapp import validacion_numeros_whatsapp_router
 from routers.normalizacion import normalizacion_router
 from routers.validacion_final import validacion_final
-from routers.validar_estatus_estudiante import validacion_estudiantes_estatus_router
+from routers.validar_estatus_estudiantes import validacion_estudiantes_estatus_router
 # JSON
 from routers.Parametros_bienvenida import Bienvenida_wapp_estudiantes_router
 from routers.estructura_correo_bienvenida import Bienvenida_correo_estudiantes_router
