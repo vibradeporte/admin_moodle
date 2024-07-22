@@ -51,7 +51,7 @@ async def validar_cedula():
         no_rows_count = (df['cedula_es_invalida'] == 'NO').sum()
 
         message = (
-            f"VALIDACIÓN DE CÉDULAS:\n"
+            f"Validación de cédulas:\n"
             f"{no_rows_count} cédulas correctas \n"
             f"{si_rows_count} cédulas incorrectas \n"
             
