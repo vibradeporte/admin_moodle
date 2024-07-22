@@ -181,6 +181,7 @@ async def validate_students():
     estudiantes_matricular['country'] = matriculas_aceptadas['PAIS_DE_RESIDENCIA'].str.upper()
     estudiantes_matricular['address'] = matriculas_aceptadas.apply(lambda row: f"{row['TIPO_IDENTIFICACION']}{row['IDENTIFICACION']}", axis=1)
     estudiantes_matricular['description'] = matriculas_aceptadas['DESCRIPCIÓN']
+    estudiantes_matricular['lastnamephonetic'] = matriculas_aceptadas['lastnamephonetic']
     estudiantes_matricular['EMPRESA'] = matriculas_aceptadas['EMPRESA']
     estudiantes_matricular['CORREO_SOLICITANTE'] = matriculas_aceptadas['CORREO_SOLICITANTE']
     estudiantes_matricular['NRO_SEMANAS_DE_MATRICULA'] = matriculas_aceptadas['NRO_SEMANAS_DE_MATRICULA']
