@@ -65,9 +65,9 @@ def nombres_cursos_bd(usuario: str, contrasena: str, host: str, port: str, nombr
     
     if not datos.empty:
         message = (
-            f"VALIDACIÓN DE NOMBRES DE CURSOS: \n"
-            f"{no_rows_count} NOMBRES DE CURSOS CORRECTOS \n"
-            f"{si_rows_count} NOMBRES DE CURSOS INVALIDOS \n"
+            f"Validación de nombres de cursos: \n"
+            f"{no_rows_count} Nombres de cursos correctos. \n"
+            f"{si_rows_count} Nombres de cursos no validos. \n"
         )
         return PlainTextResponse(content=message)
     else:
