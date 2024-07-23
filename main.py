@@ -55,10 +55,7 @@ app = FastAPI(
     version="0.0.1"
 )
 
-origins = [
-    "https://studio.botpress.cloud/5c084513-42f8-4dfe-9344-81ea229f31ec/flows/wf-main",
-    "https://studio.botpress.cloud/5c084513-42f8-4dfe-9344-81ea229f31ec/flows/wf-ba7b8ded8a"
-]
+
 
 # Including routers
 # Archivos
@@ -105,7 +102,7 @@ app.include_router(envio_mensajes_whatsapp_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
