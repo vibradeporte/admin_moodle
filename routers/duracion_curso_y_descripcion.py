@@ -86,10 +86,10 @@ async def duracion_curso_y_descripcion(
         df['CourseDaysDuration'] = course_durations
 
 
-        output_file = 'temp_files/estudiantes_validados_actualizado.csv'
+        output_file = 'temp_files/estudiantes_validados.csv'
         df.to_csv(output_file, index=False)
 
-        return FileResponse(output_file, media_type='text/csv', filename='estudiantes_validados_actualizado.csv')
+        return FileResponse(output_file, media_type='text/csv', filename='estudiantes_validados.csv')
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
