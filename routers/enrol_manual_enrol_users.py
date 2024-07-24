@@ -64,8 +64,8 @@ async def enrol_manual_enrol_users(moodle_url: str = Form(...), moodle_token: st
         #ROLEID = row.get("roleid")
         USERID = row.get("userid")
         COURSEID = row.get("CourseId")
-        TIMESTART = row.get("timestart")
-        TIMEEND = row.get("timeend")
+        TIMESTART = int(row.get("timestart"))
+        TIMEEND = int(row.get("timeend"))
         #SUSPEND = row.get("suspend")
 
         
