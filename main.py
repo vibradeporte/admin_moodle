@@ -22,7 +22,7 @@ from routers.Envio_Correo_Archivo_Adjunto import correo_archivo_adjunto_router
 from routers.validar_cursos_certificado import validacion_cursos_certificado_router_prueba
 from routers.duracion_curso_y_descripcion import duracion_curso_y_descripcion_router
 from routers.nombres_cursos import nombres_cursos_router
-
+from routers.conseguir_id_grupos import conseguir_id_grupo
 # Validacion Secundaria
 from routers.validacion_num_wapp import validacion_numeros_whatsapp_router
 from routers.normalizacion import normalizacion_router
@@ -99,6 +99,7 @@ app.include_router(nombres_cursos_router)
 # WhatsApp
 app.include_router(envio_mensajes_whatsapp_router)
 
+app.include_router(conseguir_id_grupo)
 
 app.add_middleware(
     CORSMiddleware,
