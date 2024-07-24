@@ -193,7 +193,12 @@ async def validate_students():
     estudiantes_matricular['NOMBRE_INVALIDO'] = matriculas_aceptadas['Nombre_Invalido']
     estudiantes_matricular['APELLIDO_INVALIDO'] = matriculas_aceptadas['Apellido_Invalido']
     estudiantes_matricular['ESTAN_CRUZADOS_NOMBRES_APELLIDOS'] = matriculas_aceptadas['estan_cruzados']
+    estudiantes_matricular['LA_CALIDAD_DEL_CORREO_ES_MALA'] = matriculas_aceptadas['QUALITY']
     estudiantes_matricular['NUMERO_WAPP_INCORRECTO'] = matriculas_aceptadas['Numero_Wapp_Incorrecto']
+    estudiantes_matricular['NOMBRE_DE_CURSO_INVALIDO'] = matriculas_aceptadas['nombre_De_Curso_Invalido']
+    estudiantes_matricular['ESTA_ACTIVO_ESTUDIANTE'] = matriculas_aceptadas['Esta_activo_estudiante']
+    estudiantes_matricular['ADVERTENCIA_CURSO_CULMINADO'] = matriculas_aceptadas['ADVERTENCIA_CURSO_CULMINADO']
+
 
     # Leer la base de datos de usuarios
     BD_USUARIOS = pd.read_csv('temp_files/usuarios_completos.csv')
@@ -211,7 +216,7 @@ async def validate_students():
 
     estudiantes_a_matricular = resultado[
     ((resultado['Estado'] == 'NO está en la BD esa cédula') | (resultado['Estado'] == 'SI')) &
-    (~otras_columnas_con_si.any(axis=1))
+    (~otras_columnas_con_si.any(axis=1)) & (resultado['ADVERTENCIA_CURSO_CULMINADO'] == 'NO')
     ]
 
     estudiantes_a_matricular.to_csv('temp_files/estudiantes_validados.csv', index=False)
@@ -221,7 +226,7 @@ async def validate_students():
     estudiantes_que_no_seran_matriculados = resultado[
     ((resultado['Estado'] != 'NO está en la BD esa cédula') &
      (resultado['Estado'] != 'SI')) |
-    otras_columnas_con_si.any(axis=1)
+    otras_columnas_con_si.any(axis=1) | (resultado['ADVERTENCIA_CURSO_CULMINADO'] != 'NO')
     ]
 
     estudiantes_que_no_seran_matriculados.to_excel('temp_files/estudiantes_invalidos.xlsx', index=False)
