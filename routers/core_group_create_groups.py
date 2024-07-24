@@ -74,12 +74,3 @@ async def core_group_create_groups(moodle_url: str = Form(...), moodle_token: st
             if response_dict['errorcode'] == 'invalidcourseid':
                 raise HTTPException(status_code=477, detail=HTTP_MESSAGES.get(477))
     
-    try:
-            df['GroupId'] = None
-            for i, group in enumerate(response_dict):
-                df.loc[df['CourseId'] == unique_course_ids[i], 'GroupId'] = group['id']
-            df.to_csv('temp_files/estudiantes_validados.csv', index=False)
-    except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error al actualizar y guardar el archivo CSV: {str(e)}")
-
-    return {"output": response_dict}
