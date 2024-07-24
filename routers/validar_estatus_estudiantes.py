@@ -6,11 +6,11 @@ from urllib.parse import quote_plus
 import pandas as pd
 from datetime import datetime
 
-# Define file paths and router
+
 validacion_inicial_file_path = 'temp_files/validacion_inicial.xlsx'
 validacion_estudiantes_estatus_router = APIRouter()
 
-# Function to construct the database URL
+
 def get_database_url(user: str, password: str, host: str, db_name: str, port: int = None) -> str:
     password_encoded = quote_plus(password)
     if port:
@@ -18,7 +18,7 @@ def get_database_url(user: str, password: str, host: str, db_name: str, port: in
     else:
         return f"mysql+mysqlconnector://{user}:{password_encoded}@{host}/{db_name}"
 
-# Function to fetch student enrollment status from the database
+
 def estudiantes_estatus(cursos: list, usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str) -> pd.DataFrame:
 
     database_url = get_database_url(usuario, contrasena, host, nombre_base_datos, port)
@@ -82,15 +82,13 @@ async def validacion_estudiantes_estatus_final(usuario: str, contrasena: str, ho
 
         # Merge the dataframes
         resultado = datos_df.merge(estudiantes_estatus_df, left_on='IDENTIFICACION', right_on='username', how='left', suffixes=('', '_estatus'))
-
-        # Create the Esta_activo_estudiante column
+        resultado.drop_duplicates(subset=['IDENTIFICACION', 'NOMBRE_CORTO_CURSO'], inplace=True)
         resultado['Esta_activo_estudiante'] = resultado['ESTA_ACTIVO'].apply(lambda x: 'SI' if x == 1 else 'NO')
 
-        # Create the lastnamephonetic column only if enrolment_status is 0
         resultado['lastnamephonetic'] = resultado.apply(
             lambda row: f"{row['courseshortname']}|{row['enrolment_start_date'].strftime('%d/%m/%Y')}|{row['enrolment_end_date'].strftime('%d/%m/%Y')}" if row['ESTA_ACTIVO'] == 0 else '', axis=1)
 
-        # Replace NaN and infinite values before converting to JSON
+
         resultado = resultado.replace({pd.NA: None, float('inf'): None, float('-inf'): None})
 
         columns_to_drop = [
@@ -103,7 +101,6 @@ async def validacion_estudiantes_estatus_final(usuario: str, contrasena: str, ho
 
         ]
         resultado.drop(columns=columns_to_drop, inplace=True, errors='ignore')
-        # Save the result to an Excel file
         resultado.to_excel(validacion_inicial_file_path, index=False)
 
 
@@ -115,11 +112,6 @@ async def validacion_estudiantes_estatus_final(usuario: str, contrasena: str, ho
         return PlainTextResponse(content=message)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
-
-
-
-
-
 
 
 
