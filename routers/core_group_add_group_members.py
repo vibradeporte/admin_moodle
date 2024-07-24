@@ -28,7 +28,7 @@ async def core_group_add_group_members(moodle_url: str = Form(...), moodle_token
     data = {}
     df = pd.read_csv('temp_files/estudiantes_validados.csv')
     for i, row in df.iterrows():
-        GROUPID = row.get("GroupId")
+        GROUPID = row.get("groupid")
         USERID = row.get("userid")
 
         data[f"members[{i}][groupid]"] = GROUPID
