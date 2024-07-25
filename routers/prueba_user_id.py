@@ -28,7 +28,7 @@ HTTP_MESSAGES = {
 
 def calcular_fechas_matricula(row):
     semanas_inscripcion = row['NRO_SEMANAS_DE_MATRICULA']
-    dias_curso = int(row['CourseDaysDuration'])
+    dias_curso = int(float(row['CourseDaysDuration']))
     
     # Convertir semanas_inscripcion a numérico, coaccionando errores a NaN
     semanas_inscripcion = pd.to_numeric(semanas_inscripcion, errors='coerce')
