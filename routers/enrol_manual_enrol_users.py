@@ -70,10 +70,10 @@ async def enrol_manual_enrol_users(moodle_url: str = Form(...), moodle_token: st
 
         
         data[f"enrolments[{i}][roleid]"]= 5
-        data[f"enrolments[{i}][userid]"]= USERID
-        data[f"enrolments[{i}][courseid]"]= COURSEID
-        data[f"enrolments[{i}][timestart]"]= TIMESTART
-        data[f"enrolments[{i}][timeend]"]= TIMEEND
+        data[f"enrolments[{i}][userid]"]= int(USERID)
+        data[f"enrolments[{i}][courseid]"]= int(COURSEID)
+        data[f"enrolments[{i}][timestart]"]= int(TIMESTART)
+        data[f"enrolments[{i}][timeend]"]= int(TIMEEND)
         data[f"enrolments[{i}][suspend]"]= 0
         i += 1
 
