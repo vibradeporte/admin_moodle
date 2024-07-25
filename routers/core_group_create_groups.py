@@ -72,17 +72,39 @@ async def core_group_create_groups(
         "moodlewsrestformat": "json"
     }
 
-    try:
-        response = requests.post(url, params=params, data=data)
-        response.raise_for_status()
-    except requests.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Error al comunicarse con Moodle: {str(e)}")
+    successful_groups = []
+    failed_groups = []
 
-    response_dict = response.json()
+    for i, course_id in enumerate(unique_course_ids):
+        group_data = {
+            "groups[0][courseid]": course_id,
+            "groups[0][name]": f"Grupo_{course_id}_{fecha}",
+            "groups[0][description]": f"Este grupo se compone de los estudiantes matriculados el día {fecha}"
+        }
 
-    if 'exception' in response_dict:
-        errorcode = response_dict.get('errorcode')
-        if errorcode in HTTP_MESSAGES:
-            raise HTTPException(status_code=477, detail=HTTP_MESSAGES.get(errorcode))
-        else:
-            raise HTTPException(status_code=500, detail="Error desconocido al crear grupos en Moodle")
+        try:
+            response = requests.post(url, params=params, data=group_data)
+            response.raise_for_status()
+            response_dict = response.json()
+
+            if 'exception' in response_dict:
+                errorcode = response_dict.get('errorcode')
+                if errorcode in HTTP_MESSAGES:
+                    if errorcode == "482":
+                        continue
+                    else:
+                        raise HTTPException(status_code=477, detail=HTTP_MESSAGES.get(errorcode))
+                else:
+                    raise HTTPException(status_code=500, detail="Error desconocido al crear grupos en Moodle")
+            else:
+                successful_groups.append(course_id)
+
+        except requests.RequestException as e:
+            failed_groups.append(course_id)
+            raise HTTPException(status_code=500, detail=f"Error al comunicarse con Moodle: {str(e)}")
+
+    return {
+        "message": "Operación completada",
+        "grupos Creados": successful_groups,
+        "Grupos no Creados": failed_groups
+    }
