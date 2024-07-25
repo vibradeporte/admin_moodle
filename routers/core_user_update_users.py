@@ -35,7 +35,7 @@ async def core_user_update_users(moodle_url: str = Form(...), moodle_token: str 
         PHONE2 = ""
         ADDRESS = row.get("address", "")
 
-        data[f"users[{i}][id]"] = USERID
+        data[f"users[{i}][id]"] = int(USERID)
         data[f"users[{i}][username]"] = USERNAME
         data[f"users[{i}][firstname]"] = FIRSTNAME
         data[f"users[{i}][lastname]"] = LASTNAME
