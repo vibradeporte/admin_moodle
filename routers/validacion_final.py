@@ -198,7 +198,7 @@ async def validate_students():
     estudiantes_matricular['NOMBRE_DE_CURSO_INVALIDO'] = matriculas_aceptadas['nombre_De_Curso_Invalido']
     estudiantes_matricular['ESTA_ACTIVO_ESTUDIANTE'] = matriculas_aceptadas['Esta_activo_estudiante']
     estudiantes_matricular['ADVERTENCIA_CURSO_CULMINADO'] = matriculas_aceptadas['ADVERTENCIA_CURSO_CULMINADO']
-
+    estudiantes_matricular['MOVIL'] = matriculas_aceptadas['NUMERO_MOVIL_WS_SIN_PAIS']
 
     # Leer la base de datos de usuarios
     BD_USUARIOS = pd.read_csv('temp_files/usuarios_completos.csv')
