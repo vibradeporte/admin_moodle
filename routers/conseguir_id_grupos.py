@@ -35,8 +35,8 @@ async def id_grupo(usuario: str, contrasena: str, host: str, port: str, nombre_b
     ids_curso = df['NOMBRE_CORTO_CURSO'].unique().tolist()
     ids_str = ', '.join([f':NOMBRE_CORTO_CURSO{i}' for i in range(len(ids_curso))])
     
-    today_str = datetime.now().strftime("%B_%d_%Y")
-    
+    today_str = datetime.now().strftime('%B_%d_%Y')
+
     consulta_sql = text(f"""
         SELECT g.id AS groupid, g.name AS groupname, c.id AS courseid, c.shortname AS coursename
         FROM mdl_groups g
