@@ -58,7 +58,7 @@ async def core_group_create_groups(
 
     unique_course_ids = df['CourseId'].unique()
     data = {}
-    fecha = datetime.now().strftime('%Y-%m-%d')
+    fecha = datetime.now().strftime('%Y-%m-%d_%H')
 
     for i, course_id in enumerate(unique_course_ids):
         data[f"groups[{i}][courseid]"] = int(course_id)  # Convert to native Python int
