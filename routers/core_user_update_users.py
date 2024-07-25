@@ -31,7 +31,7 @@ async def core_user_update_users(moodle_url: str = Form(...), moodle_token: str 
         IDNUMBER = row.get("username", "")
         INSTITUTION = ""
         DEPARTMENT = ""
-        PHONE1 = row.get("phone1", "")
+        PHONE1 = row.get("phone1")
         PHONE2 = ""
         ADDRESS = row.get("address", "")
 
@@ -51,7 +51,7 @@ async def core_user_update_users(moodle_url: str = Form(...), moodle_token: str 
         data[f"users[{i}][idnumber]"] = IDNUMBER
         data[f"users[{i}][institution]"] = INSTITUTION
         data[f"users[{i}][department]"] = DEPARTMENT
-        data[f"users[{i}][phone1]"] = int(PHONE1)
+        data[f"users[{i}][phone1]"] = PHONE1
         data[f"users[{i}][phone2]"] = PHONE2
         data[f"users[{i}][address]"] = ADDRESS
 
