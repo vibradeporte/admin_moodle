@@ -41,7 +41,7 @@ from routers.core_user_create_users import core_user_create_users_router
 from routers.enrol_manual_enrol_users import enrol_manual_enrol_users_router
 from routers.prueba_user_id import prueba_conseguir_id
 from routers.usuarios_bd import usuarios_bd_router
-
+from routers.core_user_update_users import core_user_update_users_router
 
 # SQL
 from routers.poblar_tabla_matricula import poblar_tabla_matricula_router
@@ -95,7 +95,7 @@ app.include_router(validacion_estudiantes_estatus_router)
 app.include_router(usuarios_bd_router)
 app.include_router(duracion_curso_y_descripcion_router)
 app.include_router(nombres_cursos_router)
-
+app.include_router(core_user_update_users_router)
 # WhatsApp
 app.include_router(envio_mensajes_whatsapp_router)
 
