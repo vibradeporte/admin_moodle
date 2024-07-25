@@ -39,11 +39,11 @@ def calcular_fechas_matricula(row):
     if semanas_inscripcion is None:
         duracion_matricula = dias_curso
     else:
-        duracion_matricula = semanas_inscripcion * 7 
+        duracion_matricula = int(semanas_inscripcion * 7)
 
     fecha_inicio_matricula = datetime.now() 
     fecha_inicio_matricula = fecha_inicio_matricula.replace(hour=0, minute=0, second=0, microsecond=0)
-    fecha_fin_matricula = fecha_inicio_matricula + timedelta(days=duracion_matricula)
+    fecha_fin_matricula = fecha_inicio_matricula + timedelta(days=int(duracion_matricula))
     fecha_fin_matricula = fecha_fin_matricula.replace(hour=23, minute=59, second=0, microsecond=0)
     
     ajuste_por_diferencia_horario = 5 * 60 * 60
