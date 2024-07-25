@@ -61,7 +61,7 @@ async def core_group_create_groups(
     fecha = datetime.now().strftime('%Y-%m-%d')
 
     for i, course_id in enumerate(unique_course_ids):
-        data[f"groups[{i}][courseid]"] = course_id
+        data[f"groups[{i}][courseid]"] = int(course_id)  # Convert to native Python int
         data[f"groups[{i}][name]"] = f"Grupo_{course_id}_{fecha}"
         data[f"groups[{i}][description]"] = f"Este grupo se compone de los estudiantes matriculados el día {fecha}"
 
@@ -77,7 +77,7 @@ async def core_group_create_groups(
 
     for i, course_id in enumerate(unique_course_ids):
         group_data = {
-            "groups[0][courseid]": course_id,
+            "groups[0][courseid]": int(course_id),  # Convert to native Python int
             "groups[0][name]": f"Grupo_{course_id}_{fecha}",
             "groups[0][description]": f"Este grupo se compone de los estudiantes matriculados el día {fecha}"
         }
@@ -91,20 +91,21 @@ async def core_group_create_groups(
                 errorcode = response_dict.get('errorcode')
                 if errorcode in HTTP_MESSAGES:
                     if errorcode == "482":
+                        # Group already exists, continue to the next one
                         continue
                     else:
                         raise HTTPException(status_code=477, detail=HTTP_MESSAGES.get(errorcode))
                 else:
                     raise HTTPException(status_code=500, detail="Error desconocido al crear grupos en Moodle")
             else:
-                successful_groups.append(course_id)
+                successful_groups.append(int(course_id))  # Convert to native Python int
 
         except requests.RequestException as e:
-            failed_groups.append(course_id)
+            failed_groups.append(int(course_id))  # Convert to native Python int
             raise HTTPException(status_code=500, detail=f"Error al comunicarse con Moodle: {str(e)}")
 
     return {
         "message": "Operación completada",
-        "grupos Creados": successful_groups,
-        "Grupos no Creados": failed_groups
+        "successful_groups": successful_groups,
+        "failed_groups": failed_groups
     }
