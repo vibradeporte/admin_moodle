@@ -33,7 +33,7 @@ def encontrar_usuario(user_id: int):
     c.USUARIO as USUARIO_BD,
     c.CONTRASENA as CONTRASENA_BD,
     c.NOMBRE_BD as NOMBRE_BD,
-    u.IDENTIFICACION as IDENTIFICACION,
+    u.ID_USUARIO as ID_USUARIO,
     u.NOMBRE as NOMBRE,
     u.APELLIDO as APELLIDO,
     u.MOVIL as MOVIL,
