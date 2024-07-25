@@ -967,7 +967,8 @@ async def core_user_create_users(moodle_url: str = Form(...), moodle_token: str 
     
     # Leer el archivo CSV y extraer los datos
     data = {}
-    df = pd.read_csv('temp_files/estudiantes_validados.csv')
+    df_1 = pd.read_csv('temp_files/estudiantes_validados.csv')
+    df = df_1[df_1['Estado'] == 'NO está en la BD esa cédula']
     i = 0  # Inicializar el contador
     for i, row in df.iterrows():
         CREATEPASSWORD = row.get("createpassword")
