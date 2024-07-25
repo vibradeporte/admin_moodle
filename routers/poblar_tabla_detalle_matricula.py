@@ -19,11 +19,11 @@ poblar_tabla_detalle_matricula_router = APIRouter()
 
 def estudiantes_matriculados():
     df = pd.read_csv('temp_files/estudiantes_validados.csv', usecols=['username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
-                                                                      'phone1', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
+                                                                      'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
                                                                       'NRO_DIAS_DE_MATRICULAS', 'NOMBRE_CORTO_CURSO'])
     
     df.rename(columns={'username': 'IDENTIFICACION', 'firstname': 'NOMBRES', 'lastname': 'APELLIDOS', 'email': 'CORREO',
-                       'phone1': 'MOVIL', 'country': 'PAIS_DEL_MOVIL', 'city': 'CIUDAD'}, inplace=True)
+                       'MOVIL': 'MOVIL', 'country': 'PAIS_DEL_MOVIL', 'city': 'CIUDAD'}, inplace=True)
     
     df_message_correo = pd.read_csv('temp_files/message_ids.csv')
     df_message_correo.rename(columns={'message_id': 'RES_CORREO_BIENVENIDA'}, inplace=True)
@@ -39,11 +39,11 @@ def estudiantes_matriculados():
 
 def estudiantes_no_matriculados():
     df = pd.read_excel('temp_files/estudiantes_invalidos.xlsx', usecols=['username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
-                                                                           'phone1', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
+                                                                           'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
                                                                            'NOMBRE_CORTO_CURSO'])
     
     df.rename(columns={'username': 'IDENTIFICACION', 'firstname': 'NOMBRES', 'lastname': 'APELLIDOS', 'email': 'CORREO',
-                       'phone1': 'MOVIL', 'country': 'PAIS_DEL_MOVIL', 'city': 'CIUDAD'}, inplace=True)
+                       'MOVIL': 'MOVIL', 'country': 'PAIS_DEL_MOVIL', 'city': 'CIUDAD'}, inplace=True)
     
     df_extra = pd.DataFrame({
     'RES_MATRICULA': ['NO MATRICULADO'] * len(df),
