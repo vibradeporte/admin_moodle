@@ -82,12 +82,10 @@ async def core_group_create_groups(
 
             if 'exception' in response_dict:
                 errorcode = response_dict.get('errorcode')
-                if errorcode == "500" and "Group with the same name already exists in the course" in response_dict.get('message', ''):
+                if errorcode == "500" in response_dict.get('message', ''):
                     continue 
                 elif errorcode in HTTP_MESSAGES:
                     raise HTTPException(status_code=477, detail=HTTP_MESSAGES.get(errorcode))
-                else:
-                    raise HTTPException(status_code=500, detail=f"Error desconocido al crear grupos en Moodle: {response_dict}")
             else:
                 successful_groups.append(int(course_id))
 
