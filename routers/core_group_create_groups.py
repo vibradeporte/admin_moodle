@@ -48,7 +48,6 @@ async def core_group_create_groups(
         - 482 -> El grupo ya existe en ese curso.
     """
     try:
-        # Read the uploaded file into a DataFrame
         df = pd.read_csv('temp_files/estudiantes_validados.csv')
     except Exception as e:
         raise HTTPException(status_code=400, detail="Error al leer el archivo CSV")
@@ -57,13 +56,10 @@ async def core_group_create_groups(
         raise HTTPException(status_code=400, detail="El archivo CSV debe contener una columna 'CourseId'.")
 
     unique_course_ids = df['CourseId'].unique()
-    data = {}
-    fecha = datetime.now().strftime('%Y-%m-%d_%H')
+    fecha = datetime.now().strftime('%B_%d_%Y')
 
-    for i, course_id in enumerate(unique_course_ids):
-        data[f"groups[{i}][courseid]"] = int(course_id)  # Convert to native Python int
-        data[f"groups[{i}][name]"] = f"Grupo_{course_id}_{fecha}"
-        data[f"groups[{i}][description]"] = f"Este grupo se compone de los estudiantes matriculados el día {fecha}"
+    successful_groups = []
+    failed_groups = []
 
     url = f"{moodle_url}/webservice/rest/server.php"
     params = {
@@ -72,13 +68,10 @@ async def core_group_create_groups(
         "moodlewsrestformat": "json"
     }
 
-    successful_groups = []
-    failed_groups = []
-
-    for i, course_id in enumerate(unique_course_ids):
+    for course_id in unique_course_ids:
         group_data = {
-            "groups[0][courseid]": int(course_id),  # Convert to native Python int
-            "groups[0][name]": f"Grupo_{course_id}_{fecha}",
+            "groups[0][courseid]": int(course_id),  # Convert numpy.int64 to int
+            "groups[0][name]": {fecha},
             "groups[0][description]": f"Este grupo se compone de los estudiantes matriculados el día {fecha}"
         }
 
@@ -89,23 +82,24 @@ async def core_group_create_groups(
 
             if 'exception' in response_dict:
                 errorcode = response_dict.get('errorcode')
-                if errorcode in HTTP_MESSAGES:
-                    if errorcode == "482":
-                        # Group already exists, continue to the next one
-                        continue
-                    else:
-                        raise HTTPException(status_code=477, detail=HTTP_MESSAGES.get(errorcode))
+                if errorcode == "500" and "Group with the same name already exists in the course" in response_dict.get('message', ''):
+                    continue 
+                elif errorcode in HTTP_MESSAGES:
+                    raise HTTPException(status_code=477, detail=HTTP_MESSAGES.get(errorcode))
                 else:
-                    raise HTTPException(status_code=500, detail="Error desconocido al crear grupos en Moodle")
+                    raise HTTPException(status_code=500, detail=f"Error desconocido al crear grupos en Moodle: {response_dict}")
             else:
-                successful_groups.append(int(course_id))  # Convert to native Python int
+                successful_groups.append(int(course_id))
 
         except requests.RequestException as e:
-            failed_groups.append(int(course_id))  # Convert to native Python int
+            failed_groups.append(int(course_id))
             raise HTTPException(status_code=500, detail=f"Error al comunicarse con Moodle: {str(e)}")
+        except Exception as e:
+            failed_groups.append(int(course_id))
+            raise HTTPException(status_code=500, detail=f"Error inesperado: {str(e)}")
 
     return {
         "message": "Operación completada",
-        "successful_groups": successful_groups,
-        "failed_groups": failed_groups
+        "grupos_creados": successful_groups,
+        "grupos_no_creados": failed_groups
     }
