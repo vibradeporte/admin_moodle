@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Form
 from pydantic import BaseModel
 import requests
-import pandas as pd  # Ensure pandas is imported
+import pandas as pd
 import os
 
 core_user_update_users_router = APIRouter()
@@ -17,17 +17,14 @@ async def core_user_update_users(moodle_url: str = Form(...), moodle_token: str 
     for i, row in df.iterrows():
         USERID = row.get("userid")
         USERNAME = row.get("username", "")
-        AUTH = "manual"
-        PASSWORD = row.get("password", "P@SsW0RD123")  # Default password if not provided
         FIRSTNAME = row.get("firstname", "")
         LASTNAME = row.get("lastname", "")
         EMAIL = row.get("email", "")
         CITY = row.get("city", "")
         COUNTRY = row.get("country", "")
-        TIMEZONE = row.get("timezone", "")
         DESCRIPTION = row.get("description", "")
         FIRSTNAMEPHONETIC = ""
-        LASTNAMEPHONETIC = row.get("lastnamephonetic")
+        LASTNAMEPHONETIC = row.get("lastnamephonetic","")
         MIDDLENAME = ""
         ALTERNATENAME = ""
         INTERESTS = ""
@@ -40,14 +37,11 @@ async def core_user_update_users(moodle_url: str = Form(...), moodle_token: str 
 
         data[f"users[{i}][id]"] = USERID
         data[f"users[{i}][username]"] = USERNAME
-        data[f"users[{i}][auth]"] = AUTH
-        data[f"users[{i}][password]"] = PASSWORD
         data[f"users[{i}][firstname]"] = FIRSTNAME
         data[f"users[{i}][lastname]"] = LASTNAME
         data[f"users[{i}][email]"] = EMAIL
         data[f"users[{i}][city]"] = CITY
         data[f"users[{i}][country]"] = COUNTRY
-        data[f"users[{i}][timezone]"] = TIMEZONE
         data[f"users[{i}][description]"] = DESCRIPTION
         data[f"users[{i}][firstnamephonetic]"] = FIRSTNAMEPHONETIC
         data[f"users[{i}][lastnamephonetic]"] = LASTNAMEPHONETIC
