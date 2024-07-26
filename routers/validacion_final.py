@@ -1,4 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi.responses import JSONResponse,PlainTextResponse
 from sqlalchemy import create_engine
 import pandas as pd
 import numpy as np
@@ -200,7 +201,7 @@ async def validate_students():
     estudiantes_matricular['ADVERTENCIA_CURSO_CULMINADO'] = matriculas_aceptadas['ADVERTENCIA_CURSO_CULMINADO']
     estudiantes_matricular['MOVIL'] = matriculas_aceptadas['NUMERO_MOVIL_WS_SIN_PAIS']
 
-    # Leer la base de datos de usuarios
+    
     BD_USUARIOS = pd.read_csv('temp_files/usuarios_completos.csv')
     BD_USUARIOS['username'] = BD_USUARIOS['username'].astype(str)
     estudiantes_matricular['username'] = estudiantes_matricular['username'].astype(str)
@@ -234,6 +235,12 @@ async def validate_students():
 
     inconsistencias = len(estudiantes_que_no_seran_matriculados)
     correctos = len(estudiantes_a_matricular)
+    message = (
+            f"Verificación de inconsistencias:\n"
+            f"{correctos} Estudiantes correctos\n"
+            f"{inconsistencias} Estudiantes con inconsistencias\n"
+        )
 
-    return f"VERIFICACIÓN DE INCONSISTENCIAS: {correctos} ESTUDIANTES CORRECTOS / {inconsistencias} ESTUDIANTES CON INCONSISTENCIAS"
+    return PlainTextResponse(content=message)
+
 
