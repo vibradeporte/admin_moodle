@@ -111,9 +111,9 @@ async def validate_courses(usuario: str, contrasena: str, host: str, port: str, 
         no_rows_count = (datos['ADVERTENCIA_CURSO_CULMINADO'] == 'NO').sum()
 
         message = (
-            f"VALIDACIÓN DE CERTIFICADOS DE CURSOS: \n"
-            f"{no_rows_count} MATRICULAS VALIDAS \n"
-            f"{si_rows_count} MATRICULAS REDUNDANTES \n"
+            f"Validación de Certificados de Cursos: \n"
+            f"{no_rows_count} Matriculas validas \n"
+            f"{si_rows_count} Matriculas redundantes \n"
         ) if not datos.empty else "No se encontraron datos para validar."
 
         return PlainTextResponse(content=message)
