@@ -1,15 +1,12 @@
 from fastapi import FastAPI, APIRouter, HTTPException
 from fastapi.responses import JSONResponse,PlainTextResponse
-from sqlalchemy import create_engine
 import pandas as pd
 import numpy as np
 import Levenshtein
 from fuzzywuzzy import fuzz
 import re
 import unicodedata
-from urllib.parse import quote_plus
 import os
-from dotenv import load_dotenv
 import math
 import unidecode
 
