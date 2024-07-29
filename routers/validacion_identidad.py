@@ -53,20 +53,18 @@ def encontrar_usuario(user_id: int, db = Depends(get_db)):
         u.IDENTIFICACION = :IDENTIFICACION;
     """)
     
-    try:
-        with db.connect() as connection:
-            result = connection.execute(query, {"IDENTIFICACION": user_id})
-            rows = result.fetchall()
-            column_names = result.keys()
 
-            if not rows:
-                mensaje = "No se encontró al usuario con esa identificación."
-                return JSONResponse(content={"message": mensaje}, status_code=200)
+    with db.connect() as connection:
+        result = connection.execute(query, {"IDENTIFICACION": user_id})
+        rows = result.fetchall()
+        column_names = result.keys()
+
+        if not rows:
+            mensaje = "No se encontró al usuario con esa identificación."
+            return JSONResponse(content={"message": mensaje}, status_code=200)
             
-            result_dicts = [dict(zip(column_names, row)) for row in rows]
-            return JSONResponse(content=result_dicts)
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        result_dicts = [dict(zip(column_names, row)) for row in rows]
+        return JSONResponse(content=result_dicts)
 
 
 
