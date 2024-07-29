@@ -2,7 +2,7 @@ from return_codes import *
 from fastapi import FastAPI, Depends, HTTPException, APIRouter
 from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, NoResultFound, OperationalError, ProgrammingError
 from urllib.parse import quote_plus
 from dotenv import load_dotenv
 import os
@@ -18,10 +18,15 @@ contrasena_codificada = quote_plus(contrasena)
 
 DATABASE_URL = f"mysql+mysqlconnector://{usuario}:{contrasena_codificada}@{host}/{nombre_base_datos}"
 
-engine = create_engine(DATABASE_URL)
+def get_db():
+    engine = create_engine(DATABASE_URL)
+    try:
+        yield engine
+    finally:
+        engine.dispose()
 
 @identificacion_usuario.get("/user/{user_id}", tags=['Validacion_Usuario'])
-def encontrar_usuario(user_id: int):
+def encontrar_usuario(user_id: int, db = Depends(get_db)):
     query = text("""
     SELECT
     c.URL_MOODLE as URL_MOODLE,
@@ -49,25 +54,19 @@ def encontrar_usuario(user_id: int):
     """)
     
     try:
-        with engine.connect() as connection:
+        with db.connect() as connection:
             result = connection.execute(query, {"IDENTIFICACION": user_id})
             rows = result.fetchall()
             column_names = result.keys()
 
-            result_dicts = []
-            for row in rows:
-                row_dict = dict(zip(column_names, row))
-                result_dicts.append(row_dict)
-
-            if result_dicts:
-                return JSONResponse(content=result_dicts)
-            else:
-                codigo = SIN_INFORMACION
-                mensaje = HTTP_MESSAGES.get(codigo)
-                raise HTTPException(codigo, mensaje)
+            if not rows:
+                mensaje = "No se encontró al usuario con esa identificación."
+                return JSONResponse(content={"message": mensaje}, status_code=200)
+            
+            result_dicts = [dict(zip(column_names, row)) for row in rows]
+            return JSONResponse(content=result_dicts)
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 
