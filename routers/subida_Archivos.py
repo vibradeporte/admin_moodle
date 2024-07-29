@@ -25,10 +25,6 @@ async def upload_file(file: UploadFile = File(...)):
         
         temp_dir = "temp_files"
         os.makedirs(temp_dir, exist_ok=True)
-
-        original_file_path = os.path.join(temp_dir, file.filename)
-        with open(original_file_path, 'wb') as f:
-            f.write(contents)
         
         missing_columns = [column for column in required_columns if column not in df.columns]
         if missing_columns:
