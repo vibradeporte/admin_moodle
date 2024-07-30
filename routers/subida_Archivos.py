@@ -1,12 +1,11 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter
-from fastapi.responses import JSONResponse
+from fastapi.responses import PlainTextResponse
 import pandas as pd
 import io
 import os
 
 verificacion_inicial_archivo = APIRouter()
 
-# Define the required columns
 required_columns = [
     'IDENTIFICACION', 'TIPO_IDENTIFICACION', 'NOMBRES', 'APELLIDOS', 'CORREO',
     'PAIS_DEL_MOVIL', 'NUMERO_MOVIL_WS_SIN_PAIS', 'EMPRESA', 'DESCRIPCIÓN', 
@@ -17,33 +16,56 @@ required_columns = [
 
 @verificacion_inicial_archivo.post("/SubirArchivo/", tags=['Validacion_Inicial'])
 async def upload_file(file: UploadFile = File(...)):
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        return PlainTextResponse(
+            "El archivo no es un archivo Excel. Por favor, sube un archivo con extensión .xlsx o .xls.",
+            status_code=400
+        )
+    
     try:
         contents = await file.read()
-        df = pd.read_excel(io.BytesIO(contents))
-        
-        df = df.dropna(axis=0, how='all')
+        try:
+            df = pd.read_excel(io.BytesIO(contents), sheet_name='ESTUDIANTES')
+        except ValueError:
+            return PlainTextResponse(
+                "El archivo no contiene la hoja ESTUDIANTES.",
+                status_code=400
+            )
+
+        if df.dropna(how='all').empty:
+            return PlainTextResponse(
+                "El archivo no contiene datos, todas las filas están en blanco.",
+                status_code=400
+            )
         
         temp_dir = "temp_files"
         os.makedirs(temp_dir, exist_ok=True)
+
+        original_file_path = os.path.join(temp_dir, file.filename)
+        with open(original_file_path, 'wb') as f:
+            f.write(contents)
+        
+        print("Columnas del archivo cargado:", df.columns.tolist())
         
         missing_columns = [column for column in required_columns if column not in df.columns]
         if missing_columns:
-            return JSONResponse(
-                status_code=400,
-                content={"message": f"El archivo no contiene las siguientes columnas: {', '.join(missing_columns)}"}
+            return PlainTextResponse(
+                f"El archivo no contiene las siguientes columnas: {', '.join(missing_columns)}",
+                status_code=400
             )
-
-        # Save the validated file
+            
         validated_file_path = os.path.join(temp_dir, 'validacion_inicial.xlsx')
         df.to_excel(validated_file_path, index=False)
 
-        return JSONResponse(
-            status_code=200,
-            content={"message": "El archivo cumple con la estructura y tipo deseado."}
+        return PlainTextResponse(
+            "El archivo cumple con la estructura y tipo deseado.",
+            status_code=200
         )
-    
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return PlainTextResponse(
+            f"Ocurrió un error al procesar el archivo: {str(e)}",
+            status_code=500
+        )
 
 
 
