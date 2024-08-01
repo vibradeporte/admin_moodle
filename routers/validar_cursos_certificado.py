@@ -6,7 +6,10 @@ from urllib.parse import quote_plus
 import pandas as pd
 from datetime import datetime
 
+# File path for validation
 validacion_inicial_file_path = 'temp_files/validacion_inicial.xlsx'
+
+# Router for API endpoints
 validacion_cursos_certificado_router_prueba = APIRouter()
 
 def get_database_url(user: str, password: str, host: str, port: str, db_name: str) -> str:
@@ -14,9 +17,6 @@ def get_database_url(user: str, password: str, host: str, port: str, db_name: st
     return f"mysql+mysqlconnector://{user}:{password_encoded}@{host}:{port}/{db_name}"
 
 def estudiantes_matriculados_con_certificados(cursos: list, usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str) -> pd.DataFrame:
-    """
-    Retorna la lista de estudiantes matriculados en varios cursos específicos que han obtenido certificados.
-    """
     database_url = get_database_url(usuario, contrasena, host, port, nombre_base_datos)
     engine = create_engine(database_url)
 
@@ -44,10 +44,14 @@ def estudiantes_matriculados_con_certificados(cursos: list, usuario: str, contra
             c.shortname IN ({cursos_str})
         ORDER BY cc.name, c.shortname;
     """)
-    with engine.connect() as connection:
-        result = connection.execute(consulta_sql)
-        rows = result.fetchall()
-        column_names = result.keys()
+
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(consulta_sql)
+            rows = result.fetchall()
+            column_names = result.keys()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Error de conxión a la base de datos.")
 
     if not rows:
         return pd.DataFrame()
@@ -64,9 +68,7 @@ def estudiantes_matriculados_con_certificados(cursos: list, usuario: str, contra
     return pd.DataFrame(result_dicts)
 
 def validar_existencia_certificado_cursos(datos: pd.DataFrame, usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str) -> pd.DataFrame:
-    """
-    Valida la existencia de certificados para varios cursos específicos y retorna un DataFrame con los resultados.
-    """
+
     datos['IDENTIFICACION'] = datos['IDENTIFICACION'].astype(str)
     datos['NOMBRE_CORTO_CURSO'] = datos['NOMBRE_CORTO_CURSO'].astype(str)
 
@@ -74,12 +76,12 @@ def validar_existencia_certificado_cursos(datos: pd.DataFrame, usuario: str, con
     cursos_certificado = estudiantes_matriculados_con_certificados(cursos_unicos, usuario, contrasena, host, port, nombre_base_datos)
     
     if cursos_certificado.empty:
-        return pd.DataFrame()
+        return datos.assign(ADVERTENCIA_CURSO_CULMINADO='NO')
 
     expected_columns = ['UserCedula', 'CourseShortName', 'CertificadoFechaEmision']
     for col in expected_columns:
         if col not in cursos_certificado.columns:
-            raise KeyError(f"Column '{col}' not found in the result from the database.")
+            raise HTTPException(status_code=500, detail=f"Column '{col}' not found in the result from the database.")
 
     cursos_certificado = cursos_certificado.dropna(subset=["UserCedula"])
     cursos_certificado['UserCedula'] = cursos_certificado['UserCedula'].astype(str)
@@ -104,7 +106,7 @@ async def validate_courses(usuario: str, contrasena: str, host: str, port: str, 
             return PlainTextResponse(content="El archivo de validación está vacío.")
 
         datos = validar_existencia_certificado_cursos(validated_df, usuario, contrasena, host, port, nombre_base_datos)
-        datos.drop(columns=['CourseFullName', 'UserNombre', 'UserApellido', 'CertificadoFechaEmision', 'CertificadoCodigo','CourseShortName','UserCedula'], inplace=True)
+        datos.drop(columns=['CourseFullName', 'UserNombre', 'UserApellido', 'CertificadoFechaEmision', 'CertificadoCodigo', 'CourseShortName', 'UserCedula'], inplace=True, errors='ignore')
         datos.to_excel(validacion_inicial_file_path, index=False)
 
         si_rows_count = (datos['ADVERTENCIA_CURSO_CULMINADO'] != 'NO').sum()
@@ -118,9 +120,10 @@ async def validate_courses(usuario: str, contrasena: str, host: str, port: str, 
 
         return PlainTextResponse(content=message)
     except KeyError as e:
-        raise HTTPException(status_code=500, detail=f"Error durante la validación de cursos: {str(e)}")
+        return PlainTextResponse(content=f"Error durante la validación de cursos: {str(e)}", status_code=500)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error durante la validación de cursos: {str(e)}")
+        return PlainTextResponse(content=f"Error durante la validación de cursos: {str(e)}", status_code=500)
+
 
 
 
