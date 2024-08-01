@@ -61,8 +61,18 @@ def create_matricula(fid_matricula: int):
     df_estudiantes_validos = estudiantes_matriculados()
     df_estudiantes_invalidos = estudiantes_no_matriculados()
     
-    df = pd.concat([df_estudiantes_validos, df_estudiantes_invalidos], ignore_index=True)
+    if df_estudiantes_validos.empty and df_estudiantes_invalidos.empty:
+        raise HTTPException(status_code = 400, detail="No hay datos para insertar")
+
+    if df_estudiantes_validos.empty:
+        df = df_estudiantes_invalidos
+    elif df_estudiantes_invalidos.empty:
+        df = df_estudiantes_validos
+    else:
+        df = pd.concat([df_estudiantes_validos, df_estudiantes_invalidos], ignore_index=True)
+
     df['FID_MATRICULA'] = fid_matricula
+    
     try:
         df.to_sql('DETALLE_MATRICULA', con=engine, if_exists='append', index=False)
     except Exception as e:
