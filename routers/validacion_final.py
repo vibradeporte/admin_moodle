@@ -167,7 +167,6 @@ async def validate_students():
     validacion = 'temp_files/validacion_inicial.xlsx'
     matriculas_aceptadas = pd.read_excel(validacion)
     
-    # Crear DataFrame para los estudiantes a matricular con las columnas requeridas
     estudiantes_matricular = pd.DataFrame()
     estudiantes_matricular['username'] = matriculas_aceptadas['IDENTIFICACION']
     estudiantes_matricular['TIPO_IDENTIFICACION'] = matriculas_aceptadas['TIPO_IDENTIFICACION']
@@ -185,17 +184,16 @@ async def validate_students():
     estudiantes_matricular['NRO_SEMANAS_DE_MATRICULA'] = matriculas_aceptadas['NRO_SEMANAS_DE_MATRICULA']
     estudiantes_matricular['NOMBRE_CORTO_CURSO'] = matriculas_aceptadas['NOMBRE_CORTO_CURSO']
     estudiantes_matricular['NOMBRE_LARGO_CURSO'] = matriculas_aceptadas['NOMBRE_LARGO_CURSO']
-    estudiantes_matricular['CALIDAD_DEL_CORREO'] = matriculas_aceptadas['QUALITY']
-    estudiantes_matricular['CEDULA_ES_INVALIDA'] = matriculas_aceptadas['cedula_es_invalida']
-    estudiantes_matricular['EXISTEN_MAS_SOLICITUDES_DE_MATRICULA'] = matriculas_aceptadas['Existen_Mas_Solicitudes_De_Matricula']
-    estudiantes_matricular['NOMBRE_INVALIDO'] = matriculas_aceptadas['Nombre_Invalido']
-    estudiantes_matricular['APELLIDO_INVALIDO'] = matriculas_aceptadas['Apellido_Invalido']
-    estudiantes_matricular['ESTAN_CRUZADOS_NOMBRES_APELLIDOS'] = matriculas_aceptadas['estan_cruzados']
-    estudiantes_matricular['LA_CALIDAD_DEL_CORREO_ES_MALA'] = matriculas_aceptadas['QUALITY']
-    estudiantes_matricular['NUMERO_WAPP_INCORRECTO'] = matriculas_aceptadas['Numero_Wapp_Incorrecto']
-    estudiantes_matricular['NOMBRE_DE_CURSO_INVALIDO'] = matriculas_aceptadas['nombre_De_Curso_Invalido']
-    estudiantes_matricular['ESTA_ACTIVO_ESTUDIANTE'] = matriculas_aceptadas['Esta_activo_estudiante']
-    estudiantes_matricular['ADVERTENCIA_CURSO_CULMINADO'] = matriculas_aceptadas['ADVERTENCIA_CURSO_CULMINADO']
+    estudiantes_matricular['¿EL email es inválido?'] = matriculas_aceptadas['QUALITY']
+    estudiantes_matricular['¿La cédula es inválida?'] = matriculas_aceptadas['cedula_es_invalida']
+    estudiantes_matricular['¿Hay más de una solicitud de matrícula?'] = matriculas_aceptadas['Existen_Mas_Solicitudes_De_Matricula']
+    estudiantes_matricular['¿El nombre es inválido?'] = matriculas_aceptadas['Nombre_Invalido']
+    estudiantes_matricular['¿El apellido es inválido?'] = matriculas_aceptadas['Apellido_Invalido']
+    estudiantes_matricular['¿Hay apellidos y nombres invertidos?'] = matriculas_aceptadas['estan_cruzados']
+    estudiantes_matricular['¿El número de whatsapp es invalido?'] = matriculas_aceptadas['Numero_Wapp_Incorrecto']
+    estudiantes_matricular['¿Hay nombres inválidos de cursos?'] = matriculas_aceptadas['nombre_De_Curso_Invalido']
+    estudiantes_matricular['¿Tiene matrícula activa?'] = matriculas_aceptadas['Esta_activo_estudiante']
+    estudiantes_matricular['Advertencia de curso culminado'] = matriculas_aceptadas['ADVERTENCIA_CURSO_CULMINADO']
     estudiantes_matricular['MOVIL'] = matriculas_aceptadas['NUMERO_MOVIL_WS_SIN_PAIS']
 
     
