@@ -6,10 +6,10 @@ from urllib.parse import quote_plus
 import pandas as pd
 from datetime import datetime
 
-# File path for validation
+
 validacion_inicial_file_path = 'temp_files/validacion_inicial.xlsx'
 
-# Router for API endpoints
+
 validacion_cursos_certificado_router_prueba = APIRouter()
 
 def get_database_url(user: str, password: str, host: str, port: str, db_name: str) -> str:
