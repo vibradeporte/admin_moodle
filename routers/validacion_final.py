@@ -167,6 +167,7 @@ async def validate_students():
     validacion = 'temp_files/validacion_inicial.xlsx'
     matriculas_aceptadas = pd.read_excel(validacion)
     
+    # Crear DataFrame para los estudiantes a matricular con las columnas requeridas
     estudiantes_matricular = pd.DataFrame()
     estudiantes_matricular['username'] = matriculas_aceptadas['IDENTIFICACION']
     estudiantes_matricular['TIPO_IDENTIFICACION'] = matriculas_aceptadas['TIPO_IDENTIFICACION']
@@ -235,3 +236,4 @@ async def validate_students():
         )
 
     return PlainTextResponse(content=message)
+
