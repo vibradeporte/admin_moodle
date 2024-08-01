@@ -204,15 +204,13 @@ async def validate_students():
     
 
     resultado = procesar_matriculas(estudiantes_matricular, BD_USUARIOS)
-  
-
-
+    
     otras_columnas_con_si = resultado.drop(columns=['Estado']).apply(lambda x: x == 'SI', axis=1)
 
 
     estudiantes_a_matricular = resultado[
     ((resultado['Estado'] == 'NO está en la BD esa cédula') | (resultado['Estado'] == 'SI')) &
-    (~otras_columnas_con_si.any(axis=1)) & (resultado['ADVERTENCIA_CURSO_CULMINADO'] == 'NO')
+    (~otras_columnas_con_si.any(axis=1)) & (resultado['Advertencia de curso culminado'] == 'NO')
     ]
 
     estudiantes_a_matricular.to_csv('temp_files/estudiantes_validados.csv', index=False)
@@ -222,7 +220,7 @@ async def validate_students():
     estudiantes_que_no_seran_matriculados = resultado[
     ((resultado['Estado'] != 'NO está en la BD esa cédula') &
      (resultado['Estado'] != 'SI')) |
-    otras_columnas_con_si.any(axis=1) | (resultado['ADVERTENCIA_CURSO_CULMINADO'] != 'NO')
+    otras_columnas_con_si.any(axis=1) | (resultado['Advertencia de curso culminado'] != 'NO')
     ]
 
     estudiantes_que_no_seran_matriculados.to_excel('temp_files/estudiantes_invalidos.xlsx', index=False)
@@ -237,5 +235,3 @@ async def validate_students():
         )
 
     return PlainTextResponse(content=message)
-
-
