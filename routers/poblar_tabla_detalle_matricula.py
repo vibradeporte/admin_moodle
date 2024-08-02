@@ -16,26 +16,38 @@ contrasena_codificada = quote_plus(contrasena)
 
 DATABASE_URL = f"mysql+mysqlconnector://{usuario}:{contrasena_codificada}@{host}/{nombre_base_datos}"
 
+
 engine = create_engine(DATABASE_URL)
 poblar_tabla_detalle_matricula_router = APIRouter()
 
-
+# Function to get validated students from CSV
 def estudiantes_matriculados():
     if not os.path.exists('temp_files/estudiantes_validados.csv'):
         return pd.DataFrame()
 
-    df = pd.read_csv('temp_files/estudiantes_validados.csv', usecols=['username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
-                                                                      'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
-                                                                      'NRO_DIAS_DE_MATRICULAS', 'NOMBRE_CORTO_CURSO'])
+    try:
+        df = pd.read_csv('temp_files/estudiantes_validados.csv', usecols=[
+            'username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
+            'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
+            'NRO_DIAS_DE_MATRICULAS', 'NOMBRE_CORTO_CURSO'
+        ])
+    except ValueError as e:
+        # Handle the case where usecols do not match columns in the CSV
+        df = pd.read_csv('temp_files/estudiantes_validados.csv')
+        if df.empty or 'NRO_DIAS_DE_MATRICULAS' not in df.columns:
+            return pd.DataFrame()  # Return an empty DataFrame if the necessary columns are missing
+
     df = df.dropna(how='all')
     
     if df.empty:
         return df
-    
 
-    df.rename(columns={'username': 'IDENTIFICACION', 'firstname': 'NOMBRES', 'lastname': 'APELLIDOS', 'email': 'CORREO',
-                       'MOVIL': 'MOVIL', 'country': 'PAIS_DEL_MOVIL', 'city': 'CIUDAD'}, inplace=True)
-    
+
+    df.rename(columns={
+        'username': 'IDENTIFICACION', 'firstname': 'NOMBRES', 'lastname': 'APELLIDOS', 'email': 'CORREO',
+        'MOVIL': 'MOVIL', 'country': 'PAIS_DEL_MOVIL', 'city': 'CIUDAD'
+    }, inplace=True)
+
 
     if os.path.exists('temp_files/message_ids.csv'):
         df_message_correo = pd.read_csv('temp_files/message_ids.csv')
@@ -43,7 +55,7 @@ def estudiantes_matriculados():
         df = pd.concat([df, df_message_correo], axis=1)
     else:
         df['RES_CORREO_BIENVENIDA'] = None
-    
+
 
     if os.path.exists('temp_files/message_status_wapp.csv'):
         df_wapp = pd.read_csv('temp_files/message_status_wapp.csv', usecols=['message_status'])
@@ -51,7 +63,7 @@ def estudiantes_matriculados():
         df = pd.concat([df, df_wapp], axis=1)
     else:
         df['RES_WS_BIENVENIDA'] = None
-    
+
 
     df['RES_MATRICULA'] = 'MATRICULADO'
     
@@ -60,20 +72,24 @@ def estudiantes_matriculados():
 
 def estudiantes_no_matriculados():
     if not os.path.exists('temp_files/estudiantes_invalidos.xlsx'):
-        return pd.DataFrame() 
+        return pd.DataFrame()  # Return an empty DataFrame if the file doesn't exist
 
-    df = pd.read_excel('temp_files/estudiantes_invalidos.xlsx', usecols=['username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
-                                                                           'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
-                                                                           'NOMBRE_CORTO_CURSO'])
+    df = pd.read_excel('temp_files/estudiantes_invalidos.xlsx', usecols=[
+        'username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
+        'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE',
+        'NOMBRE_CORTO_CURSO'
+    ])
     df = df.dropna(how='all')
     
     if df.empty:
         return df
-    
 
-    df.rename(columns={'username': 'IDENTIFICACION', 'firstname': 'NOMBRES', 'lastname': 'APELLIDOS', 'email': 'CORREO',
-                       'MOVIL': 'MOVIL', 'country': 'PAIS_DEL_MOVIL', 'city': 'CIUDAD'}, inplace=True)
-    
+
+    df.rename(columns={
+        'username': 'IDENTIFICACION', 'firstname': 'NOMBRES', 'lastname': 'APELLIDOS', 'email': 'CORREO',
+        'MOVIL': 'MOVIL', 'country': 'PAIS_DEL_MOVIL', 'city': 'CIUDAD'
+    }, inplace=True)
+
 
     df_extra = pd.DataFrame({
         'RES_MATRICULA': ['NO MATRICULADO'] * len(df),
@@ -89,8 +105,10 @@ def estudiantes_no_matriculados():
 
 @poblar_tabla_detalle_matricula_router.post("/poblar_tabla_detalle_matricula/{fid_matricula}", response_model=int, tags=['Base de Datos'])
 def create_matricula(fid_matricula: int):
+    # Get dataframes for valid and invalid students
     df_estudiantes_validos = estudiantes_matriculados()
     df_estudiantes_invalidos = estudiantes_no_matriculados()
+
 
     if df_estudiantes_validos.empty and df_estudiantes_invalidos.empty:
         raise HTTPException(status_code=400, detail="No hay datos para insertar")
@@ -111,8 +129,11 @@ def create_matricula(fid_matricula: int):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al insertar los datos: {e}")
 
+
     with engine.connect() as connection:
         result = connection.execute(text("SELECT LAST_INSERT_ID()"))
         new_id = result.scalar()
 
     return new_id
+
+
