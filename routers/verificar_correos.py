@@ -90,13 +90,13 @@ async def verificar_correos_endpoint():
 
         quality = pd.read_csv(resultado_file_path)
         validated_df = pd.read_excel(validacion_inicial_file_path)
-        validated_df['QUALITY'] = quality['quality']
+        validated_df['¿EL email es inválido?'] = quality['quality']
         os.remove(resultado_file_path)
-        validated_df['QUALITY'] = validated_df['QUALITY'].apply(lambda x: 'SI' if x == 'bad' else 'NO')
+        validated_df['¿EL email es inválido?'] = validated_df['¿EL email es inválido?'].apply(lambda x: 'SI' if x == 'bad' else 'NO')
         validated_df.to_excel(validacion_inicial_file_path, index=False)
 
-        count_si = validated_df[validated_df['QUALITY'] == 'SI'].shape[0]
-        count_no = validated_df[validated_df['QUALITY'] == 'NO'].shape[0]
+        count_si = validated_df[validated_df['¿EL email es inválido?'] == 'SI'].shape[0]
+        count_no = validated_df[validated_df['¿EL email es inválido?'] == 'NO'].shape[0]
         message = (
             
             f"Los estudiantes que pasaron exitosamente la verificación fueron: {count_no}.\n"
@@ -111,6 +111,4 @@ async def verificar_correos_endpoint():
         raise HTTPException(status_code=500, detail=f"Error al comunicar con el servicio de verificación: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
-
-
 
