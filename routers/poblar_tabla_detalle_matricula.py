@@ -123,7 +123,7 @@ def create_matricula(fid_matricula: int):
 
 
     df['FID_MATRICULA'] = fid_matricula
-    
+    df['CORREO_SOLICITANTE'] = df['CORREO_SOLICITANTE'].fillna('')
     try:
         df.to_sql('DETALLE_MATRICULA', con=engine, if_exists='append', index=False)
     except Exception as e:
