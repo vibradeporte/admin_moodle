@@ -185,7 +185,7 @@ async def validate_students():
     estudiantes_matricular['NRO_SEMANAS_DE_MATRICULA'] = matriculas_aceptadas['NRO_SEMANAS_DE_MATRICULA']
     estudiantes_matricular['NOMBRE_CORTO_CURSO'] = matriculas_aceptadas['NOMBRE_CORTO_CURSO']
     estudiantes_matricular['NOMBRE_LARGO_CURSO'] = matriculas_aceptadas['NOMBRE_LARGO_CURSO']
-    estudiantes_matricular['¿EL email es inválido?'] = matriculas_aceptadas['QUALITY']
+    estudiantes_matricular['¿EL email es inválido?'] = matriculas_aceptadas['¿EL email es inválido?']
     estudiantes_matricular['¿La cédula es inválida?'] = matriculas_aceptadas['cedula_es_invalida']
     estudiantes_matricular['¿Hay más de una solicitud de matrícula?'] = matriculas_aceptadas['Existen_Mas_Solicitudes_De_Matricula']
     estudiantes_matricular['¿El nombre es inválido?'] = matriculas_aceptadas['Nombre_Invalido']
