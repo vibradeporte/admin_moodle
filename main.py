@@ -10,9 +10,9 @@ from routers.Archivo_base64 import Archivo_base64_router
 # Validacion Inicial
 from routers.validacion_identidad import identificacion_usuario
 from routers.validacion_nombres_apellidos import validacion_nombres_apellidos_router
-from routers.subida_Archivos import verificacion_inicial_archivo
+from routers.subir_archivo import subida_de_archivo_router
 from routers.validacion_cedula import validacion_cedula_router
-
+from routers.validar_archivo import  verificacion_inicial_archivo
 # Correos
 from routers.Envio_Correo import correo_router
 from routers.verificar_correos import verificar_correos
@@ -60,7 +60,7 @@ app = FastAPI(
 # Including routers
 # Archivos
 app.include_router(Archivo_base64_router)
-
+app.include_router(verificacion_inicial_archivo)
 # SQL
 app.include_router(poblar_tabla_matricula_router)
 app.include_router(poblar_tabla_detalle_matricula_router)
@@ -83,7 +83,7 @@ app.include_router(core_user_create_users_router)
 app.include_router(identificacion_usuario)
 app.include_router(prueba_conseguir_id)
 app.include_router(validacion_cedula_router)
-app.include_router(verificacion_inicial_archivo)
+app.include_router(subida_de_archivo_router)
 app.include_router(validacion_nombres_apellidos_router)
 app.include_router(verificar_correos)
 app.include_router(validacion_numeros_whatsapp_router)
