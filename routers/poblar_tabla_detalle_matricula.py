@@ -1,10 +1,10 @@
 from fastapi import FastAPI, HTTPException, APIRouter
 from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
 import pandas as pd
 from urllib.parse import quote_plus
 from dotenv import load_dotenv
 import os
-
 
 load_dotenv()
 usuario = os.getenv("USER_DB_UL_ADMIN")
@@ -13,41 +13,26 @@ host = os.getenv("HOST_DB_ADMIN")
 nombre_base_datos = os.getenv("NAME_DB_UL_ADMIN")
 contrasena_codificada = quote_plus(contrasena)
 
-
 DATABASE_URL = f"mysql+mysqlconnector://{usuario}:{contrasena_codificada}@{host}/{nombre_base_datos}"
 
-
 engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 poblar_tabla_detalle_matricula_router = APIRouter()
 
-# Function to get validated students from CSV
 def estudiantes_matriculados():
     if not os.path.exists('temp_files/estudiantes_validados.csv'):
         return pd.DataFrame()
 
-    try:
-        df = pd.read_csv('temp_files/estudiantes_validados.csv', usecols=[
-            'username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
-            'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
-            'NRO_DIAS_DE_MATRICULAS', 'NOMBRE_CORTO_CURSO'
-        ])
-    except ValueError as e:
-        # Handle the case where usecols do not match columns in the CSV
-        df = pd.read_csv('temp_files/estudiantes_validados.csv')
-        if df.empty or 'NRO_DIAS_DE_MATRICULAS' not in df.columns:
-            return pd.DataFrame()  # Return an empty DataFrame if the necessary columns are missing
-
+    df = pd.read_csv('temp_files/estudiantes_validados.csv', usecols=['username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
+                                                                      'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
+                                                                      'NRO_DIAS_DE_MATRICULAS', 'NOMBRE_CORTO_CURSO'])
     df = df.dropna(how='all')
     
     if df.empty:
         return df
 
-
-    df.rename(columns={
-        'username': 'IDENTIFICACION', 'firstname': 'NOMBRES', 'lastname': 'APELLIDOS', 'email': 'CORREO',
-        'MOVIL': 'MOVIL', 'country': 'PAIS_DEL_MOVIL', 'city': 'CIUDAD'
-    }, inplace=True)
-
+    df.rename(columns={'username': 'IDENTIFICACION', 'firstname': 'NOMBRES', 'lastname': 'APELLIDOS', 'email': 'CORREO',
+                       'MOVIL': 'MOVIL', 'country': 'PAIS_DEL_MOVIL', 'city': 'CIUDAD'}, inplace=True)
 
     if os.path.exists('temp_files/message_ids.csv'):
         df_message_correo = pd.read_csv('temp_files/message_ids.csv')
@@ -56,7 +41,6 @@ def estudiantes_matriculados():
     else:
         df['RES_CORREO_BIENVENIDA'] = None
 
-
     if os.path.exists('temp_files/message_status_wapp.csv'):
         df_wapp = pd.read_csv('temp_files/message_status_wapp.csv', usecols=['message_status'])
         df_wapp.rename(columns={'message_status': 'RES_WS_BIENVENIDA'}, inplace=True)
@@ -64,32 +48,24 @@ def estudiantes_matriculados():
     else:
         df['RES_WS_BIENVENIDA'] = None
 
-
     df['RES_MATRICULA'] = 'MATRICULADO'
     
     return df
 
-
 def estudiantes_no_matriculados():
     if not os.path.exists('temp_files/estudiantes_invalidos.xlsx'):
-        return pd.DataFrame()  # Return an empty DataFrame if the file doesn't exist
+        return pd.DataFrame() 
 
-    df = pd.read_excel('temp_files/estudiantes_invalidos.xlsx', usecols=[
-        'username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
-        'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE',
-        'NOMBRE_CORTO_CURSO'
-    ])
+    df = pd.read_excel('temp_files/estudiantes_invalidos.xlsx', usecols=['username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
+                                                                           'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
+                                                                           'NOMBRE_CORTO_CURSO'])
     df = df.dropna(how='all')
     
     if df.empty:
         return df
 
-
-    df.rename(columns={
-        'username': 'IDENTIFICACION', 'firstname': 'NOMBRES', 'lastname': 'APELLIDOS', 'email': 'CORREO',
-        'MOVIL': 'MOVIL', 'country': 'PAIS_DEL_MOVIL', 'city': 'CIUDAD'
-    }, inplace=True)
-
+    df.rename(columns={'username': 'IDENTIFICACION', 'firstname': 'NOMBRES', 'lastname': 'APELLIDOS', 'email': 'CORREO',
+                       'MOVIL': 'MOVIL', 'country': 'PAIS_DEL_MOVIL', 'city': 'CIUDAD'}, inplace=True)
 
     df_extra = pd.DataFrame({
         'RES_MATRICULA': ['NO MATRICULADO'] * len(df),
@@ -102,17 +78,13 @@ def estudiantes_no_matriculados():
     
     return df
 
-
 @poblar_tabla_detalle_matricula_router.post("/poblar_tabla_detalle_matricula/{fid_matricula}", response_model=int, tags=['Base de Datos'])
 def create_matricula(fid_matricula: int):
-    # Get dataframes for valid and invalid students
     df_estudiantes_validos = estudiantes_matriculados()
     df_estudiantes_invalidos = estudiantes_no_matriculados()
 
-
     if df_estudiantes_validos.empty and df_estudiantes_invalidos.empty:
         raise HTTPException(status_code=400, detail="No hay datos para insertar")
-
 
     if df_estudiantes_validos.empty:
         df = df_estudiantes_invalidos
@@ -121,19 +93,26 @@ def create_matricula(fid_matricula: int):
     else:
         df = pd.concat([df_estudiantes_validos, df_estudiantes_invalidos], ignore_index=True)
 
-
     df['FID_MATRICULA'] = fid_matricula
-    df['CORREO_SOLICITANTE'] = df['CORREO_SOLICITANTE'].fillna('')
+    
+    session = SessionLocal()
     try:
         df.to_sql('DETALLE_MATRICULA', con=engine, if_exists='append', index=False)
+        session.commit()
     except Exception as e:
+        session.rollback()
         raise HTTPException(status_code=400, detail=f"Error al insertar los datos: {e}")
+    finally:
+        session.close()
 
-
-    with engine.connect() as connection:
-        result = connection.execute(text("SELECT LAST_INSERT_ID()"))
-        new_id = result.scalar()
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(text("SELECT LAST_INSERT_ID()"))
+            new_id = result.scalar()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener el ID insertado: {e}")
 
     return new_id
+
 
 
