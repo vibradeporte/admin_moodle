@@ -65,7 +65,7 @@ async def validar_cedula():
             f"solicitudes de matrícula incorrectas: {si_rows_count_solicitudes}\n"
         )
 
-        return {"message": message}
+        return PlainTextResponse(content=message)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
