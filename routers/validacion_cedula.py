@@ -22,12 +22,14 @@ def validacion_cedula(datos):
 def cedula_repetida(row, datos):
     start_index = row.name + 1
     end_index = len(datos)
-    dynamic_range = datos.loc[start_index:end_index, 'IDENTIFICACION']
+    dynamic_range = datos.loc[start_index:end_index, ['IDENTIFICACION', 'NOMBRE_CORTO_CURSO']]
 
-    if row['IDENTIFICACION'] in dynamic_range.values:
+    if ((dynamic_range['IDENTIFICACION'] == row['IDENTIFICACION']) &
+        (dynamic_range['NOMBRE_CORTO_CURSO'] == row['NOMBRE_CORTO_CURSO'])).any():
         return "SI"
     else:
         return "NO"
+
 
 def validar_Cedula(datos):
     resultados_1 = validacion_cedula(datos)
@@ -46,19 +48,26 @@ async def validar_cedula():
         df = validar_Cedula(df)
         df.to_excel(file_path, index=False)
 
+        si_rows_count_cedula = (df['cedula_es_invalida'] == 'SI').sum()
+        no_rows_count_cedula = (df['cedula_es_invalida'] == 'NO').sum()
 
-        si_rows_count = (df['cedula_es_invalida'] == 'SI').sum()
-        no_rows_count = (df['cedula_es_invalida'] == 'NO').sum()
+
+        si_rows_count_solicitudes = (df['Existen_Mas_Solicitudes_De_Matricula'] == 'SI').sum()
+        no_rows_count_solicitudes = (df['Existen_Mas_Solicitudes_De_Matricula'] == 'NO').sum()
+
 
         message = (
             f"Validación de cédulas:\n"
-            f"{no_rows_count} cédulas correctas \n"
-            f"{si_rows_count} cédulas incorrectas \n"
-            
+            f"cédulas correctas: {no_rows_count_cedula} \n"
+            f"cédulas incorrectas: {si_rows_count_cedula} \n"
+            f"Validación de solicitudes de matrícula:\n"
+            f"solicitudes de matrícula correctas: {no_rows_count_solicitudes}\n"
+            f"solicitudes de matrícula incorrectas: {si_rows_count_solicitudes}\n"
         )
 
-        return PlainTextResponse(content=message)
+        return {"message": message}
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
     
