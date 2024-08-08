@@ -3,7 +3,6 @@ from fastapi.responses import PlainTextResponse
 import pandas as pd
 import os
 
-
 verificacion_inicial_archivo = APIRouter()
 
 required_columns = [
@@ -38,7 +37,9 @@ async def verificar_archivo():
                 status_code=400
             )
 
-        if df.dropna(how='all').empty:
+        df = df.dropna(how='all', axis=0) 
+
+        if df.empty:
             return PlainTextResponse(
                 "El archivo no contiene datos, todas las filas están en blanco.",
                 status_code=400
