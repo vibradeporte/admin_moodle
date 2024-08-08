@@ -126,7 +126,7 @@ def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
             if sonMuyParecidos(strApellido, usuario_encontrado['lastname']):
                 if sonMuyParecidos(strNombre, usuario_encontrado['firstname']):
                     # Si el apellido y nombre son muy similares, se acepta la matrícula
-                    estudiantes_matricular.at[index, 'Estado'] = 'SI'
+                    estudiantes_matricular.at[index, 'Estado'] = 'Existe en la BD'
                 else:
                     # Si el apellido es similar pero el nombre es diferente
                     datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']}"
@@ -169,22 +169,22 @@ async def validate_students():
     
     # Crear DataFrame para los estudiantes a matricular con las columnas requeridas
     estudiantes_matricular = pd.DataFrame()
-    estudiantes_matricular['username'] = matriculas_aceptadas['IDENTIFICACION']
-    estudiantes_matricular['TIPO_IDENTIFICACION'] = matriculas_aceptadas['TIPO_IDENTIFICACION']
-    estudiantes_matricular['email'] = matriculas_aceptadas['CORREO']
-    estudiantes_matricular['firstname'] = matriculas_aceptadas['NOMBRES'].str.upper()
-    estudiantes_matricular['lastname'] = matriculas_aceptadas['APELLIDOS'].str.upper()
-    estudiantes_matricular['phone1'] = matriculas_aceptadas['Numero_Con_Prefijo'].apply(solo_numeros)
-    estudiantes_matricular['city'] = matriculas_aceptadas['CIUDAD'].str.upper()
-    estudiantes_matricular['country'] = matriculas_aceptadas['PAIS_DE_RESIDENCIA'].str.upper()
+    estudiantes_matricular['username'] = matriculas_aceptadas['IDENTIFICACION'].fillna('NO IDENTIFICACION')
+    estudiantes_matricular['TIPO_IDENTIFICACION'] = matriculas_aceptadas['TIPO_IDENTIFICACION'].fillna('SIN TIPO DE IDENTIFICACION')
+    estudiantes_matricular['email'] = matriculas_aceptadas['CORREO'].fillna('NO CORREO')
+    estudiantes_matricular['firstname'] = matriculas_aceptadas['NOMBRES'].str.upper().fillna('SIN NOMBRES')
+    estudiantes_matricular['lastname'] = matriculas_aceptadas['APELLIDOS'].str.upper().fillna('SIN APELLIDOS')
+    estudiantes_matricular['phone1'] = matriculas_aceptadas['Numero_Con_Prefijo'].apply(solo_numeros).fillna('')
+    estudiantes_matricular['city'] = matriculas_aceptadas['CIUDAD'].str.upper().fillna('SIN CIUDAD')
+    estudiantes_matricular['country'] = matriculas_aceptadas['PAIS_DE_RESIDENCIA'].str.upper().fillna('SIN PAÍS')
     estudiantes_matricular['address'] = matriculas_aceptadas.apply(lambda row: f"{row['TIPO_IDENTIFICACION']}{row['IDENTIFICACION']}", axis=1)
-    estudiantes_matricular['description'] = matriculas_aceptadas['DESCRIPCIÓN']
-    estudiantes_matricular['lastnamephonetic'] = matriculas_aceptadas['lastnamephonetic']
-    estudiantes_matricular['EMPRESA'] = matriculas_aceptadas['EMPRESA']
-    estudiantes_matricular['CORREO_SOLICITANTE'] = matriculas_aceptadas['CORREO_SOLICITANTE']
-    estudiantes_matricular['NRO_SEMANAS_DE_MATRICULA'] = matriculas_aceptadas['NRO_SEMANAS_DE_MATRICULA']
-    estudiantes_matricular['NOMBRE_CORTO_CURSO'] = matriculas_aceptadas['NOMBRE_CORTO_CURSO']
-    estudiantes_matricular['NOMBRE_LARGO_CURSO'] = matriculas_aceptadas['NOMBRE_LARGO_CURSO']
+    estudiantes_matricular['description'] = matriculas_aceptadas['DESCRIPCIÓN'].fillna('')
+    estudiantes_matricular['lastnamephonetic'] = matriculas_aceptadas['lastnamephonetic'].fillna('')
+    estudiantes_matricular['EMPRESA'] = matriculas_aceptadas['EMPRESA'].fillna('')
+    estudiantes_matricular['CORREO_SOLICITANTE'] = matriculas_aceptadas['CORREO_SOLICITANTE'].fillna('')
+    estudiantes_matricular['NRO_SEMANAS_DE_MATRICULA'] = matriculas_aceptadas['NRO_SEMANAS_DE_MATRICULA'].fillna('')
+    estudiantes_matricular['NOMBRE_CORTO_CURSO'] = matriculas_aceptadas['NOMBRE_CORTO_CURSO'].fillna('SIN NOMBRE CORTO CURSO')
+    estudiantes_matricular['NOMBRE_LARGO_CURSO'] = matriculas_aceptadas['NOMBRE_LARGO_CURSO'].fillna('SIN NOMBRE LARGO')
     estudiantes_matricular['¿EL email es inválido?'] = matriculas_aceptadas['¿EL email es inválido?']
     estudiantes_matricular['¿La cédula es inválida?'] = matriculas_aceptadas['cedula_es_invalida']
     estudiantes_matricular['¿Hay más de una solicitud de matrícula?'] = matriculas_aceptadas['Existen_Mas_Solicitudes_De_Matricula']
@@ -196,7 +196,6 @@ async def validate_students():
     estudiantes_matricular['¿Tiene matrícula activa?'] = matriculas_aceptadas['Esta_activo_estudiante']
     estudiantes_matricular['Advertencia de curso culminado'] = matriculas_aceptadas['ADVERTENCIA_CURSO_CULMINADO']
     estudiantes_matricular['MOVIL'] = matriculas_aceptadas['NUMERO_MOVIL_WS_SIN_PAIS']
-
     
     BD_USUARIOS = pd.read_csv('temp_files/usuarios_completos.csv')
     BD_USUARIOS['username'] = BD_USUARIOS['username'].astype(str)
@@ -210,7 +209,7 @@ async def validate_students():
 
 
     estudiantes_a_matricular = resultado[
-    ((resultado['Estado'] == 'NO está en la BD esa cédula') | (resultado['Estado'] == 'SI')) &
+    ((resultado['Estado'] == 'NO está en la BD esa cédula') | (resultado['Estado'] == 'Existe en la BD')) &
     (~otras_columnas_con_si.any(axis=1)) & (resultado['Advertencia de curso culminado'] == 'NO')
     ]
 
@@ -220,7 +219,7 @@ async def validate_students():
 
     estudiantes_que_no_seran_matriculados = resultado[
     ((resultado['Estado'] != 'NO está en la BD esa cédula') &
-     (resultado['Estado'] != 'SI')) |
+     (resultado['Estado'] != 'Existe en la BD')) |
     otras_columnas_con_si.any(axis=1) | (resultado['Advertencia de curso culminado'] != 'NO')
     ]
 
