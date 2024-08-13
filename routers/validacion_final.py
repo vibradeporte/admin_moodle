@@ -54,46 +54,25 @@ class StringScoreCalculator:
         return rabbit_score * 100
 
 def solo_numeros(numero):
-    if pd.isna(numero):
-        return ''
+    if pd.isna(numero) or str(numero).strip() == '':
+        return 'SIN NUMERO'
     numero_str = str(numero)
     return re.sub(r'\D', '', numero_str)
 
+
 def sonMuyParecidos(nombre1, nombre2, threshold=80):
     calculator = StringScoreCalculator()
-    nombre1 = str(nombre1).strip()
-    nombre2 = str(nombre2).strip()
+    nombre1 = str(nombre1).strip().lower()
+    nombre2 = str(nombre2).strip().lower()
     similarity = calculator.calculate_similarity_score(nombre1, nombre2)
     return similarity >= threshold
 
-def buscarCedula(cedula, df):
-    cedula = str(cedula)
-    limiteInferior = 0
-    limiteSuperior = len(df) - 1
-    while limiteInferior <= limiteSuperior:
-        filaUsuarioActual = (limiteInferior + limiteSuperior) // 2
-        actual_cedula = str(df.iloc[filaUsuarioActual]['username'])
-        if cedula == actual_cedula:
-            return filaUsuarioActual
-        elif cedula < actual_cedula:
-            limiteSuperior = filaUsuarioActual - 1
-        else:
-            limiteInferior = filaUsuarioActual + 1
-    return -1
-
-def buscarPorNombresApellidosCorreo(nombre, apellido, correo, bd_usuarios):
-    for index, row in bd_usuarios.iterrows():
-        if (sonMuyParecidos(row['firstname'], nombre) and
-            sonMuyParecidos(row['lastname'], apellido) and
-            row['email'].lower() == correo.lower()):
-            return index
-    return -1
-
 def buscarPorNombresApellidosTelefono(nombre, apellido, telefono, bd_usuarios):
+    telefono = solo_numeros(telefono)  # Normalize phone number for comparison
     for index, row in bd_usuarios.iterrows():
         if (sonMuyParecidos(row['firstname'], nombre) and
             sonMuyParecidos(row['lastname'], apellido) and
-            sonMuyParecidos(row['phone1'], telefono)):
+            sonMuyParecidos(solo_numeros(row['phone1']), telefono)):
             return index
     return -1
 
@@ -102,11 +81,11 @@ def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
     
     for index, row in estudiantes_matricular.iterrows():
         cedulaUsuarioAMatricular = row['username']
-        strApellido = row['lastname']
-        strNombre = row['firstname']
-        correoUsuario = row['email']
-        telefonoUsuario = row['phone1']
-        
+        strApellido = row['lastname'].strip().upper()
+        strNombre = row['firstname'].strip().upper()
+        correoUsuario = row['email'].strip().lower()
+        telefonoUsuario = solo_numeros(row['phone1'])
+
         filaUsuarioActual = buscarCedula(cedulaUsuarioAMatricular, BD_USUARIOS)
         
         if filaUsuarioActual != -1:
@@ -136,6 +115,7 @@ def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
                 estudiantes_matricular.at[index, 'Estado'] = 'NO está en la BD esa cédula'
     
     return estudiantes_matricular
+
 
 @validacion_final.post("/validacion_final/", tags=['Moodle'])
 async def validate_students():
