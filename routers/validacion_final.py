@@ -175,7 +175,7 @@ async def validate_students():
     estudiantes_matricular['firstname'] = matriculas_aceptadas['NOMBRES'].str.upper().fillna('SIN NOMBRES')
     estudiantes_matricular['lastname'] = matriculas_aceptadas['APELLIDOS'].str.upper().fillna('SIN APELLIDOS')
     estudiantes_matricular['phone1'] = matriculas_aceptadas['Numero_Con_Prefijo'].apply(solo_numeros).fillna('')
-    estudiantes_matricular['city'] = matriculas_aceptadas['CIUDAD'].str.upper().fillna('SIN CIUDAD')
+    estudiantes_matricular['city'] = matriculas_aceptadas['CIUDAD'].astype(str).str.upper().fillna('SIN CIUDAD')
     estudiantes_matricular['country'] = matriculas_aceptadas['PAIS_DE_RESIDENCIA'].str.upper().fillna('SIN PAÍS')
     estudiantes_matricular['address'] = matriculas_aceptadas.apply(lambda row: f"{row['TIPO_IDENTIFICACION']}{row['IDENTIFICACION']}", axis=1)
     estudiantes_matricular['description'] = matriculas_aceptadas['DESCRIPCIÓN'].fillna('')
