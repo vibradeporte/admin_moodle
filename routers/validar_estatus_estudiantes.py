@@ -79,7 +79,7 @@ async def validacion_estudiantes_estatus_final(usuario: str, contrasena: str, ho
         # Merge the dataframes
         resultado = datos_df.merge(estudiantes_estatus_df, left_on=['IDENTIFICACION', 'NOMBRE_CORTO_CURSO'], right_on=['username', 'courseshortname'], how='left', suffixes=('', '_estatus'))
 
-        resultado.drop_duplicates(subset=['IDENTIFICACION', 'NOMBRE_CORTO_CURSO'], inplace=True)
+        #resultado.drop_duplicates(subset=['IDENTIFICACION', 'NOMBRE_CORTO_CURSO'], keep='last', inplace=True)
         resultado['Esta_activo_estudiante'] = resultado['ESTA_ACTIVO'].apply(lambda x: 'SI' if x == 1 else 'NO')
 
         resultado['lastnamephonetic'] = resultado.apply(
@@ -102,6 +102,7 @@ async def validacion_estudiantes_estatus_final(usuario: str, contrasena: str, ho
         return PlainTextResponse(content=message)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
+
 
 
 
