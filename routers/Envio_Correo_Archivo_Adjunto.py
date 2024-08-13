@@ -22,7 +22,7 @@ class EmailSchema(BaseModel):
     from_e: EmailStr = Field(..., max_length=MAX_LENGTH_CORREO)
     to: EmailStr = Field(..., max_length=MAX_LENGTH_CORREO)
     subject: str
-    cc: Optional[EmailStr] = None
+    cc: str
     html_content: str
     content: str
     attachments: Optional[List[AttachmentSchema]] = None
