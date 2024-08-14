@@ -68,20 +68,21 @@ def sonMuyParecidos(nombre1, nombre2, threshold=90):  # Ajuste del threshold
     similarity = calculator.calculate_similarity_score(nombre1, nombre2)
     return similarity >= threshold
 
-def buscarPorNombresApellidosTelefono(nombre, apellido, telefono, bd_usuarios):
-    telefono = solo_numeros(telefono)  # Normalize phone number for comparison
-    for index, row in bd_usuarios.iterrows():
-        if (sonMuyParecidos(row['firstname'], nombre) and
-            sonMuyParecidos(row['lastname'], apellido) and
-            sonMuyParecidos(solo_numeros(row['phone1']), telefono)):
-            return index
-    return -1
-
 def buscarCedula(cedula, bd_usuarios):
     try:
         return bd_usuarios[bd_usuarios['username'] == cedula].index[0]
     except IndexError:
         return -1
+
+def buscarPorNombresApellidosTelefono(nombre, apellido, telefono, bd_usuarios):
+    telefono = solo_numeros(telefono)
+    for index, row in bd_usuarios.iterrows():
+        telefono_bd = solo_numeros(row['phone1'])
+        if (sonMuyParecidos(row['firstname'], nombre) and
+            sonMuyParecidos(row['lastname'], apellido) and
+            (telefono_bd != 'SIN NUMERO' and sonMuyParecidos(telefono_bd, telefono))):
+            return index
+    return -1
 
 def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
     estudiantes_matricular['Estado'] = ''
@@ -116,7 +117,6 @@ def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
                 estudiantes_matricular.at[index, 'Estado'] = 'NO está en la BD esa cédula'
     
     return estudiantes_matricular
-
 
 @validacion_final.post("/validacion_final/", tags=['Moodle'])
 async def validate_students():
