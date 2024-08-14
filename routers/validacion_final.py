@@ -85,11 +85,7 @@ def buscarPorNombresApellidosTelefono(nombre, apellido, telefono, bd_usuarios):
             return index
     return -1
 
-def buscarCedula(cedula, bd_usuarios):
-    try:
-        return bd_usuarios[bd_usuarios['username'] == cedula].index[0]
-    except IndexError:
-        return -1
+
 
 
 def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
@@ -97,7 +93,7 @@ def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
     estudiantes_matricular['Estado'] = ''
 
     for index, row in estudiantes_matricular.iterrows():
-        cedulaUsuarioAMatricular = str(row['username']).strip()  # Convertir a cadena y eliminar espacios
+        cedulaUsuarioAMatricular = str(row['username']).strip()
         strApellido = row['lastname'].strip().upper()
         strNombre = row['firstname'].strip().upper()
         correoUsuario = row['email'].strip().lower()
