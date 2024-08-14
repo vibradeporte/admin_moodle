@@ -126,7 +126,7 @@ def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
             if sonMuyParecidos(strApellido, usuario_encontrado['lastname']):
                 if sonMuyParecidos(strNombre, usuario_encontrado['firstname']):
                     # Si el apellido y nombre son muy similares, se acepta la matrícula
-                    estudiantes_matricular.at[index, 'Estado'] = 'SI'
+                    estudiantes_matricular.at[index, 'Estado'] = 'SI existe en la BD'
                 else:
                     # Si el apellido es similar pero el nombre es diferente
                     datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']}"
@@ -210,7 +210,7 @@ async def validate_students():
 
 
     estudiantes_a_matricular = resultado[
-    ((resultado['Estado'] == 'NO está en la BD esa cédula') | (resultado['Estado'] == 'SI')) &
+    ((resultado['Estado'] == 'NO está en la BD esa cédula') | (resultado['Estado'] == 'SI existe en la BD')) &
     (~otras_columnas_con_si.any(axis=1)) & (resultado['Advertencia de curso culminado'] == 'NO')
     ]
 
@@ -220,7 +220,7 @@ async def validate_students():
 
     estudiantes_que_no_seran_matriculados = resultado[
     ((resultado['Estado'] != 'NO está en la BD esa cédula') &
-     (resultado['Estado'] != 'SI')) |
+     (resultado['Estado'] != 'SI existe en la BD')) |
     otras_columnas_con_si.any(axis=1) | (resultado['Advertencia de curso culminado'] != 'NO')
     ]
 
