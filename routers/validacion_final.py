@@ -66,7 +66,30 @@ def sonMuyParecidos(nombre1, nombre2, threshold=80):
     nombre2 = str(nombre2).strip().lower()
     similarity = calculator.calculate_similarity_score(nombre1, nombre2)
     return similarity >= threshold
+    
+def buscarCedula(cedula, df):
+    cedula = str(cedula)
+    limiteInferior = 0
+    limiteSuperior = len(df) - 1
+    while limiteInferior <= limiteSuperior:
+        filaUsuarioActual = (limiteInferior + limiteSuperior) // 2
+        actual_cedula = str(df.iloc[filaUsuarioActual]['username'])  # Convertir a cadena de caracteres
+        if cedula == actual_cedula:
+            return filaUsuarioActual
+        elif cedula < actual_cedula:
+            limiteSuperior = filaUsuarioActual - 1
+        else:
+            limiteInferior = filaUsuarioActual + 1
+    return -1
 
+def buscarPorNombresApellidosCorreo(nombre, apellido, correo, bd_usuarios):
+    for index, row in bd_usuarios.iterrows():
+        if (sonMuyParecidos(row['firstname'], nombre) and
+            sonMuyParecidos(row['lastname'], apellido) and
+            row['email'].lower() == correo.lower()):
+            return index
+    return -1
+    
 def buscarPorNombresApellidosTelefono(nombre, apellido, telefono, bd_usuarios):
     telefono = solo_numeros(telefono)  # Normalize phone number for comparison
     for index, row in bd_usuarios.iterrows():
