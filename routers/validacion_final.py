@@ -93,8 +93,9 @@ def buscarCedula(cedula, bd_usuarios):
 
 
 def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
+    calculator = StringScoreCalculator()
     estudiantes_matricular['Estado'] = ''
-    
+
     for index, row in estudiantes_matricular.iterrows():
         cedulaUsuarioAMatricular = row['username']
         strApellido = row['lastname'].strip().upper()
@@ -102,36 +103,59 @@ def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
         correoUsuario = row['email'].strip().lower()
         telefonoUsuario = solo_numeros(row['phone1'])
 
-        filaUsuarioActual = buscarCedula(cedulaUsuarioAMatricular, BD_USUARIOS)
+        filaUsuarioActual = BD_USUARIOS[BD_USUARIOS['username'] == cedulaUsuarioAMatricular]
         
-        if filaUsuarioActual != -1:
-            usuario_encontrado = BD_USUARIOS.iloc[filaUsuarioActual]
-            if sonMuyParecidos(strApellido, usuario_encontrado['lastname']):
-                if sonMuyParecidos(strNombre, usuario_encontrado['firstname']):
-                    estudiantes_matricular.at[index, 'Estado'] = 'Existe en la BD'
-                else:
-                    datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']}"
-                    estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Apellido SIMILAR y nombre DIFERENTE]"
+        if not filaUsuarioActual.empty:
+            usuario_encontrado = filaUsuarioActual.iloc[0]
+            apellido_similar = calculator.calculate_similarity_score(strApellido, usuario_encontrado['lastname'].strip().upper()) >= 90
+            nombre_similar = calculator.calculate_similarity_score(strNombre, usuario_encontrado['firstname'].strip().upper()) >= 90
+            correo_similar = calculator.calculate_similarity_score(correoUsuario, usuario_encontrado['email'].strip().lower()) >= 90
+            telefono_similar = calculator.calculate_similarity_score(telefonoUsuario, solo_numeros(usuario_encontrado['phone1'])) >= 90
+
+            if apellido_similar and nombre_similar:
+                estudiantes_matricular.at[index, 'Estado'] = 'Existe en la BD'
             else:
                 datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']}"
-                estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Apellido DIFERENTE]"
+                if apellido_similar and not nombre_similar:
+                    estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Apellido SIMILAR y nombre DIFERENTE]"
+                elif not apellido_similar:
+                    estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Apellido DIFERENTE]"
         else:
-            filaConNombresSimilares = buscarPorNombresApellidosCorreo(strNombre, strApellido, correoUsuario, BD_USUARIOS)
-            if filaConNombresSimilares != -1:
-                usuario_encontrado = BD_USUARIOS.iloc[filaConNombresSimilares]
-                filaConNombresApellidosTelefonoSimilares = buscarPorNombresApellidosTelefono(strNombre, strApellido, telefonoUsuario, BD_USUARIOS)
-                
-                if filaConNombresApellidosTelefonoSimilares != -1:
-                    usuario_encontrado = BD_USUARIOS.iloc[filaConNombresApellidosTelefonoSimilares]
+            filaConNombresSimilares = BD_USUARIOS[
+                BD_USUARIOS.apply(
+                    lambda x: (
+                        calculator.calculate_similarity_score(strNombre, x['firstname'].strip().upper()) >= 90 and
+                        calculator.calculate_similarity_score(strApellido, x['lastname'].strip().upper()) >= 90
+                    ), axis=1
+                )
+            ]
+
+            if not filaConNombresSimilares.empty:
+                filaConCorreoSimilar = filaConNombresSimilares[
+                    filaConNombresSimilares.apply(
+                        lambda x: calculator.calculate_similarity_score(correoUsuario, x['email'].strip().lower()) >= 90, axis=1
+                    )
+                ]
+                filaConTelefonoSimilar = filaConNombresSimilares[
+                    filaConNombresSimilares.apply(
+                        lambda x: calculator.calculate_similarity_score(telefonoUsuario, solo_numeros(x['phone1'])) >= 90, axis=1
+                    )
+                ]
+
+                if not filaConCorreoSimilar.empty:
+                    usuario_encontrado = filaConCorreoSimilar.iloc[0]
                     datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']} Teléfono: {usuario_encontrado['phone1']}"
-                    estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Cédula DIFERENTE, nombres, apellidos y teléfono muy SIMILARES]"
+                    estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Cédula DIFERENTE, nombres, apellidos y correo SIMILARES]"
+                elif not filaConTelefonoSimilar.empty:
+                    usuario_encontrado = filaConTelefonoSimilar.iloc[0]
+                    datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']} Teléfono: {usuario_encontrado['phone1']}"
+                    estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Cédula DIFERENTE, nombres, apellidos y teléfono SIMILARES]"
                 else:
                     estudiantes_matricular.at[index, 'Estado'] = 'NO está en la BD esa cédula'
             else:
                 estudiantes_matricular.at[index, 'Estado'] = 'NO está en la BD esa cédula'
     
     return estudiantes_matricular
-
 
 @validacion_final.post("/validacion_final/", tags=['Moodle'])
 async def validate_students():
