@@ -92,30 +92,31 @@ def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
     calculator = StringScoreCalculator()
     estudiantes_matricular['Estado'] = ''
 
+    def normalizar_cedula(cedula):
+        # Convertir a cadena, eliminar espacios, ceros a la izquierda, y cualquier punto decimal
+        return str(cedula).strip().lstrip('0').split('.')[0]
+
     for index, row in estudiantes_matricular.iterrows():
-        cedulaUsuarioAMatricular = str(row['username']).strip()
+        cedulaUsuarioAMatricular = normalizar_cedula(row['username'])  # Normalización de la cédula
         strApellido = row['lastname'].strip().upper()
         strNombre = row['firstname'].strip().upper()
         correoUsuario = row['email'].strip().lower()
         telefonoUsuario = solo_numeros(row['phone1'])
 
-        filaUsuarioActual = BD_USUARIOS[BD_USUARIOS['username'].apply(lambda x: str(x).strip()) == cedulaUsuarioAMatricular]
+        filaUsuarioActual = BD_USUARIOS[BD_USUARIOS['username'].apply(normalizar_cedula) == cedulaUsuarioAMatricular]
         
         if not filaUsuarioActual.empty:
             usuario_encontrado = filaUsuarioActual.iloc[0]
             apellido_similar = calculator.calculate_similarity_score(strApellido, usuario_encontrado['lastname'].strip().upper()) >= 90
             nombre_similar = calculator.calculate_similarity_score(strNombre, usuario_encontrado['firstname'].strip().upper()) >= 90
-            correo_similar = calculator.calculate_similarity_score(correoUsuario, usuario_encontrado['email'].strip().lower()) >= 90
-            telefono_similar = calculator.calculate_similarity_score(telefonoUsuario, solo_numeros(usuario_encontrado['phone1'])) >= 90
+            datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']} Teléfono: {usuario_encontrado['phone1']}"
 
-            if apellido_similar and nombre_similar and cedulaUsuarioAMatricular == str(usuario_encontrado['username']).strip():
-                estudiantes_matricular.at[index, 'Estado'] = 'Existe en la BD'
+            if apellido_similar and not nombre_similar:
+                estudiantes_matricular.at[index, 'Estado'] = f"RECHAZO 1 ==> Se encontró a alguien en la BD con misma cédula del estudiante que quiero matricular, pero con Apellido SIMILAR y nombre DIFERENTE. Datos encontrados: {datosCompletosUsuarioEnBd}"
+            elif not apellido_similar:
+                estudiantes_matricular.at[index, 'Estado'] = f"RECHAZO 2 ==> Se encontró a alguien en la BD con misma cédula, pero con Apellido DIFERENTE. Datos encontrados: {datosCompletosUsuarioEnBd}"
             else:
-                datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']} Teléfono: {usuario_encontrado['phone1']}"
-                if apellido_similar and not nombre_similar:
-                    estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Apellido SIMILAR y nombre DIFERENTE]"
-                elif not apellido_similar:
-                    estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Apellido DIFERENTE]"
+                estudiantes_matricular.at[index, 'Estado'] = 'Existe en la BD'
         else:
             filaConNombresSimilares = BD_USUARIOS[
                 BD_USUARIOS.apply(
@@ -141,11 +142,11 @@ def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
                 if not filaConCorreoSimilar.empty:
                     usuario_encontrado = filaConCorreoSimilar.iloc[0]
                     datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']} Teléfono: {usuario_encontrado['phone1']}"
-                    estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Cédula DIFERENTE, nombres, apellidos y correo SIMILARES]"
+                    estudiantes_matricular.at[index, 'Estado'] = f"RECHAZO 3 ==> Se ha encontrado un usuario en la BD con la cédula diferente pero con nombres, apellidos MUY SIMILARES y correo IGUAL. Inconsistencia de cédula. Datos encontrados: {datosCompletosUsuarioEnBd}"
                 elif not filaConTelefonoSimilar.empty:
                     usuario_encontrado = filaConTelefonoSimilar.iloc[0]
                     datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']} Teléfono: {usuario_encontrado['phone1']}"
-                    estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Cédula DIFERENTE, nombres, apellidos y teléfono SIMILARES]"
+                    estudiantes_matricular.at[index, 'Estado'] = f"RECHAZO 4 ==> Se ha encontrado un usuario en la BD con la cédula diferente pero con nombres, apellidos y teléfonos muy similares. Inconsistencia de cédula. Datos encontrados: {datosCompletosUsuarioEnBd}"
                 else:
                     estudiantes_matricular.at[index, 'Estado'] = 'NO está en la BD esa cédula'
             else:
