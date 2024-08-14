@@ -97,13 +97,13 @@ def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
     estudiantes_matricular['Estado'] = ''
 
     for index, row in estudiantes_matricular.iterrows():
-        cedulaUsuarioAMatricular = row['username']
+        cedulaUsuarioAMatricular = str(row['username']).strip()  # Convertir a cadena y eliminar espacios
         strApellido = row['lastname'].strip().upper()
         strNombre = row['firstname'].strip().upper()
         correoUsuario = row['email'].strip().lower()
         telefonoUsuario = solo_numeros(row['phone1'])
 
-        filaUsuarioActual = BD_USUARIOS[BD_USUARIOS['username'] == cedulaUsuarioAMatricular]
+        filaUsuarioActual = BD_USUARIOS[BD_USUARIOS['username'].apply(lambda x: str(x).strip()) == cedulaUsuarioAMatricular]
         
         if not filaUsuarioActual.empty:
             usuario_encontrado = filaUsuarioActual.iloc[0]
@@ -112,10 +112,10 @@ def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
             correo_similar = calculator.calculate_similarity_score(correoUsuario, usuario_encontrado['email'].strip().lower()) >= 90
             telefono_similar = calculator.calculate_similarity_score(telefonoUsuario, solo_numeros(usuario_encontrado['phone1'])) >= 90
 
-            if apellido_similar and nombre_similar:
+            if apellido_similar and nombre_similar and cedulaUsuarioAMatricular == str(usuario_encontrado['username']).strip():
                 estudiantes_matricular.at[index, 'Estado'] = 'Existe en la BD'
             else:
-                datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']}"
+                datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']} Teléfono: {usuario_encontrado['phone1']}"
                 if apellido_similar and not nombre_similar:
                     estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Apellido SIMILAR y nombre DIFERENTE]"
                 elif not apellido_similar:
