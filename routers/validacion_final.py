@@ -57,10 +57,11 @@ def solo_numeros(numero):
     if pd.isna(numero) or str(numero).strip() == '':
         return 'SIN NUMERO'
     numero_str = str(numero)
-    return re.sub(r'\D', '', numero_str)
+    # Eliminar cualquier carácter que no sea numérico, pero mantener el prefijo internacional
+    numero_str = re.sub(r'\D', '', numero_str)
+    return numero_str
 
-
-def sonMuyParecidos(nombre1, nombre2, threshold=80):
+def sonMuyParecidos(nombre1, nombre2, threshold=90):  # Ajuste del threshold
     calculator = StringScoreCalculator()
     nombre1 = str(nombre1).strip().lower()
     nombre2 = str(nombre2).strip().lower()
