@@ -39,6 +39,12 @@ def validar_nombre_apellido(s):
     else:
         return "SI"
     
+def longitud_cadena(s):
+    if len(s) > 3:
+        return 'NO'
+    else:
+        return 'SI'
+
 def encontrar_similitudes(primer_token, otros_nombres):
     return primer_token in otros_nombres
 
@@ -78,8 +84,8 @@ async def validar_nombres_apellidos():
 
         df = pd.read_excel(file_path)
 
-        df['Nombre_Invalido'] = df['NOMBRES'].apply(validar_nombre_apellido)
-        df['Apellido_Invalido'] = df['APELLIDOS'].apply(validar_nombre_apellido)
+        df['Nombre_Invalido'] = df['NOMBRES'].apply(validar_nombre_apellido).apply(longitud_cadena)
+        df['Apellido_Invalido'] = df['APELLIDOS'].apply(validar_nombre_apellido).apply(longitud_cadena)
         df = nuevo_estan_cruzados(df)
         df.to_excel(file_path, index=False)
 
@@ -88,14 +94,12 @@ async def validar_nombres_apellidos():
 
 
         message = (
-            f"Validación de nombres y apellidos invertidos: \n"
+            f"Validación de nombres y apellidos: \n"
             f"{no_rows_count} Nombres Y Apellidos Correctos. \n"
-            f"{si_rows_count} Nombres Y Apellidos Invertidos. \n"
+            f"{si_rows_count} Nombres Y Apellidos Incorrectos. \n"
             
         )
 
         return PlainTextResponse(content=message)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Un error occurrio: {e}")
-
-
