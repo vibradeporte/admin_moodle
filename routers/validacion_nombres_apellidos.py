@@ -32,18 +32,13 @@ def verificar_cruzados(row):
         return 'ES PROBABLE'
 
 def validar_nombre_apellido(s):
-    if not s:
+    if not s or not re.match("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]*$", s):
         return "SI"
-    if re.match("^[a-zA-ZáéíóúÁÉÍÓÚ ñÑ]*$", s):
+    elif len(s) < 3:
+        return "SI"
+    else:
         return "NO"
-    else:
-        return "SI"
     
-def longitud_cadena(s):
-    if len(s) > 3:
-        return 'NO'
-    else:
-        return 'SI'
 
 def encontrar_similitudes(primer_token, otros_nombres):
     return primer_token in otros_nombres
@@ -84,8 +79,8 @@ async def validar_nombres_apellidos():
 
         df = pd.read_excel(file_path)
 
-        df['Nombre_Invalido'] = df['NOMBRES'].apply(validar_nombre_apellido).apply(longitud_cadena)
-        df['Apellido_Invalido'] = df['APELLIDOS'].apply(validar_nombre_apellido).apply(longitud_cadena)
+        df['Nombre_Invalido'] = df['NOMBRES'].apply(validar_nombre_apellido)
+        df['Apellido_Invalido'] = df['APELLIDOS'].apply(validar_nombre_apellido)
         df = nuevo_estan_cruzados(df)
         df.to_excel(file_path, index=False)
 
