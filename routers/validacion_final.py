@@ -171,7 +171,7 @@ async def validate_students():
             'phone1': matriculas_aceptadas['Numero_Con_Prefijo'].astype(str).apply(solo_numeros),
             'city': matriculas_aceptadas['CIUDAD'].astype(str).str.upper().fillna('SIN CIUDAD'),
             'country': matriculas_aceptadas['PAIS_DE_RESIDENCIA'].astype(str).str.upper().fillna('SIN PAÍS'),
-            'address': matriculas_aceptadas.apply(lambda row: f"{row['TIPO_IDENTIFICACION']}{row['IDENTIFICACION']}", axis=1),
+            'address': matriculas_aceptadas.apply(lambda row: f"{row['TIPO_IDENTIFICACION']} {row['IDENTIFICACION']}", axis=1),
             'description': matriculas_aceptadas['DESCRIPCIÓN'],
             'lastnamephonetic': matriculas_aceptadas['lastnamephonetic'],
             'EMPRESA': matriculas_aceptadas['EMPRESA'].astype(str).fillna(' '),
