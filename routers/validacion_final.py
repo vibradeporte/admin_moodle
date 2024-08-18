@@ -215,7 +215,9 @@ async def validate_students():
         ]
 
         estudiantes_que_no_seran_matriculados.to_excel('temp_files/estudiantes_invalidos.xlsx', index=False)
-
+        if os.path.exists(validacion):
+            os.remove(validacion)
+        
         inconsistencias = len(estudiantes_que_no_seran_matriculados)
         correctos = len(estudiantes_a_matricular)
         message = (
