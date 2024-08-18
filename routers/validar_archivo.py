@@ -25,7 +25,7 @@ async def verificar_archivo():
     if not os.path.isfile(ruta):
         return PlainTextResponse(
             "El archivo especificado no existe. Por favor, verifica la ruta.",
-            status_code=500
+            status_code=400
         )
     
     try:
@@ -34,7 +34,7 @@ async def verificar_archivo():
         except ValueError:
             return PlainTextResponse(
                 "El archivo no contiene la hoja ESTUDIANTES.",
-                status_code=500
+                status_code=400
             )
 
         df = df.dropna(how='all', axis=0) 
@@ -42,7 +42,7 @@ async def verificar_archivo():
         if df.empty:
             return PlainTextResponse(
                 "El archivo no contiene datos, todas las filas están en blanco.",
-                status_code=500
+                status_code=400
             )
 
         print("Columnas del archivo cargado:", df.columns.tolist())
@@ -51,7 +51,7 @@ async def verificar_archivo():
         if missing_columns:
             return PlainTextResponse(
                 f"El archivo no contiene las siguientes columnas: {', '.join(missing_columns)}",
-                status_code=500
+                status_code=400
             )
             
         validated_file_path = os.path.join(os.path.dirname(ruta), 'validacion_inicial.xlsx')
