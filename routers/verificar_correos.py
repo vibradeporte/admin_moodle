@@ -5,10 +5,10 @@ import pandas as pd
 import requests
 import time
 import os
-
+import re
 
 load_dotenv()
-verificar_correos = APIRouter()
+verificar_correos_router = APIRouter()
 api_key = os.getenv("API_KEY_MILLION")
 
 if not api_key:
@@ -19,12 +19,44 @@ file_path = 'temp_files/correos_validar.csv'
 resultado_file_path = 'temp_files/Resultado_Validacion_Correos.csv'
 validacion_inicial_file_path = 'temp_files/validacion_inicial.xlsx'
 
+def es_email_invalido(email):
+    # Verificar si el campo está vacío
+    if email == '' or pd.isna(email):
+        return True
+    
+    # Validar si el email no contiene el carácter @
+    if '@' not in email:
+        return True
+    
+    # Validar si no hay caracteres antes del signo @
+    if email.split('@')[0] == '':
+        return True
+    
+    # Validar si no hay caracteres después del signo @
+    if len(email.split('@')) < 2 or email.split('@')[1] == '':
+        return True
+    
+    # Validar si no contiene el carácter .
+    if '.' not in email.split('@')[1]:
+        return True
+    
+    # Si no cumple ninguna de las condiciones anteriores, el correo es válido
+    return False
+
+
+
+
 def limpiar_email(email):
-    email = email.strip()
-    email = email.replace('\t', '').replace('\xa0', '')
-    email = ' '.join(email.split())
-    email = email.lower()
-    return email
+    if email is None:
+        return "" 
+    try:
+        email = str(email)  # in case email is not a string
+        email = email.strip().replace("\xa0", "").replace("\t", "")
+        email = " ".join(email.split())
+        return email.lower()
+    except Exception as e:
+        print(f"Error occurred while cleaning email: {e}")
+        return ""
 
 def enviar_archivo_a_validar(api_key, file_path):
     url = f"https://bulkapi.millionverifier.com/bulkapi/v2/upload?key={api_key}"
@@ -53,62 +85,141 @@ def descargar_resultado(api_key, file_id):
         file.write(response.content)
     print(f"Results have been saved to {resultado_file_path}")
 
-@verificar_correos.post("/verificar_correos/", tags=['Correo'])
-async def verificar_correos_endpoint():
+@verificar_correos_router.post("/verificar_correos/", tags=["Correo"])
+async def verificar_correos():
+    """Verificar correos en un archivo Excel y actualizar el archivo con la validación."""
+
     try:
-
         df = pd.read_excel(validacion_inicial_file_path)
-        correos_validar = df['CORREO'].apply(limpiar_email)
-        correos_validar.to_csv(file_path, index=False, header=False)
+    except FileNotFoundError as e:
+        return PlainTextResponse(
+            content=f"El archivo en la ruta '{validacion_inicial_file_path}' no fue encontrado: {e}",
+            status_code=404,
+        )
 
+    # Limpiar correos y asegurarse de que los valores nulos o vacíos se marquen como inválidos
+    df["CORREO"] = df["CORREO"].apply(limpiar_email)
+    df["¿EL email es inválido?"] = df["CORREO"].apply(lambda x: "SI" if pd.isna(x) or str(x).strip() == "" or es_email_invalido(x) else "NO")
 
+    # Filtrar para validar solo los correos que no son inválidos
+    df_to_validate = df[df["¿EL email es inválido?"] == "NO"]
+
+    # Si no hay correos válidos a validar, terminar el proceso
+    if df_to_validate.empty:
+        df.to_excel(validacion_inicial_file_path, index=False)
+        return PlainTextResponse(
+            content="No hay correos válidos a validar en el archivo. Todos los correos se marcaron como inválidos.",
+            status_code=400,
+        )
+
+    # Guardar los correos a validar en el archivo CSV
+    try:
+        df_to_validate["CORREO"].to_csv(file_path, index=False, header=False)
+    except Exception as e:
+        return PlainTextResponse(
+            content=f"Error al guardar el archivo CSV: {e}",
+            status_code=500,
+        )
+
+    # Proceder con la validación a través del servicio externo
+    try:
         response = enviar_archivo_a_validar(api_key, file_path)
         if response.status_code == 200:
-            print("File uploaded successfully!")
             file_id, response_data = obtener_file_id(response)
-            print(response_data)
         else:
-            raise HTTPException(status_code=response.status_code, detail=f"Error al cargar el archivo. {response.text}")
-
-        if not file_id:
-            raise HTTPException(status_code=400, detail="File ID no encontrado.")
-
-        print(f"File ID: {file_id}")
-
-        while True:
-            time.sleep(10)
-            status_response = consultar_status(api_key, file_id)
-            status = status_response.get("status")
-            print(f"Current status: {status}")
-
-            if status == "finished":
-                break
-            elif status in ["error", "failed"]:
-                raise HTTPException(status_code=400, detail=f"El procesamiento del archivo falló con el status: {status}")
-
-        descargar_resultado(api_key, file_id)
-
-        quality = pd.read_csv(resultado_file_path)
-        validated_df = pd.read_excel(validacion_inicial_file_path)
-        validated_df['¿EL email es inválido?'] = quality['quality']
-        os.remove(resultado_file_path)
-        validated_df['¿EL email es inválido?'] = validated_df['¿EL email es inválido?'].apply(lambda x: 'SI' if x == 'bad' else 'NO')
-        validated_df.to_excel(validacion_inicial_file_path, index=False)
-
-        count_si = validated_df[validated_df['¿EL email es inválido?'] == 'SI'].shape[0]
-        count_no = validated_df[validated_df['¿EL email es inválido?'] == 'NO'].shape[0]
-        message = (
-            
-            f"Los estudiantes que pasaron exitosamente la verificación fueron: {count_no}.\n"
-            f"Los estudiantes que no pasaron exitosamente la verificación fueron: {count_si}.\n"
-            
-        )
-        return PlainTextResponse(content=message)
-
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail=f"El archivo en la ruta '{file_path}' no fue encontrado.")
+            return PlainTextResponse(
+                content=f"Error al cargar el archivo: {response.text}",
+                status_code=response.status_code,
+            )
     except requests.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Error al comunicar con el servicio de verificación: {e}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
+        return PlainTextResponse(
+            content=f"Error al comunicar con el servicio de verificación: {e}",
+            status_code=500,
+        )
 
+    # Esperar a que el proceso termine
+    while True:
+        time.sleep(10)
+        try:
+            status_response = consultar_status(api_key, file_id)
+        except requests.RequestException as e:
+            return PlainTextResponse(
+                content=f"Error al obtener el estado del archivo: {e}",
+                status_code=500,
+            )
+
+        status = status_response.get("status")
+
+        if status == "finished":
+            break
+        elif status in ["error", "failed"]:
+            return PlainTextResponse(
+                content=f"El procesamiento del archivo falló con el status: {status}",
+                status_code=400,
+            )
+
+    # Descargar el archivo de resultado
+    try:
+        descargar_resultado(api_key, file_id)
+    except (requests.RequestException, FileNotFoundError) as e:
+        return PlainTextResponse(
+            content=f"An error occurred: {e}",
+            status_code=500,
+        )
+
+    # Leer el archivo de resultado
+    try:
+        quality = pd.read_csv(resultado_file_path)
+    except FileNotFoundError as e:
+        return PlainTextResponse(
+            content=f"El archivo en la ruta '{resultado_file_path}' no fue encontrado: {e}",
+            status_code=404,
+        )
+
+    # Actualizar la columna de validación solo para los correos que pasaron la validación inicial
+    try:
+        validated_df = pd.read_excel(validacion_inicial_file_path)
+    except FileNotFoundError as e:
+        return PlainTextResponse(
+            content=f"El archivo en la ruta '{validacion_inicial_file_path}' no fue encontrado: {e}",
+            status_code=404,
+        )
+
+    if "¿EL email es inválido?" not in validated_df.columns:
+        validated_df["¿EL email es inválido?"] = "NO"
+
+    # Primero, mapeamos los resultados de calidad con los correos
+    quality_map = dict(zip(quality["email"], quality["quality"]))
+
+
+    # Luego, aplicamos la actualización de la columna "¿EL email es inválido?"
+    validated_df["¿EL email es inválido?"] = validated_df.apply(
+        lambda row: "SI" if row["CORREO"] not in quality_map or quality_map.get(row["CORREO"]) == "bad" else row["¿EL email es inválido?"],
+        axis=1
+    )
+
+    # Eliminar el archivo de resultado temporal
+    try:
+        os.remove(resultado_file_path)
+    except FileNotFoundError:
+        pass  # Ignorar si el archivo ya fue eliminado
+
+    # Guardar el archivo actualizado con la validación
+    try:
+        validated_df.to_excel(validacion_inicial_file_path, index=False)
+    except Exception as e:
+        return PlainTextResponse(
+            content=f"Error al guardar el archivo Excel: {e}",
+            status_code=500,
+        )
+
+    # Contar la cantidad de correos válidos e inválidos
+    count_si = validated_df[validated_df["¿EL email es inválido?"] == "SI"].shape[0]
+    count_no = validated_df[validated_df["¿EL email es inválido?"] == "NO"].shape[0]
+
+    # Mensaje de respuesta
+    message = (
+        f"Los estudiantes que pasaron exitosamente la verificación fueron: {count_no}.\n"
+        f"Los estudiantes que no pasaron exitosamente la verificación fueron: {count_si}.\n"
+    )
+    return PlainTextResponse(content=message)
