@@ -15,7 +15,7 @@ from routers.validacion_cedula import validacion_cedula_router
 from routers.validar_archivo import  verificacion_inicial_archivo
 # Correos
 from routers.Envio_Correo import correo_router
-from routers.verificar_correos import verificar_correos
+from routers.verificar_correos import verificar_correos_router
 from routers.Envio_Correo_Archivo_Adjunto import correo_archivo_adjunto_router
 
 # Cursos
@@ -85,7 +85,7 @@ app.include_router(prueba_conseguir_id)
 app.include_router(validacion_cedula_router)
 app.include_router(subida_de_archivo_router)
 app.include_router(validacion_nombres_apellidos_router)
-app.include_router(verificar_correos)
+app.include_router(verificar_correos_router)
 app.include_router(validacion_numeros_whatsapp_router)
 app.include_router(normalizacion_router)
 app.include_router(validacion_final)
