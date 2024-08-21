@@ -94,7 +94,9 @@ def map_cities_to_representative(city_list, representative_names, threshold):
 def validar_pais(pais):
     if not isinstance(pais, str):
         return 'SI'
-    if len(pais) == 0:
+    if len(pais) == 0 or len(pais) < 3:
+        return 'SI'
+    if not re.match("^[a-zA-Z ]+$", pais):
         return 'SI'
     return 'NO'
 
