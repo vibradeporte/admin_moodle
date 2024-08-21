@@ -158,6 +158,8 @@ async def validate_students():
     try:
         validacion = 'temp_files/validacion_inicial.xlsx'
         matriculas_aceptadas = pd.read_excel(validacion)
+        matriculas_aceptadas = matriculas_aceptadas.drop_duplicates()
+        matriculas_aceptadas = matriculas_aceptadas.reset_index(drop=True)
         user_db_path = 'temp_files/usuarios_completos.csv'
         if not os.path.exists(user_db_path):
             empty_df = pd.DataFrame(columns=['username', 'firstname', 'lastname', 'email', 'phone1'])
