@@ -42,7 +42,7 @@ def estudiantes_matriculados():
                         'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
                         'NRO_DIAS_DE_MATRICULAS', 'NOMBRE_CORTO_CURSO']
     df = df[columnas_interes]
-
+    df.dropna(subset=columnas_interes, inplace=True)
     df = df.rename(columns={
         'username': 'IDENTIFICACION',
         'firstname': 'NOMBRES',
@@ -77,8 +77,6 @@ def estudiantes_no_matriculados():
     Devuelve un DataFrame con los estudiantes que no se han matriculado
     """
     invalid_students_file_path = 'temp_files/estudiantes_invalidos.xlsx'
-    if not os.path.exists(invalid_students_file_path):
-        return pd.DataFrame()
 
     df = pd.read_excel(invalid_students_file_path)
     if df.empty:
@@ -87,12 +85,20 @@ def estudiantes_no_matriculados():
                        'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
                        'NOMBRE_CORTO_CURSO']
 
-    df.dropna(inplace=True)
+    df.dropna(subset=columnas_interes, inplace=True)
     df.fillna('SIN DATOS', inplace=True)
     df = df[columnas_interes]
 
-    df.rename(columns={'username': 'IDENTIFICACION', 'firstname': 'NOMBRES', 'lastname': 'APELLIDOS', 'email': 'CORREO',
-                       'MOVIL': 'MOVIL', 'country': 'PAIS_DEL_MOVIL', 'city': 'CIUDAD'}, inplace=True)
+    df = df.rename(columns={
+        'username': 'IDENTIFICACION',
+        'firstname': 'NOMBRES',
+        'lastname': 'APELLIDOS',
+        'email': 'CORREO',
+        'MOVIL': 'MOVIL',
+        'country': 'PAIS_DEL_MOVIL',
+        'city': 'CIUDAD'
+    })
+
 
     extra_columns = pd.DataFrame({
         'RES_MATRICULA': ['NO MATRICULADO'] * len(df),
@@ -108,25 +114,37 @@ def estudiantes_no_matriculados():
 
 @poblar_tabla_detalle_matricula_router.post("/poblar_tabla_detalle_matricula/{fid_matricula}", response_model=int, tags=['Base de Datos'])
 def create_matricula(fid_matricula: int):
+    # Obtener los datos de estudiantes matriculados y no matriculados
     estudiantes_matriculados_df = estudiantes_matriculados()
     estudiantes_no_matriculados_df = estudiantes_no_matriculados()
-
+    
+    
+    # Verificar si ambos DataFrames están vacíos
     if estudiantes_matriculados_df.empty and estudiantes_no_matriculados_df.empty:
         raise HTTPException(status_code=400, detail="No hay datos para insertar")
 
-
-    df = pd.concat([estudiantes_matriculados_df, estudiantes_no_matriculados_df], ignore_index=True)
-
-    df['FID_MATRICULA'] = fid_matricula
+    # Concatenar solo si ambos DataFrames no están vacíos
+    if not estudiantes_matriculados_df.empty and not estudiantes_no_matriculados_df.empty:
+        df = pd.concat([estudiantes_matriculados_df, estudiantes_no_matriculados_df], ignore_index=False)
+    elif not estudiantes_matriculados_df.empty:  # Solo hay datos de estudiantes matriculados
+        df = estudiantes_matriculados_df
+    elif not estudiantes_no_matriculados_df.empty:  # Solo hay datos de estudiantes no matriculados
+        df = estudiantes_no_matriculados_df
     
+    # Agregar la columna 'FID_MATRICULA'
+    df['FID_MATRICULA'] = fid_matricula
+
+
     try:
+        # Intentar insertar los datos en la tabla 'DETALLE_MATRICULA'
         df.to_sql('DETALLE_MATRICULA', con=engine, if_exists='append', index=False)
     except Exception as e:
+        # En caso de error, lanzar una excepción con detalles
         raise HTTPException(status_code=400, detail=f"Error al insertar los datos: {e}")
 
+    # Obtener el ID insertado más recientemente
     with engine.connect() as connection:
         result = connection.execute(text("SELECT LAST_INSERT_ID()"))
         new_id = result.scalar()
 
     return new_id
-
