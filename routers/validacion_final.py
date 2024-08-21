@@ -54,104 +54,89 @@ class StringScoreCalculator:
         return rabbit_score * 100
 
 def solo_numeros(numero):
-    if pd.isna(numero) or str(numero).strip() == '':
-        return 'SIN NUMERO'
+    if pd.isna(numero):
+        return ''
     numero_str = str(numero)
     return re.sub(r'\D', '', numero_str)
 
-
-def sonMuyParecidos(nombre1, nombre2, threshold=90):
+def sonMuyParecidos(nombre1, nombre2, threshold=80):
     calculator = StringScoreCalculator()
-    nombre1 = str(nombre1).strip().lower()
-    nombre2 = str(nombre2).strip().lower()
+    nombre1 = str(nombre1).strip()
+    nombre2 = str(nombre2).strip()
     similarity = calculator.calculate_similarity_score(nombre1, nombre2)
     return similarity >= threshold
+
+def buscarCedula(cedula, df):
+    cedula = str(cedula)
+    limiteInferior = 0
+    limiteSuperior = len(df) - 1
+    while limiteInferior <= limiteSuperior:
+        filaUsuarioActual = (limiteInferior + limiteSuperior) // 2
+        actual_cedula = str(df.iloc[filaUsuarioActual]['username'])
+        if cedula == actual_cedula:
+            return filaUsuarioActual
+        elif cedula < actual_cedula:
+            limiteSuperior = filaUsuarioActual - 1
+        else:
+            limiteInferior = filaUsuarioActual + 1
+    return -1
 
 def buscarPorNombresApellidosCorreo(nombre, apellido, correo, bd_usuarios):
     for index, row in bd_usuarios.iterrows():
         if (sonMuyParecidos(row['firstname'], nombre) and
             sonMuyParecidos(row['lastname'], apellido) and
-            sonMuyParecidos(row['email'], correo)):
+            row['email'].lower() == correo.lower()):
             return index
     return -1
 
-
 def buscarPorNombresApellidosTelefono(nombre, apellido, telefono, bd_usuarios):
-    telefono = solo_numeros(telefono)  # Normalize phone number for comparison
     for index, row in bd_usuarios.iterrows():
         if (sonMuyParecidos(row['firstname'], nombre) and
             sonMuyParecidos(row['lastname'], apellido) and
-            sonMuyParecidos(solo_numeros(row['phone1']), telefono)):
+            sonMuyParecidos(row['phone1'], telefono)):
             return index
     return -1
 
-
-
-
 def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
-    calculator = StringScoreCalculator()
     estudiantes_matricular['Estado'] = ''
-
+    
     for index, row in estudiantes_matricular.iterrows():
-        cedulaUsuarioAMatricular = str(row['username']).strip()
-        strApellido = row['lastname'].strip().upper()
-        strNombre = row['firstname'].strip().upper()
-        correoUsuario = row['email'].strip().lower()
-        telefonoUsuario = solo_numeros(row['phone1'])
-
-        filaUsuarioActual = BD_USUARIOS[BD_USUARIOS['username'].apply(lambda x: str(x).strip()) == cedulaUsuarioAMatricular]
+        cedulaUsuarioAMatricular = row['username']
+        strApellido = row['lastname']
+        strNombre = row['firstname']
+        correoUsuario = row['email']
+        telefonoUsuario = row['phone1']
         
-        if not filaUsuarioActual.empty:
-            usuario_encontrado = filaUsuarioActual.iloc[0]
-            apellido_similar = calculator.calculate_similarity_score(strApellido, usuario_encontrado['lastname'].strip().upper()) >= 90
-            nombre_similar = calculator.calculate_similarity_score(strNombre, usuario_encontrado['firstname'].strip().upper()) >= 90
-            correo_similar = calculator.calculate_similarity_score(correoUsuario, usuario_encontrado['email'].strip().lower()) >= 90
-            telefono_similar = calculator.calculate_similarity_score(telefonoUsuario, solo_numeros(usuario_encontrado['phone1'])) >= 90
-
-            if apellido_similar and nombre_similar and cedulaUsuarioAMatricular == str(usuario_encontrado['username']).strip():
-                estudiantes_matricular.at[index, 'Estado'] = 'Existe en la BD'
-            else:
-                datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']} Teléfono: {usuario_encontrado['phone1']}"
-                if apellido_similar and not nombre_similar:
+        filaUsuarioActual = buscarCedula(cedulaUsuarioAMatricular, BD_USUARIOS)
+        
+        if filaUsuarioActual != -1:
+            usuario_encontrado = BD_USUARIOS.iloc[filaUsuarioActual]
+            if sonMuyParecidos(strApellido, usuario_encontrado['lastname']):
+                if sonMuyParecidos(strNombre, usuario_encontrado['firstname']):
+                    estudiantes_matricular.at[index, 'Estado'] = 'Existe en la BD'
+                else:
+                    datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']}"
                     estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Apellido SIMILAR y nombre DIFERENTE]"
-                elif not apellido_similar:
-                    estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Apellido DIFERENTE]"
+            else:
+                datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']}"
+                estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Apellido DIFERENTE]"
         else:
-            filaConNombresSimilares = BD_USUARIOS[
-                BD_USUARIOS.apply(
-                    lambda x: (
-                        calculator.calculate_similarity_score(strNombre, x['firstname'].strip().upper()) >= 90 and
-                        calculator.calculate_similarity_score(strApellido, x['lastname'].strip().upper()) >= 90
-                    ), axis=1
-                )
-            ]
-
-            if not filaConNombresSimilares.empty:
-                filaConCorreoSimilar = filaConNombresSimilares[
-                    filaConNombresSimilares.apply(
-                        lambda x: calculator.calculate_similarity_score(correoUsuario, x['email'].strip().lower()) >= 90, axis=1
-                    )
-                ]
-                filaConTelefonoSimilar = filaConNombresSimilares[
-                    filaConNombresSimilares.apply(
-                        lambda x: calculator.calculate_similarity_score(telefonoUsuario, solo_numeros(x['phone1'])) >= 90, axis=1
-                    )
-                ]
-
-                if not filaConCorreoSimilar.empty:
-                    usuario_encontrado = filaConCorreoSimilar.iloc[0]
+            filaConNombresSimilares = buscarPorNombresApellidosCorreo(strNombre, strApellido, correoUsuario, BD_USUARIOS)
+            if filaConNombresSimilares != -1:
+                usuario_encontrado = BD_USUARIOS.iloc[filaConNombresSimilares]
+                filaConNombresApellidosTelefonoSimilares = buscarPorNombresApellidosTelefono(strNombre, strApellido, telefonoUsuario, BD_USUARIOS)
+                
+                if filaConNombresApellidosTelefonoSimilares != -1:
+                    usuario_encontrado = BD_USUARIOS.iloc[filaConNombresApellidosTelefonoSimilares]
                     datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']} Teléfono: {usuario_encontrado['phone1']}"
-                    estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Cédula DIFERENTE, nombres, apellidos y correo SIMILARES]"
-                elif not filaConTelefonoSimilar.empty:
-                    usuario_encontrado = filaConTelefonoSimilar.iloc[0]
-                    datosCompletosUsuarioEnBd = f"Nombre: {usuario_encontrado['firstname']} Apellido: {usuario_encontrado['lastname']} Correo: {usuario_encontrado['email']} Cédula: {usuario_encontrado['username']} Teléfono: {usuario_encontrado['phone1']}"
-                    estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Cédula DIFERENTE, nombres, apellidos y teléfono SIMILARES]"
+                    estudiantes_matricular.at[index, 'Estado'] = f"@ID: {datosCompletosUsuarioEnBd} [Cédula DIFERENTE, nombres, apellidos y teléfono muy SIMILARES]"
                 else:
                     estudiantes_matricular.at[index, 'Estado'] = 'NO está en la BD esa cédula'
             else:
                 estudiantes_matricular.at[index, 'Estado'] = 'NO está en la BD esa cédula'
     
     return estudiantes_matricular
+
 
 @validacion_final.post("/validacion_final/", tags=['Moodle'])
 async def validate_students():
@@ -166,21 +151,21 @@ async def validate_students():
             empty_df.to_csv(user_db_path, index=False)
         estudiantes_matricular = pd.DataFrame({
             'username': matriculas_aceptadas['IDENTIFICACION'].fillna('NO IDENTIFICACION'),
-            'TIPO_IDENTIFICACION': matriculas_aceptadas['TIPO_IDENTIFICACION'].astype(str).fillna('SIN TIPO DE IDENTIFICACION'),
-            'email': matriculas_aceptadas['CORREO'].astype(str).fillna('NO CORREO'),
-            'firstname': matriculas_aceptadas['NOMBRES'].astype(str).str.upper().fillna('SIN NOMBRES'),
-            'lastname': matriculas_aceptadas['APELLIDOS'].astype(str).str.upper().fillna('SIN APELLIDOS'),
-            'phone1': matriculas_aceptadas['Numero_Con_Prefijo'].astype(str).apply(solo_numeros),
+            'TIPO_IDENTIFICACION': matriculas_aceptadas['TIPO_IDENTIFICACION'].fillna('SIN TIPO DE IDENTIFICACION'),
+            'email': matriculas_aceptadas['CORREO'].fillna('NO CORREO'),
+            'firstname': matriculas_aceptadas['NOMBRES'].str.upper().fillna('SIN NOMBRES'),
+            'lastname': matriculas_aceptadas['APELLIDOS'].str.upper().fillna('SIN APELLIDOS'),
+            'phone1': matriculas_aceptadas['Numero_Con_Prefijo'].apply(solo_numeros).fillna(''),
             'city': matriculas_aceptadas['CIUDAD'].astype(str).str.upper().fillna('SIN CIUDAD'),
-            'country': matriculas_aceptadas['PAIS_DE_RESIDENCIA'].astype(str).str.upper().fillna('SIN PAÍS'),
+            'country': matriculas_aceptadas['PAIS_DE_RESIDENCIA'].str.upper().fillna('SIN PAÍS'),
             'address': matriculas_aceptadas.apply(lambda row: f"{row['TIPO_IDENTIFICACION']} {row['IDENTIFICACION']}", axis=1),
-            'description': matriculas_aceptadas['DESCRIPCIÓN'],
-            'lastnamephonetic': matriculas_aceptadas['lastnamephonetic'],
-            'EMPRESA': matriculas_aceptadas['EMPRESA'].astype(str).fillna(' '),
-            'CORREO_SOLICITANTE': matriculas_aceptadas['CORREO_SOLICITANTE'].astype(str).fillna(' '),
-            'NRO_SEMANAS_DE_MATRICULA': matriculas_aceptadas['NRO_SEMANAS_DE_MATRICULA'],
-            'NOMBRE_CORTO_CURSO': matriculas_aceptadas['NOMBRE_CORTO_CURSO'].astype(str).fillna('SIN NOMBRE CORTO CURSO'),
-            'NOMBRE_LARGO_CURSO': matriculas_aceptadas['NOMBRE_LARGO_CURSO'].astype(str).fillna('SIN NOMBRE LARGO'),
+            'description': matriculas_aceptadas['DESCRIPCIÓN'].fillna(''),
+            'lastnamephonetic': matriculas_aceptadas['lastnamephonetic'].fillna(''),
+            'EMPRESA': matriculas_aceptadas['EMPRESA'].fillna(''),
+            'CORREO_SOLICITANTE': matriculas_aceptadas['CORREO_SOLICITANTE'].fillna(''),
+            'NRO_SEMANAS_DE_MATRICULA': matriculas_aceptadas['NRO_SEMANAS_DE_MATRICULA'].fillna(''),
+            'NOMBRE_CORTO_CURSO': matriculas_aceptadas['NOMBRE_CORTO_CURSO'].fillna('SIN NOMBRE CORTO CURSO'),
+            'NOMBRE_LARGO_CURSO': matriculas_aceptadas['NOMBRE_LARGO_CURSO'].fillna('SIN NOMBRE LARGO'),
             '¿EL email es inválido?': matriculas_aceptadas['¿EL email es inválido?'],
             '¿La cédula es inválida?': matriculas_aceptadas['cedula_es_invalida'],
             '¿Hay más de una solicitud de matrícula?': matriculas_aceptadas['Existen_Mas_Solicitudes_De_Matricula'],
@@ -220,7 +205,7 @@ async def validate_students():
         estudiantes_que_no_seran_matriculados.to_excel('temp_files/estudiantes_invalidos.xlsx', index=False)
         if os.path.exists(validacion):
             os.remove(validacion)
-        
+
         inconsistencias = len(estudiantes_que_no_seran_matriculados)
         correctos = len(estudiantes_a_matricular)
         message = (
@@ -231,5 +216,4 @@ async def validate_students():
 
         return PlainTextResponse(content=message)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {e}") 
-
+        raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
