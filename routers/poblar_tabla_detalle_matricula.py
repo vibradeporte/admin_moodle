@@ -114,12 +114,8 @@ def create_matricula(fid_matricula: int):
     if estudiantes_matriculados_df.empty and estudiantes_no_matriculados_df.empty:
         raise HTTPException(status_code=400, detail="No hay datos para insertar")
 
-    if estudiantes_matriculados_df.empty:
-        df = estudiantes_no_matriculados_df
-    elif estudiantes_no_matriculados_df.empty:
-        df = estudiantes_matriculados_df
-    else:
-        df = pd.concat([estudiantes_matriculados_df, estudiantes_no_matriculados_df], ignore_index=True)
+
+    df = pd.concat([estudiantes_matriculados_df, estudiantes_no_matriculados_df], ignore_index=True)
 
     df['FID_MATRICULA'] = fid_matricula
     
@@ -133,6 +129,4 @@ def create_matricula(fid_matricula: int):
         new_id = result.scalar()
 
     return new_id
-
-
 
