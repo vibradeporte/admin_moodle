@@ -108,9 +108,7 @@ async def verificar_correos():
     if df_to_validate.empty:
         df.to_excel(validacion_inicial_file_path, index=False)
         return PlainTextResponse(
-            content="No hay correos válidos a validar en el archivo. Todos los correos se marcaron como inválidos.",
-            status_code=400,
-        )
+            content="No hay correos válidos a validar en el archivo. Todos los correos se marcaron como inválidos.")
 
     # Guardar los correos a validar en el archivo CSV
     try:
