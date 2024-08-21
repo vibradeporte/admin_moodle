@@ -55,19 +55,19 @@ def estudiantes_matriculados():
 
     if os.path.exists('temp_files/message_ids.csv'):
         df_mensajes_correo = pd.read_csv('temp_files/message_ids.csv')
-        df_mensajes_correo = df_mensajes_correo.rename(columns={'message_id': 'RESULTADO_CORREO_BIENVENIDA'})
+        df_mensajes_correo = df_mensajes_correo.rename(columns={'message_id': 'RES_CORREO_BIENVENIDA'})
         df = pd.concat([df, df_mensajes_correo], axis=1)
     else:
-        df['RESULTADO_CORREO_BIENVENIDA'] = 'NO ENVIADO AL CORREO'
+        df['RES_CORREO_BIENVENIDA'] = 'NO ENVIADO AL CORREO'
 
     if os.path.exists('temp_files/message_status_wapp.csv'):
         df_estado_wapp = pd.read_csv('temp_files/message_status_wapp.csv', usecols=['message_status'])
-        df_estado_wapp = df_estado_wapp.rename(columns={'message_status': 'RESULTADO_WS_BIENVENIDA'})
+        df_estado_wapp = df_estado_wapp.rename(columns={'message_status': 'RES_WS_BIENVENIDA'})
         df = pd.concat([df, df_estado_wapp], axis=1)
     else:
-        df['RESULTADO_WS_BIENVENIDA'] = 'NO ENVIADO A WAPP'
+        df['RES_WS_BIENVENIDA'] = 'NO ENVIADO A WAPP'
 
-    df['RESULTADO_MATRICULA'] = 'MATRICULADO'
+    df['RES_MATRICULA'] = 'MATRICULADO'
 
     return df
 
@@ -133,7 +133,6 @@ def create_matricula(fid_matricula: int):
         new_id = result.scalar()
 
     return new_id
-
 
 
 
