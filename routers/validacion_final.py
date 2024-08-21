@@ -190,6 +190,7 @@ async def validate_students():
             '¿El número de whatsapp es invalido?': matriculas_aceptadas['Numero_Wapp_Incorrecto'],
             '¿Hay nombres inválidos de cursos?': matriculas_aceptadas['nombre_De_Curso_Invalido'],
             '¿Tiene matrícula activa?': matriculas_aceptadas['Esta_activo_estudiante'],
+            '¿El campo del pais esta vacío?' : matriculas_aceptadas['El campo del pais esta vacío'],
             'Advertencia de curso culminado': matriculas_aceptadas['ADVERTENCIA_CURSO_CULMINADO'],
             'MOVIL': matriculas_aceptadas['NUMERO_MOVIL_WS_SIN_PAIS']
         })
