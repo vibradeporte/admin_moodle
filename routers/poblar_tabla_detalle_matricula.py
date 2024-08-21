@@ -30,7 +30,6 @@ def estudiantes_matriculados():
         return df
 
     df = pd.read_csv(ruta_archivo)
-    df = df.dropna(how='all')
 
     if df.empty:
         return df
@@ -42,7 +41,8 @@ def estudiantes_matriculados():
                         'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
                         'NRO_DIAS_DE_MATRICULAS', 'NOMBRE_CORTO_CURSO']
     df = df[columnas_interes]
-    df.dropna(subset=columnas_interes, inplace=True)
+    df.dropna(subset=columnas_interes, how='all', inplace=True)
+    df.fillna('SIN DATOS', inplace=True)
     df = df.rename(columns={
         'username': 'IDENTIFICACION',
         'firstname': 'NOMBRES',
@@ -52,7 +52,7 @@ def estudiantes_matriculados():
         'country': 'PAIS_DEL_MOVIL',
         'city': 'CIUDAD'
     })
-
+    
     if os.path.exists('temp_files/message_ids.csv'):
         df_mensajes_correo = pd.read_csv('temp_files/message_ids.csv')
         df_mensajes_correo = df_mensajes_correo.rename(columns={'message_id': 'RES_CORREO_BIENVENIDA'})
@@ -84,8 +84,8 @@ def estudiantes_no_matriculados():
     columnas_interes = ['username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
                        'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
                        'NOMBRE_CORTO_CURSO']
-
-    df.dropna(subset=columnas_interes, inplace=True)
+    
+    df.dropna(subset=columnas_interes, how='all', inplace=True)
     df.fillna('SIN DATOS', inplace=True)
     df = df[columnas_interes]
 
