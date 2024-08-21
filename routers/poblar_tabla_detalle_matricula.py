@@ -22,20 +22,26 @@ poblar_tabla_detalle_matricula_router = APIRouter()
 
 def estudiantes_matriculados():
     """
-    Devuelve un DataFrame con los estudiantes que se han matriculado con exito
+    Devuelve un DataFrame con los estudiantes que se han matriculado con éxito
     """
-    if not os.path.exists('temp_files/estudiantes_validados.csv'):
-        return pd.DataFrame()
+    ruta_archivo = 'temp_files/estudiantes_validados.csv'
+    if not os.path.exists(ruta_archivo):
+        df = pd.DataFrame()
+        return df
 
-    columns_to_read = ['username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
-                       'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
-                       'NRO_DIAS_DE_MATRICULAS', 'NOMBRE_CORTO_CURSO']
-
-    df = pd.read_csv('temp_files/estudiantes_validados.csv', usecols=columns_to_read)
+    df = pd.read_csv(ruta_archivo)
     df = df.dropna(how='all')
 
     if df.empty:
         return df
+
+    if 'NRO_DIAS_DE_MATRICULAS' not in df.columns:
+        df['NRO_DIAS_DE_MATRICULAS'] = 0
+
+    columnas_interes = ['username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
+                        'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
+                        'NRO_DIAS_DE_MATRICULAS', 'NOMBRE_CORTO_CURSO']
+    df = df[columnas_interes]
 
     df = df.rename(columns={
         'username': 'IDENTIFICACION',
@@ -48,20 +54,20 @@ def estudiantes_matriculados():
     })
 
     if os.path.exists('temp_files/message_ids.csv'):
-        df_message_correo = pd.read_csv('temp_files/message_ids.csv')
-        df_message_correo = df_message_correo.rename(columns={'message_id': 'RES_CORREO_BIENVENIDA'})
-        df = pd.concat([df, df_message_correo], axis=1)
+        df_mensajes_correo = pd.read_csv('temp_files/message_ids.csv')
+        df_mensajes_correo = df_mensajes_correo.rename(columns={'message_id': 'RESULTADO_CORREO_BIENVENIDA'})
+        df = pd.concat([df, df_mensajes_correo], axis=1)
     else:
-        df['RES_CORREO_BIENVENIDA'] = 'NO ENVIADO AL CORREO'
+        df['RESULTADO_CORREO_BIENVENIDA'] = 'NO ENVIADO AL CORREO'
 
     if os.path.exists('temp_files/message_status_wapp.csv'):
-        df_wapp = pd.read_csv('temp_files/message_status_wapp.csv', usecols=['message_status'])
-        df_wapp = df_wapp.rename(columns={'message_status': 'RES_WS_BIENVENIDA'})
-        df = pd.concat([df, df_wapp], axis=1)
+        df_estado_wapp = pd.read_csv('temp_files/message_status_wapp.csv', usecols=['message_status'])
+        df_estado_wapp = df_estado_wapp.rename(columns={'message_status': 'RESULTADO_WS_BIENVENIDA'})
+        df = pd.concat([df, df_estado_wapp], axis=1)
     else:
-        df['RES_WS_BIENVENIDA'] = 'NO ENVIADO A WAPP'
+        df['RESULTADO_WS_BIENVENIDA'] = 'NO ENVIADO A WAPP'
 
-    df['RES_MATRICULA'] = 'MATRICULADO'
+    df['RESULTADO_MATRICULA'] = 'MATRICULADO'
 
     return df
 
@@ -102,22 +108,18 @@ def estudiantes_no_matriculados():
 
 @poblar_tabla_detalle_matricula_router.post("/poblar_tabla_detalle_matricula/{fid_matricula}", response_model=int, tags=['Base de Datos'])
 def create_matricula(fid_matricula: int):
-    df_estudiantes_validos = estudiantes_matriculados()
-    df_estudiantes_invalidos = estudiantes_no_matriculados()
+    estudiantes_matriculados_df = estudiantes_matriculados()
+    estudiantes_no_matriculados_df = estudiantes_no_matriculados()
 
-    if df_estudiantes_validos is None and df_estudiantes_invalidos is None:
+    if estudiantes_matriculados_df.empty and estudiantes_no_matriculados_df.empty:
         raise HTTPException(status_code=400, detail="No hay datos para insertar")
 
-    if df_estudiantes_validos is None:
-        df = df_estudiantes_invalidos
-    elif df_estudiantes_invalidos is None:
-        df = df_estudiantes_validos
+    if estudiantes_matriculados_df.empty:
+        df = estudiantes_no_matriculados_df
+    elif estudiantes_no_matriculados_df.empty:
+        df = estudiantes_matriculados_df
     else:
-        df = pd.concat([df_estudiantes_validos, df_estudiantes_invalidos], ignore_index=True)
-
-
-    if df is None:
-        raise HTTPException(status_code=400, detail="No se puede concatenar los DataFrames")
+        df = pd.concat([estudiantes_matriculados_df, estudiantes_no_matriculados_df], ignore_index=True)
 
     df['FID_MATRICULA'] = fid_matricula
     
@@ -126,14 +128,12 @@ def create_matricula(fid_matricula: int):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al insertar los datos: {e}")
 
-    try:
-        with engine.connect() as connection:
-            result = connection.execute(text("SELECT LAST_INSERT_ID()"))
-            new_id = result.scalar()
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error al obtener el ID del registro insertado: {e}")
+    with engine.connect() as connection:
+        result = connection.execute(text("SELECT LAST_INSERT_ID()"))
+        new_id = result.scalar()
 
     return new_id
+
 
 
 
