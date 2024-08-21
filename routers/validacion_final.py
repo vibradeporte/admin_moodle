@@ -150,22 +150,23 @@ async def validate_students():
             empty_df = pd.DataFrame(columns=['username', 'firstname', 'lastname', 'email', 'phone1'])
             empty_df.to_csv(user_db_path, index=False)
         estudiantes_matricular = pd.DataFrame({
-            'username': matriculas_aceptadas['IDENTIFICACION'].fillna('NO IDENTIFICACION'),
-            'TIPO_IDENTIFICACION': matriculas_aceptadas['TIPO_IDENTIFICACION'].fillna('SIN TIPO DE IDENTIFICACION'),
-            'email': matriculas_aceptadas['CORREO'].fillna('NO CORREO'),
-            'firstname': matriculas_aceptadas['NOMBRES'].str.upper().fillna('SIN NOMBRES'),
-            'lastname': matriculas_aceptadas['APELLIDOS'].str.upper().fillna('SIN APELLIDOS'),
+            'username': matriculas_aceptadas['IDENTIFICACION'].fillna('NO IDENTIFICACION').astype(str),
+            'TIPO_IDENTIFICACION': matriculas_aceptadas['TIPO_IDENTIFICACION'].fillna('SIN TIPO DE IDENTIFICACION').astype(str),
+            'email': matriculas_aceptadas['CORREO'].fillna('NO CORREO').astype(str),
+            'firstname': matriculas_aceptadas['NOMBRES'].astype(str).str.upper().fillna('SIN NOMBRES'),
+            'lastname': matriculas_aceptadas['APELLIDOS'].astype(str).str.upper().fillna('SIN APELLIDOS'),
+            'MOVIL': matriculas_aceptadas['NUMERO_MOVIL_WS_SIN_PAIS'].astype(str).str.upper().fillna('SIN MOVIL'),
             'phone1': matriculas_aceptadas['Numero_Con_Prefijo'].apply(solo_numeros).fillna(''),
             'city': matriculas_aceptadas['CIUDAD'].astype(str).str.upper().fillna('SIN CIUDAD'),
-            'country': matriculas_aceptadas['PAIS_DE_RESIDENCIA'].str.upper().fillna('SIN PAÍS'),
+            'country': matriculas_aceptadas['PAIS_DE_RESIDENCIA'].astype(str).str.upper().fillna('SIN PAÍS'),
             'address': matriculas_aceptadas.apply(lambda row: f"{row['TIPO_IDENTIFICACION']} {row['IDENTIFICACION']}", axis=1),
             'description': matriculas_aceptadas['DESCRIPCIÓN'].fillna(''),
             'lastnamephonetic': matriculas_aceptadas['lastnamephonetic'].fillna(''),
             'EMPRESA': matriculas_aceptadas['EMPRESA'].fillna(''),
             'CORREO_SOLICITANTE': matriculas_aceptadas['CORREO_SOLICITANTE'].fillna(''),
             'NRO_SEMANAS_DE_MATRICULA': matriculas_aceptadas['NRO_SEMANAS_DE_MATRICULA'].fillna(''),
-            'NOMBRE_CORTO_CURSO': matriculas_aceptadas['NOMBRE_CORTO_CURSO'].fillna('SIN NOMBRE CORTO CURSO'),
-            'NOMBRE_LARGO_CURSO': matriculas_aceptadas['NOMBRE_LARGO_CURSO'].fillna('SIN NOMBRE LARGO'),
+            'NOMBRE_CORTO_CURSO': matriculas_aceptadas['NOMBRE_CORTO_CURSO'].astype(str).fillna('SIN NOMBRE CORTO CURSO'),
+            'NOMBRE_LARGO_CURSO': matriculas_aceptadas['NOMBRE_LARGO_CURSO'].astype(str).fillna('SIN NOMBRE LARGO'),
             '¿EL email es inválido?': matriculas_aceptadas['¿EL email es inválido?'],
             '¿La cédula es inválida?': matriculas_aceptadas['cedula_es_invalida'],
             '¿Hay más de una solicitud de matrícula?': matriculas_aceptadas['Existen_Mas_Solicitudes_De_Matricula'],
@@ -175,9 +176,9 @@ async def validate_students():
             '¿El número de whatsapp es invalido?': matriculas_aceptadas['Numero_Wapp_Incorrecto'],
             '¿Hay nombres inválidos de cursos?': matriculas_aceptadas['nombre_De_Curso_Invalido'],
             '¿Tiene matrícula activa?': matriculas_aceptadas['Esta_activo_estudiante'],
-            '¿El campo del pais esta vacío?' : matriculas_aceptadas['El campo del pais esta vacío'],
-            'Advertencia de curso culminado': matriculas_aceptadas['ADVERTENCIA_CURSO_CULMINADO'],
-            'MOVIL': matriculas_aceptadas['NUMERO_MOVIL_WS_SIN_PAIS']
+            '¿El campo del pais esta vacío?': matriculas_aceptadas['El campo del pais esta vacío'],
+            'Advertencia de curso culminado': matriculas_aceptadas['ADVERTENCIA_CURSO_CULMINADO']
+            
         })
         
         BD_USUARIOS = pd.read_csv('temp_files/usuarios_completos.csv')
