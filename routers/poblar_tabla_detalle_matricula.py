@@ -80,16 +80,16 @@ def estudiantes_no_matriculados():
     if not os.path.exists(invalid_students_file_path):
         return pd.DataFrame()
 
-    columns_to_read = ['username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
+    df = pd.read_excel(invalid_students_file_path)
+    if df.empty:
+        return df
+    columnas_interes = ['username', 'TIPO_IDENTIFICACION', 'firstname', 'lastname', 'email',
                        'MOVIL', 'country', 'city', 'EMPRESA', 'CORREO_SOLICITANTE', 
                        'NOMBRE_CORTO_CURSO']
 
-    df = pd.read_excel(invalid_students_file_path, usecols=columns_to_read)
-    if df.empty:
-        return df
-
     df.dropna(inplace=True)
     df.fillna('SIN DATOS', inplace=True)
+    df = df[columnas_interes]
 
     df.rename(columns={'username': 'IDENTIFICACION', 'firstname': 'NOMBRES', 'lastname': 'APELLIDOS', 'email': 'CORREO',
                        'MOVIL': 'MOVIL', 'country': 'PAIS_DEL_MOVIL', 'city': 'CIUDAD'}, inplace=True)
