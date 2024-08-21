@@ -6,6 +6,7 @@ from sqlalchemy import create_engine, text
 import os
 from datetime import datetime, timedelta
 from urllib.parse import quote_plus
+import re
 
 prueba_conseguir_id = APIRouter()
 
@@ -30,9 +31,6 @@ def calcular_fechas_matricula(row):
     cleaned_semanas = re.sub(r'[^0-9.-]', '', str(row['NRO_SEMANAS_DE_MATRICULA']))
     semanas_inscripcion = pd.to_numeric(cleaned_semanas, errors='coerce')
     dias_curso = int(float(row['CourseDaysDuration']))
-    
-    # Convertir semanas_inscripcion a numérico, coaccionando errores a NaN
-    semanas_inscripcion = pd.to_numeric(semanas_inscripcion, errors='coerce')
     
     if pd.isna(semanas_inscripcion):
         semanas_inscripcion = None
@@ -97,5 +95,4 @@ async def id_estudiante(usuario: str,contrasena: str,host: str,port: str,nombre_
         raise HTTPException(status_code=400, detail=f"Error converting DataFrame to JSON: {str(e)}")
 
     return JSONResponse(content=json_response)
-
 
