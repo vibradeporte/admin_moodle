@@ -20,7 +20,7 @@ def transformar_datos_bienvenida(datos: pd.DataFrame) -> List[Dict]:
             </style>
         </head>
         <body>
-            <img src="https://elaulavirtual.com/giz/info_cliente/imagenes_mensajes/ENCABEZADO_CORREOS_INCAS.png" alt="Banner" class="banner">
+            <img src="https://elaulavirtual.com/imagenes_mensajes/ins/ENCABEZADO_CORREOS_INS2.png" alt="Banner" class="banner">
             <div class="content">
                 <p>Apreciado(a) {fila['firstname']} {fila['lastname']},</p>
                 <p>Reciba un cordial saludo de bienvenida al curso {fila['NOMBRE_LARGO_CURSO']}.</p>
