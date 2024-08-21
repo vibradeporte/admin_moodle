@@ -7,6 +7,7 @@ from collections import Counter
 import numpy as np
 import math
 import uvicorn
+import re 
 
 normalizacion_router = APIRouter()
 
@@ -118,7 +119,7 @@ async def normalizar():
 
         df['EMPRESA'] = [mapped[1] for mapped in empresa_mapping]
         df['CIUDAD'] = [mapped[1] for mapped in ciudad_mapping]
-
+        print(df)
         df.to_excel(file_path, index=False)
 
         message = (
@@ -127,4 +128,5 @@ async def normalizar():
         return PlainTextResponse(content=message)  
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-  
+
+
