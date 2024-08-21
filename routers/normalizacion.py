@@ -90,6 +90,14 @@ def map_cities_to_representative(city_list, representative_names, threshold):
             city_mapping.append((city, city))
     return city_mapping
 
+
+def validar_pais(pais):
+    if not isinstance(pais, str):
+        return 'SI'
+    if len(pais) == 0:
+        return 'SI'
+    return 'NO'
+
 @normalizacion_router.post("/Normalizacion/", tags=['Validacion_Secundaria'])
 async def normalizar():
     try:
@@ -99,6 +107,7 @@ async def normalizar():
             raise HTTPException(status_code=404, detail=f"El archivo en la ruta '{file_path}' no fue encontrado.")
 
         df = pd.read_excel(file_path)
+        df['El campo del pais esta vacío'] = df['PAIS_DE_RESIDENCIA'].apply(validar_pais)
         similarity_threshold = 80
         representative_names_empresa = find_representative_city(df['EMPRESA'], threshold=similarity_threshold)
         representative_names_ciudad = find_representative_city(df['CIUDAD'], threshold=similarity_threshold)
@@ -116,7 +125,4 @@ async def normalizar():
         return PlainTextResponse(content=message)  
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-
   
