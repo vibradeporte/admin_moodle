@@ -64,13 +64,13 @@ def calcular_fechas_matricula(row):
         duracion_matricula = int(semanas_inscripcion * 7)
 
     # Configurar la fecha de inicio a las 00:00 en la hora local (Colombia)
-    fecha_inicio_matricula = datetime.now().replace(hour=5, minute=0, second=0, microsecond=0)
+    fecha_inicio_matricula = datetime.now().replace(hour=4, minute=0, second=0, microsecond=0)
     
     # Calcular la fecha de fin de matrícula sumando la duración de la matrícula
     fecha_fin_matricula = fecha_inicio_matricula + timedelta(days=int(duracion_matricula))
     
     # Establecer la hora de la fecha de fin de matrícula a las 23:59
-    fecha_fin_matricula = fecha_fin_matricula.replace(hour=4, minute=59, second=0, microsecond=0)
+    fecha_fin_matricula = fecha_fin_matricula.replace(hour=3, minute=59, second=0, microsecond=0)
     
     # Convertir las fechas a timestamps
     timestart = int(fecha_inicio_matricula.timestamp())
