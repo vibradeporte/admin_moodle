@@ -28,29 +28,61 @@ HTTP_MESSAGES = {
 }
 
 def calcular_fechas_matricula(row):
-    cleaned_semanas = re.sub(r'[^0-9.]', '', str(row['NRO_SEMANAS_DE_MATRICULA']))
-    semanas_inscripcion = pd.to_numeric(cleaned_semanas, errors='coerce')
+    """
+    Esta función calcula las fechas de inicio y fin de matrícula,
+    así como la duración de la misma, dado un registro (row) de datos.
+    """
+
+    # Reemplazar caracteres no numéricos en la columna NRO_SEMANAS_DE_MATRICULA
+    cleaned_semanas = re.sub(r'[^0-9,.-]', '', str(row['NRO_SEMANAS_DE_MATRICULA'])).replace(',', '.')
+    
+    # Verificar si cleaned_semanas está vacío o contiene un punto
+    if not cleaned_semanas or cleaned_semanas == '.':
+        # Si es así, asignar None a semanas_inscripcion
+        semanas_inscripcion = None
+    else:
+        # De lo contrario, convertir cleaned_semanas a un número entero
+        semanas_inscripcion = int(float(cleaned_semanas))
+    
+    # Convertir la duración del curso a un número entero
     dias_curso = int(float(row['CourseDaysDuration']))
     
-    if pd.isna(semanas_inscripcion):
+    # Verificar si semanas_inscripcion es NaN o menor o igual a 0
+    if pd.isna(semanas_inscripcion) or semanas_inscripcion <= 0:
+        # Si es así, asignar None a semanas_inscripcion
         semanas_inscripcion = None
         
+    # Verificar si semanas_inscripcion es None
     if semanas_inscripcion is None:
+        # Si es así, asignar dias_curso a duracion_matricula
+        duracion_matricula = dias_curso
+    elif dias_curso < int(semanas_inscripcion * 7):
+        # Si la duración del curso es menor que la duración de la matrícula
         duracion_matricula = dias_curso
     else:
+        # Si no, asignar la duración de la matrícula en días
         duracion_matricula = int(semanas_inscripcion * 7)
 
-    fecha_inicio_matricula = datetime.now() 
-    fecha_inicio_matricula = fecha_inicio_matricula.replace(hour=0, minute=0, second=0, microsecond=0)
+    # Configurar la fecha de inicio a las 00:00 en la hora local (Colombia)
+    fecha_inicio_matricula = datetime.now().replace(hour=5, minute=0, second=0, microsecond=0)
+    
+    # Calcular la fecha de fin de matrícula sumando la duración de la matrícula
     fecha_fin_matricula = fecha_inicio_matricula + timedelta(days=int(duracion_matricula))
-    fecha_fin_matricula = fecha_fin_matricula.replace(hour=23, minute=59, second=0, microsecond=0)
     
-    ajuste_por_diferencia_horario = 5 * 60 * 60
+    # Establecer la hora de la fecha de fin de matrícula a las 23:59
+    fecha_fin_matricula = fecha_fin_matricula.replace(hour=4, minute=59, second=0, microsecond=0)
     
-    timestart = int(fecha_inicio_matricula.timestamp()) + ajuste_por_diferencia_horario
-    timeend = int(fecha_fin_matricula.timestamp()) + ajuste_por_diferencia_horario
+    # Convertir las fechas a timestamps
+    timestart = int(fecha_inicio_matricula.timestamp())
+    timeend = int(fecha_fin_matricula.timestamp())
     
+    # Asegurarse de que los timestamps sean positivos
+    timestart = max(timestart, 0)
+    timeend = max(timeend, 0)
+    
+    # Devolver un DataFrame con las fechas de inicio, fin y duración de la matrícula
     return pd.Series([timestart, timeend, duracion_matricula], index=['timestart', 'timeend', 'NRO_DIAS_DE_MATRICULAS'])
+
 
 @prueba_conseguir_id.post("/prueba_conseguir_id/", tags=['Moodle'], status_code=200)
 async def id_estudiante(usuario: str,contrasena: str,host: str,port: str,nombre_base_datos: str):
