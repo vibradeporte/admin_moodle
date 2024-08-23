@@ -19,25 +19,25 @@ file_path = 'temp_files/correos_validar.csv'
 resultado_file_path = 'temp_files/Resultado_Validacion_Correos.csv'
 validacion_inicial_file_path = 'temp_files/validacion_inicial.xlsx'
 
-def es_email_invalido(email):
-    # Verificar si el campo está vacío
-    if email == '' or pd.isna(email):
-        return True
-    
+def es_email_invalido(email):    
     # Validar si el email no contiene el carácter @
     if '@' not in email:
         return True
     
-    # Validar si no hay caracteres antes del signo @
-    if email.split('@')[0] == '':
+    # Separar el correo en la parte local y el dominio
+    local_part, domain_part = email.split('@', 1)
+    
+    # Validar si la parte local está vacía
+    if local_part.strip() == '':
         return True
     
-    # Validar si no hay caracteres después del signo @
-    if len(email.split('@')) < 2 or email.split('@')[1] == '':
+    # Validar si el dominio contiene un punto (.) después del @
+    if '.' not in domain_part:
         return True
     
-    # Validar si no contiene el carácter .
-    if '.' not in email.split('@')[1]:
+    # Validar si hay caracteres antes del último punto en el dominio
+    domain_name, domain_extension = domain_part.rsplit('.', 1)
+    if domain_name.strip() == '' or domain_extension.strip() == '':
         return True
     
     # Si no cumple ninguna de las condiciones anteriores, el correo es válido
@@ -46,17 +46,19 @@ def es_email_invalido(email):
 
 
 
+
 def limpiar_email(email):
-    if email is None:
+    if pd.isna(email) or email is None:
         return "" 
     try:
-        email = str(email)  # in case email is not a string
+        email = str(email)  # Asegurarse de que el correo es una cadena
         email = email.strip().replace("\xa0", "").replace("\t", "")
-        email = " ".join(email.split())
+        email = email.replace(" ", "")  # Eliminar todos los espacios dentro del correo
         return email.lower()
     except Exception as e:
         print(f"Error occurred while cleaning email: {e}")
         return ""
+
 
 def enviar_archivo_a_validar(api_key, file_path):
     url = f"https://bulkapi.millionverifier.com/bulkapi/v2/upload?key={api_key}"
@@ -97,10 +99,18 @@ async def verificar_correos():
             status_code=404,
         )
 
-    # Limpiar correos y asegurarse de que los valores nulos o vacíos se marquen como inválidos
+    # Limpieza y validación del campo CORREO
     df["CORREO"] = df["CORREO"].apply(limpiar_email)
-    df["¿EL email es inválido?"] = df["CORREO"].apply(lambda x: "SI" if pd.isna(x) or str(x).strip() == "" or es_email_invalido(x) else "NO")
+    df["¿EL email es inválido?"] = df["CORREO"].apply(
+        lambda x: "SI" if es_email_invalido(x) or pd.isna(x) or x.strip() == "" else "NO"
+    )
 
+
+
+    
+
+
+# Limpieza y validación del campo CORREO_SOLICITANTE`
     # Filtrar para validar solo los correos que no son inválidos
     df_to_validate = df[df["¿EL email es inválido?"] == "NO"]
 
@@ -196,7 +206,14 @@ async def verificar_correos():
         axis=1
     )
 
-    # Eliminar el archivo de resultado temporal
+
+    validated_df["CORREO_SOLICITANTE"] = df["CORREO_SOLICITANTE"].apply(limpiar_email)
+
+
+    validated_df["¿EL email solicitante es inválido?"] = validated_df["CORREO_SOLICITANTE"].apply(
+        lambda x: "SI" if es_email_invalido(x) else "NO"
+    )
+
     try:
         os.remove(resultado_file_path)
     except FileNotFoundError:
