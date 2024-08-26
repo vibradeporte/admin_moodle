@@ -107,6 +107,7 @@ async def validar_cedula():
             raise HTTPException(status_code=404, detail=f"El archivo en la ruta '{file_path}' no fue encontrado.")
 
         df = pd.read_excel(file_path)
+        df['Existen_Mas_Solicitudes_De_Matricula'] = ''
         df = validar_Cedula(df)
         df = verificar_tipo_identificacion(df)
         df['¿El tipo de identificación es incorrecto?'] = df['TIPO_IDENTIFICACION'].apply(validacion_tipo_identificacion)
@@ -133,4 +134,5 @@ async def validar_cedula():
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
