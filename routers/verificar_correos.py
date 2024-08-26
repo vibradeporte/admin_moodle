@@ -201,9 +201,8 @@ async def verificar_correos():
 
 
     # Luego, aplicamos la actualización de la columna "¿EL email es inválido?"
-    validated_df["¿EL email es inválido?"] = validated_df.apply(
-        lambda row: "SI" if row["CORREO"] not in quality_map or quality_map.get(row["CORREO"]) == "bad" else row["¿EL email es inválido?"],
-        axis=1
+    validated_df["¿EL email solicitante es inválido?"] = validated_df["CORREO_SOLICITANTE"].apply(
+        lambda x: "NO" if pd.isna(x) or x.strip() == "" else ("SI" if es_email_invalido(x) else "NO")
     )
 
 
