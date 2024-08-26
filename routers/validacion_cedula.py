@@ -75,9 +75,25 @@ def cedula_repetida(registro, datos):
     registros_con_misma_cedula = datos[datos['IDENTIFICACION'] == registro['IDENTIFICACION']]
     
     if len(registros_con_misma_cedula) > 1:
+        # Verificar si hay registros duplicados exactos (mismo nombre y apellido)
+        duplicados_exactos = registros_con_misma_cedula[
+            (registros_con_misma_cedula['NOMBRES'] == registro['NOMBRES']) &
+            (registros_con_misma_cedula['APELLIDOS'] == registro['APELLIDOS'])&
+            (registros_con_misma_cedula['NOMBRE_CORTO_CURSO'] == registro['NOMBRE_CORTO_CURSO'])
+        ]
+        
+        if len(duplicados_exactos) > 1:
+            # Marcar todos como 'SI' excepto el último, que se marca como 'NO'
+            if registro.name == duplicados_exactos.index[-1]:
+                return "NO"
+            else:
+                return "SI"
+        
+        # Verificar si hay duplicados con diferentes nombres o apellidos
         if _verificar_si_hay_duplicados_con_distintos_nombres_o_apellidos(registros_con_misma_cedula):
             return "SI"
         
+        # Verificar si hay duplicados en el mismo curso
         if _tiene_registros_duplicados_con_mismo_curso(registros_con_misma_cedula, registro['NOMBRE_CORTO_CURSO']):
             if registro['Existen_Mas_Solicitudes_De_Matricula'] == "SI":
                 if _es_la_primera_entrada_del_curso(registros_con_misma_cedula, registro['NOMBRE_CORTO_CURSO'], registro.name):
@@ -86,6 +102,7 @@ def cedula_repetida(registro, datos):
                     return "NO"
     
     return "NO"
+
 
 
 
