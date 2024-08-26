@@ -43,12 +43,11 @@ def encontrar_usuario(user_id: int, db = Depends(get_db)):
     u.APELLIDO as APELLIDO,
     u.MOVIL as MOVIL,
     u.CORREO as CORREO,
-    p.NOMBRE as NOMBRE_PERMISO
+    cu.`FID_CASO_USO-CLIENTE` as ID_PERMISO
     FROM
         USUARIO AS u
     JOIN CLIENTE AS c ON u.FID_CLIENTE = c.ID_CLIENTE
-    JOIN `PERMISO-USUARIO` AS pu ON u.ID_USUARIO = pu.FID_USUARIO
-    JOIN PERMISO AS p ON p.ID_PERMISO = pu.FID_PERMISO
+    JOIN `CASO_USO-USUARIO` AS cu ON u.ID_USUARIO = cu.FID_USUARIO
     WHERE
         u.IDENTIFICACION = :IDENTIFICACION;
     """)
