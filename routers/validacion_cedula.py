@@ -3,9 +3,44 @@ from fastapi.responses import JSONResponse,PlainTextResponse
 import pandas as pd
 import openpyxl
 import os
+import re
 
 validacion_cedula_router = APIRouter()
 os.makedirs('temp_files', exist_ok=True)
+
+
+def verificar_tipo_identificacion(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Verifica si el tipo de identificación en la columna 'tipo_identificacion' 
+    se encuentra en la lista de tipos permitidos, limpiando la columna.
+
+    :param df: pd.DataFrame
+    :return: pd.DataFrame
+    """
+    def limpiar_tipo_identificacion(tipo_identificacion):
+        if not tipo_identificacion:
+            return None
+
+        tipo_identificacion = tipo_identificacion.strip().upper()
+        tipo_identificacion = re.sub(r'[^a-zA-Z.]', '', tipo_identificacion)
+        if tipo_identificacion.endswith('.'):
+            tipo_identificacion = tipo_identificacion[:-1]
+        return tipo_identificacion
+
+    # Aplicar la función a la columna 'tipo_identificacion'
+    df['TIPO_IDENTIFICACION'] = df['TIPO_IDENTIFICACION'].apply(limpiar_tipo_identificacion)
+    
+    return df
+
+def validacion_tipo_identificacion(tipo_identificacion):
+    """
+    Verifica si el tipo de identificación se encuentra en la lista de tipos permitidos.
+
+    :param tipo_identificacion: str
+    :return: str
+    """
+    tipos_permitidos = {'C.C', 'C.E', 'C.I', 'CURP', 'DNI', 'DPI', 'ID', 'INE', 'PAS'}
+    return "SI" if tipo_identificacion not in tipos_permitidos else "NO"
 
 def validacion_cedula(datos):
     datos['IDENTIFICACION'] = datos['IDENTIFICACION'].astype(str)
@@ -19,22 +54,49 @@ def validacion_cedula(datos):
 
     return datos
 
-def cedula_repetida(row, datos):
-    start_index = row.name + 1
-    end_index = len(datos)
-    dynamic_range = datos.loc[start_index:end_index, ['IDENTIFICACION', 'NOMBRE_CORTO_CURSO']]
+def _tiene_registros_duplicados_con_mismo_curso(registros_con_misma_cedula, nombre_curso):
+    """Verifica si hay registros duplicados con el mismo curso"""
+    return len(registros_con_misma_cedula[registros_con_misma_cedula['NOMBRE_CORTO_CURSO'] == nombre_curso]) > 1
 
-    if ((dynamic_range['IDENTIFICACION'] == row['IDENTIFICACION']) &
-        (dynamic_range['NOMBRE_CORTO_CURSO'] == row['NOMBRE_CORTO_CURSO'])).any():
-        return "SI"
-    else:
-        return "NO"
+
+def _es_la_primera_entrada_del_curso(registros_con_misma_cedula, nombre_curso, indice_registro):
+    """Verifica si el registro es la primera entrada del curso"""
+    return indice_registro == registros_con_misma_cedula[registros_con_misma_cedula['NOMBRE_CORTO_CURSO'] == nombre_curso].index[0]
+
+
+def _verificar_si_hay_duplicados_con_distintos_nombres_o_apellidos(registros_con_misma_cedula):
+    """Verifica si los registros duplicados tienen nombres o apellidos diferentes"""
+    return (registros_con_misma_cedula['NOMBRES'] != registros_con_misma_cedula.iloc[0]['NOMBRES']).any() or \
+           (registros_con_misma_cedula['APELLIDOS'] != registros_con_misma_cedula.iloc[0]['APELLIDOS']).any()
+
+
+def cedula_repetida(registro, datos):
+    """Verifica si una cédula se ha repetido"""
+    registros_con_misma_cedula = datos[datos['IDENTIFICACION'] == registro['IDENTIFICACION']]
+    
+    if len(registros_con_misma_cedula) > 1:
+        if _verificar_si_hay_duplicados_con_distintos_nombres_o_apellidos(registros_con_misma_cedula):
+            return "SI"
+        
+        if _tiene_registros_duplicados_con_mismo_curso(registros_con_misma_cedula, registro['NOMBRE_CORTO_CURSO']):
+            if registro['Existen_Mas_Solicitudes_De_Matricula'] == "SI":
+                if _es_la_primera_entrada_del_curso(registros_con_misma_cedula, registro['NOMBRE_CORTO_CURSO'], registro.name):
+                    return "SI"
+                else:
+                    return "NO"
+    
+    return "NO"
+
+
+
 
 
 def validar_Cedula(datos):
     resultados_1 = validacion_cedula(datos)
     resultados_1['Existen_Mas_Solicitudes_De_Matricula'] = resultados_1.apply(lambda row: cedula_repetida(row, resultados_1), axis=1)
     return resultados_1
+
+
 
 @validacion_cedula_router.post("/validar_cedula/", tags=['Validacion_Inicial'])
 async def validar_cedula():
@@ -46,6 +108,8 @@ async def validar_cedula():
 
         df = pd.read_excel(file_path)
         df = validar_Cedula(df)
+        df = verificar_tipo_identificacion(df)
+        df['¿El tipo de identificación es incorrecto?'] = df['TIPO_IDENTIFICACION'].apply(validacion_tipo_identificacion)
         df.to_excel(file_path, index=False)
 
         si_rows_count_cedula = (df['cedula_es_invalida'] == 'SI').sum()
@@ -65,9 +129,8 @@ async def validar_cedula():
             f"solicitudes de matrícula incorrectas: {si_rows_count_solicitudes}\n"
         )
 
-        return PlainTextResponse(content=message)
+        return {"message": message}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    
