@@ -21,7 +21,7 @@ def verificar_tipo_identificacion(df: pd.DataFrame) -> pd.DataFrame:
         if not tipo_identificacion:
             return None
 
-        tipo_identificacion = tipo_identificacion.strip().upper()
+        tipo_identificacion = str(tipo_identificacion).strip().upper()
         tipo_identificacion = re.sub(r'[^a-zA-Z.]', '', tipo_identificacion)
         if tipo_identificacion.endswith('.'):
             tipo_identificacion = tipo_identificacion[:-1]
