@@ -76,7 +76,8 @@ async def validar_nombres_apellidos():
             raise HTTPException(status_code=404, detail=f"El archivo en la ruta '{file_path}' no fue encontrado.")
 
         df = pd.read_excel(file_path)
-
+        df['NOMBRES'] = df['NOMBRES'].astype(str)
+        df['APELLIDOS'] = df['APELLIDOS'].astype(str)
         df['Nombre_Invalido'] = df['NOMBRES'].apply(validar_nombre_apellido)
         df['Apellido_Invalido'] = df['APELLIDOS'].apply(validar_nombre_apellido)
         df = nuevo_estan_cruzados(df)
