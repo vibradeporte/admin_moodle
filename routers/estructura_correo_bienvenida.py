@@ -1,65 +1,134 @@
-from fastapi import FastAPI, UploadFile, APIRouter, HTTPException
-from typing import List, Dict
+from fastapi import FastAPI, APIRouter, HTTPException
+from sqlalchemy import create_engine, text
+from urllib.parse import quote_plus
 import pandas as pd
+from datetime import datetime
+import html
 
-app = FastAPI()
 Bienvenida_correo_estudiantes_router = APIRouter()
 
-def transformar_datos_bienvenida(datos: pd.DataFrame) -> List[Dict]:
-    estructura_deseada = []    
+def get_database_url(user: str, password: str, host: str, port: str, db_name: str) -> str:
+    password_encoded = quote_plus(password)
+    return f"mysql+mysqlconnector://{user}:{password_encoded}@{host}:{port}/{db_name}"
+
+def obtener_plantillas_correos(cursos: list, usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str) -> pd.DataFrame:
+    database_url = get_database_url(usuario, contrasena, host, port, nombre_base_datos)
+    engine = create_engine(database_url)
+    cursos_str = ','.join([f"'{curso.strip()}'" for curso in cursos])
+
+    consulta_sql = text(f"""
+        SELECT 
+            shortname as NOMBRE_CORTO_CURSO,
+            summary as plantilla_Html
+        FROM mdl_course 
+        WHERE 
+            shortname IN ({cursos_str})
+            AND summaryformat = 1;
+        """)
+
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(consulta_sql)
+            rows = result.fetchall()
+            column_names = result.keys()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error de conexión a la base de datos: {str(e)}")
+
+    if not rows:
+        return pd.DataFrame()
+
+    # Convertir los resultados en un DataFrame
+    result_dicts = [dict(zip(column_names, row)) for row in rows]
+    return pd.DataFrame(result_dicts)
+
+
+def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, correo_matriculas: str, correo_envio_bienvenidas: str):
+    meses_espanol = {
+        1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril',
+        5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto',
+        9: 'septiembre', 10: 'octubre', 11: 'noviembre', 12: 'diciembre'
+    }
+    
+    estructura_deseada = []
+
+    # Unir los datos de los estudiantes con las plantillas de correo
+    datos = datos.merge(plantilla, on='NOMBRE_CORTO_CURSO', how='left')
+    
     for _, fila in datos.iterrows():
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                .content {{
-                    font-family: Arial, sans-serif;
-                    margin: 20px;
-                }}
-            </style>
-        </head>
-        <body>
-            <img src="https://elaulavirtual.com/imagenes_mensajes/ins/ENCABEZADO_CORREOS_INS2.png" alt="Banner" class="banner">
-            <div class="content">
-                <p>Apreciado(a) {fila['firstname']} {fila['lastname']},</p>
-                <p>Reciba un cordial saludo de bienvenida al curso {fila['NOMBRE_LARGO_CURSO']}.</p>
-                <p>El ingreso al aula virtual se hace por la siguiente dirección: <a href="https://elaulavirtual.com/test">https://elaulavirtual.com/test</a></p>
-                <p>Su usuario es su número de cédula: {fila['username']} (sin espacios, ni puntos, ni comas, ni apóstrofo) y su contraseña es: P@SsW0RD123</p>
-                <p>Todos los recursos de estudio y evaluaciones estarán disponibles a partir de {fila['timestart']} y hasta el {fila['timeend']}, dado que el usuario y contraseña estarán habilitados por un plazo de {fila['enrolperiod']} días.</p>
-                <p>Al finalizar el curso encontrará una encuesta de satisfacción, para nosotros es muy importante su diligenciamiento ya que nos permitirá conocer su opinión y hacer las mejoras correspondientes.</p>
-                <p>Si necesita apoyo técnico puede hacer <a href="https://wa.me/573209939001">clic aquí para ir al CHAT de soporte de WhatsApp</a> o puede escribirnos al correo <a href="mailto:AulasVirtuales@Fasecolda.com">AulasVirtuales@Fasecolda.com</a></p>
-                <p>Cordialmente,</p>
-                <p>Soporte de Aula Virtuales INS.</p>
-            </div>
-        </body>
-        </html>
-        """
-        
-        item = {
-            "from_e": "aulasvirtuales@fasecolda.com",
-            "to": fila['email'],
-            "subject": f"Bienvenida al Curso {fila['NOMBRE_LARGO_CURSO']}",
-            "cc": fila['CORREO_SOLICITANTE'],
-            "html_content": html_content,
-            "content": f"Apreciado(a) {fila['firstname']} {fila['lastname']},\nReciba un cordial saludo de bienvenida al curso {fila['NOMBRE_LARGO_CURSO']}.\nEl ingreso al aula virtual se hace por la siguiente dirección: https://elaulavirtual.com/ins\nSu usuario es su número de cédula: {fila['username']} y su contraseña es: P@SsW0RD123 \nTodos los recursos de estudio y evaluaciones estarán disponibles hasta el {fila['timeend']}, dado que el usuario y contraseña estarán habilitados por un plazo de {fila['enrolperiod']} días.\nAl finalizar el curso encontrará una encuesta de satisfacción, para nosotros es muy importante su diligenciamiento ya que nos permitirá conocer su opinión y hacer las mejoras correspondientes.\nSi necesita apoyo técnico puede hacer clic aquí para ir al CHAT de soporte de WhatsApp o puede escribirnos al correo AulasVirtuales@Fasecolda.com\nCordialmente,\nSoporte de Aula Virtuales INS."
-        }
-        
-        estructura_deseada.append(item)
+        # Verifica que la plantilla HTML no esté vacía
+        if pd.notna(fila['plantilla_Html']):
+            try:
+                # Convertir timestamp Unix a datetime
+                timestart_dt = datetime.fromtimestamp(fila['timestart'])
+                timeend_dt = datetime.fromtimestamp(fila['timeend'])
+                
+                # Formatear las fechas con el nombre del mes en español
+                timestart_str = f"{timestart_dt.day} de {meses_espanol[timestart_dt.month]} de {timestart_dt.year}"
+                timeend_str = f"{timeend_dt.day} de {meses_espanol[timeend_dt.month]} de {timeend_dt.year}"
+                
+                # Calcular enrolperiod (diferencia en días)
+                enrolperiod = (timeend_dt - timestart_dt).days
+                
+            except (ValueError, TypeError, OSError):  # Capturar cualquier error en la conversión
+                timestart_str = "Fecha no disponible"
+                timeend_str = "Fecha no disponible"
+                enrolperiod = "Periodo no disponible"
+
+            # Rellenar la plantilla con los valores de la fila
+            html_content_with_entities = fila['plantilla_Html'].format(
+                firstname=fila['firstname'],
+                lastname=fila['lastname'],
+                username=fila['username'],
+                timestart=timestart_str,
+                timeend=timeend_str,
+                enrolperiod=enrolperiod  # Usar el valor calculado de enrolperiod
+            )
+
+            # Convertir las entidades HTML a caracteres
+            html_content = html.unescape(html_content_with_entities)
+
+            # Crear el diccionario con la estructura deseada
+            item = {
+                "from_e": correo_envio_bienvenidas,
+                "to": fila['email'],
+                "subject": f"Bienvenida al Curso {fila['NOMBRE_LARGO_CURSO']}",
+                "cc": correo_matriculas,  # Valor predeterminado en caso de que no haya 'CORREO_SOLICITANTE'
+                "html_content": html_content,
+                "content": ""
+            }
+
+            # Verifica si existe 'CORREO_SOLICITANTE' y no es nulo
+            if pd.notna(fila.get('CORREO_SOLICITANTE')):
+                item['cc'] = f"{fila['CORREO_SOLICITANTE']}, {correo_matriculas}"
+
+            # Añadir a la lista estructura_deseada
+            estructura_deseada.append(item)
+
     return estructura_deseada
 
-@Bienvenida_correo_estudiantes_router.post("/Estructura_Correo_Bienvenida/")
-async def bienvenida_correo():
+
+
+
+@Bienvenida_correo_estudiantes_router.post("/Estructura_Correo_Bienvenida/", tags=['Correo'])
+async def Estructura_Correo_Bienvenida(usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str, correo_matriculas: str, correo_envio_bienvenidas: str):
     try:
-        datos = pd.read_csv('temp_files/estudiantes_validados.csv')
-        # Ensure 'timestart' and 'timeend' are datetime objects
-        datos['timestart'] = pd.to_datetime(datos['timestart'], unit='s')
-        datos['timeend'] = pd.to_datetime(datos['timeend'], unit='s')
-        # Convert to date and calculate enrolperiod
-        datos['timestart_date'] = datos['timestart'].dt.date
-        datos['timeend_date'] = datos['timeend'].dt.date
-        datos['enrolperiod'] = (datos['timeend'] - datos['timestart']).dt.days
-        estructura_deseada = transformar_datos_bienvenida(datos)
-        return estructura_deseada
+        df = pd.read_csv('temp_files/estudiantes_validados.csv')
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="El archivo 'estudiantes_validados.csv' no fue encontrado.")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error al leer el archivo CSV: {str(e)}")
+
+    cursos_unicos = df['NOMBRE_CORTO_CURSO'].unique().tolist()
+    
+    try:
+        df_plantilla = obtener_plantillas_correos(cursos_unicos, usuario, contrasena, host, port, nombre_base_datos)
+    except HTTPException as e:
+        raise e
+    
+    if df_plantilla.empty:
+        raise HTTPException(status_code=404, detail="No se encontraron plantillas de correo para los cursos especificados.")
+    
+    # Transformar los datos para el envío de correos
+    estructura_correo = transformar_datos_bienvenida(df, df_plantilla, correo_matriculas, correo_envio_bienvenidas)
+    
+    return estructura_correo
