@@ -24,7 +24,7 @@ async def core_user_update_users(moodle_url: str = Form(...), moodle_token: str 
     df = pd.read_csv('temp_files/estudiantes_validados.csv')
     df['username'] = df['username'].apply(lambda x: str(x).replace('.0', '') if '.0' in str(x) else str(x))
     df["country"] = df["country"].apply(obtener_codigo_iso_pais)
-    df = df.drop_duplicates(subset=['id'])
+    df = df.drop_duplicates(subset=['userid'])
     if df is None:
         raise HTTPException(status_code=400, detail="No se encontr  el archivo 'temp_files/estudiantes_validados.csv'")
 
