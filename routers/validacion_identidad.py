@@ -38,6 +38,8 @@ def encontrar_usuario(user_id: int, db = Depends(get_db)):
             c.USUARIO as USUARIO_BD,
             c.CONTRASENA as CONTRASENA_BD,
             c.NOMBRE_BD as NOMBRE_BD,
+            c.CORREO_MATRICULA as CORREO_MATRICULA,
+            c.CORREO_ENVIO_BIENVENIDAS as CORREO_ENVIO_BIENVENIDAS,
             u.ID_USUARIO as ID_USUARIO,
             u.NOMBRE as NOMBRE,
             u.APELLIDO as APELLIDO,
