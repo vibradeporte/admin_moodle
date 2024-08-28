@@ -26,7 +26,9 @@ def verificar_cruzados(row):
         return 'SI'
 
 def validar_nombre_apellido(s):
-    if not s or not re.match("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]*$", s):
+    s = str(s)
+    # Verificar si es None, vacío, o nan
+    if pd.isna(s) or s == 'nan' or s == 'NAN' or not s or not re.match("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]*$", s):
         return "SI"
     elif len(s) < 3:
         return "SI"
