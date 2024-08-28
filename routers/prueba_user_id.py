@@ -91,6 +91,7 @@ async def id_estudiante(usuario: str,contrasena: str,host: str,port: str,nombre_
 
     try:
         df = pd.read_csv('temp_files/estudiantes_validados.csv')
+        df['username'] = df['username'].apply(lambda x: str(x).replace('.0', '') if '.0' in str(x) else str(x))
         df = df.astype(str)
     except Exception as e:
         raise HTTPException(status_code=400, detail="Invalid file format or content")
