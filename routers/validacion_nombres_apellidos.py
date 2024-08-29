@@ -26,10 +26,13 @@ def verificar_cruzados(row):
         return 'SI'
 
 def validar_nombre_apellido(s):
-    s = str(s)
-    # Verificar si es None, vacío, o nan
-    if pd.isna(s) or s == 'nan' or s == 'NAN' or not s or not re.match("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]*$", s):
+    # Verificar si la cadena es vacía
+    if not s or not s.strip():
         return "SI"
+    # Verificar si no coincide con el patrón permitido
+    elif not re.match("^[\w\s]*$", s):
+        return "SI"
+    # Verificar si la longitud es menor a 3
     elif len(s) < 3:
         return "SI"
     else:
