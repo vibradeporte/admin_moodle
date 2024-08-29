@@ -22,7 +22,7 @@ def estudiantes_estatus(cursos: list, usuario: str, contrasena: str, host: str, 
 
     cursos_str = ','.join([f"'{curso.strip()}'" for curso in cursos])
     consulta_sql = text(f"""
-    SELECT
+    SELECT DISTINCT
         c.shortname AS courseshortname,
         u.username AS username,
         u.firstname AS first_name,
