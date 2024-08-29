@@ -70,7 +70,7 @@ def calcular_fechas_matricula(row):
     fecha_fin_matricula = fecha_inicio_matricula + timedelta(days=int(duracion_matricula))
     
     # Establecer la hora de la fecha de fin de matrícula a las 23:59
-    fecha_fin_matricula = fecha_fin_matricula.replace(hour=3, minute=59, second=0, microsecond=0)
+    fecha_fin_matricula = fecha_fin_matricula.replace(hour=4, minute=0, second=0, microsecond=0)
     
     # Convertir las fechas a timestamps
     timestart = int(fecha_inicio_matricula.timestamp())
