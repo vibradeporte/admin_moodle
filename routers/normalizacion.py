@@ -97,7 +97,7 @@ def validar_pais(pais):
         return 'SI'
     if len(pais) == 0 or len(pais) < 3:
         return 'SI'
-    if not re.match("^[a-zA-Z ]+$", pais):
+    if not re.match("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$", pais):
         return 'SI'
     return 'NO'
 
