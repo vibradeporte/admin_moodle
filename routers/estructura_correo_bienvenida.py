@@ -67,7 +67,7 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
                 dia_anterior = timeend_dt - timedelta(days=1)
                 
                 # Formatear las fechas con el nombre del mes en español
-                timeend_str = f"{dia_anterior.day} de {meses_espanol[dia_anterior.month]} de {dia_anterior.year} 12:00 pm de la noche"
+                timeend_str = f"{dia_anterior.day} de {meses_espanol[dia_anterior.month]} de {dia_anterior.year} 11:59 PM"
 
                 
                 # Calcular enrolperiod (diferencia en días)
@@ -140,7 +140,7 @@ async def Estructura_Correo_Bienvenida(usuario: str, contrasena: str, host: str,
     
     if df_plantilla.empty:
         raise HTTPException(status_code=404, detail="No se encontraron plantillas de correo para los cursos especificados.")
-    plantilla = pd.read_csv('temp_files\plantillas_correos.csv')
+    plantilla = pd.read_csv('temp_files/plantillas_correos.csv')
     # Transformar los datos para el envío de correos
     estructura_correo = transformar_datos_bienvenida(df, plantilla, correo_matriculas, correo_envio_bienvenidas)
     
