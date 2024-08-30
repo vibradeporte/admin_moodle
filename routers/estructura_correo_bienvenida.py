@@ -40,6 +40,8 @@ def obtener_plantillas_correos(cursos: list, usuario: str, contrasena: str, host
     # Convertir los resultados en un DataFrame
     result_dicts = [dict(zip(column_names, row)) for row in rows]
     df_plantilla = pd.DataFrame(result_dicts)
+    df_plantilla.to_csv('temp_files/plantillas_correos.csv', index=False)
+
     return df_plantilla
 
 
@@ -80,6 +82,7 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
                 firstname=fila['firstname'],
                 lastname=fila['lastname'],
                 username=fila['username'],
+                timestart_dt=timestart_dt,
                 timeend=timeend_str,
                 enrolperiod=enrolperiod  # Usar el valor calculado de enrolperiod
             )
@@ -114,3 +117,31 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
             estructura_deseada.append(item)
 
     return estructura_deseada
+
+
+
+
+
+@Bienvenida_correo_estudiantes_router.post("/Estructura_Correo_Bienvenida/", tags=['Correo'])
+async def Estructura_Correo_Bienvenida(usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str, correo_matriculas: str, correo_envio_bienvenidas: str):
+    try:
+        df = pd.read_csv('temp_files/estudiantes_validados.csv')
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="El archivo 'estudiantes_validados.csv' no fue encontrado.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al leer el archivo CSV: {str(e)}")
+
+    cursos_unicos = df['NOMBRE_CORTO_CURSO'].unique().tolist()
+    print(df)
+    try:
+        df_plantilla = obtener_plantillas_correos(cursos_unicos, usuario, contrasena, host, port, nombre_base_datos)
+    except HTTPException as e:
+        raise e
+    
+    if df_plantilla.empty:
+        raise HTTPException(status_code=404, detail="No se encontraron plantillas de correo para los cursos especificados.")
+    plantilla = pd.read_csv('temp_files\plantillas_correos.csv')
+    # Transformar los datos para el envío de correos
+    estructura_correo = transformar_datos_bienvenida(df, plantilla, correo_matriculas, correo_envio_bienvenidas)
+    
+    return estructura_correo
