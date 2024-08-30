@@ -2,7 +2,7 @@ from fastapi import FastAPI, APIRouter, HTTPException
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
 import pandas as pd
-from datetime import datetime
+from datetime import datetime , timedelta
 import html
 import re
 Bienvenida_correo_estudiantes_router = APIRouter()
@@ -62,17 +62,16 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
                 # Convertir timestamp Unix a datetime
                 timestart_dt = datetime.fromtimestamp(fila['timestart'])
                 timeend_dt = datetime.fromtimestamp(fila['timeend'])
+                dia_anterior = timeend_dt - timedelta(days=1)
                 
                 # Formatear las fechas con el nombre del mes en español
-                timestart_str = f"{timestart_dt.day} de {meses_espanol[timestart_dt.month]} de {timestart_dt.year}"
-                timeend_str = f"{timeend_dt.day} de {meses_espanol[timeend_dt.month]} de {timeend_dt.year} 12:00 pm de la noche"
+                timeend_str = f"{dia_anterior.day} de {meses_espanol[dia_anterior.month]} de {dia_anterior.year} 12:00 pm de la noche"
 
                 
                 # Calcular enrolperiod (diferencia en días)
                 enrolperiod = (timeend_dt - timestart_dt).days
                 
             except (ValueError, TypeError, OSError):  # Capturar cualquier error en la conversión
-                timestart_str = "Fecha no disponible"
                 timeend_str = "Fecha no disponible"
                 enrolperiod = "Periodo no disponible"
 
@@ -81,7 +80,6 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
                 firstname=fila['firstname'],
                 lastname=fila['lastname'],
                 username=fila['username'],
-                timestart=timestart_str,
                 timeend=timeend_str,
                 enrolperiod=enrolperiod  # Usar el valor calculado de enrolperiod
             )
@@ -116,57 +114,3 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
             estructura_deseada.append(item)
 
     return estructura_deseada
-
-
-
-
-@Bienvenida_correo_estudiantes_router.post("/Estructura_Correo_Bienvenida/", tags=['Correo'])
-async def Estructura_Correo_Bienvenida(usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str, correo_matriculas: str, correo_envio_bienvenidas: str):
-    try:
-        df = pd.read_csv('temp_files/estudiantes_validados.csv')
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="El archivo 'estudiantes_validados.csv' no fue encontrado.")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al leer el archivo CSV: {str(e)}")
-
-    cursos_unicos = df['NOMBRE_CORTO_CURSO'].unique().tolist()
-    
-    try:
-        df_plantilla = obtener_plantillas_correos(cursos_unicos, usuario, contrasena, host, port, nombre_base_datos)
-    except HTTPException as e:
-        raise e
-    
-    if df_plantilla.empty:
-        raise HTTPException(status_code=404, detail="No se encontraron plantillas de correo para los cursos especificados.")
-    
-    # Transformar los datos para el envío de correos
-    estructura_correo = transformar_datos_bienvenida(df, df_plantilla, correo_matriculas, correo_envio_bienvenidas)
-    
-    return estructura_correo
-
-
-
-
-@Bienvenida_correo_estudiantes_router.post("/Estructura_Correo_Bienvenida/", tags=['Correo'])
-async def Estructura_Correo_Bienvenida(usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str, correo_matriculas: str, correo_envio_bienvenidas: str):
-    try:
-        df = pd.read_csv('temp_files/estudiantes_validados.csv')
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="El archivo 'estudiantes_validados.csv' no fue encontrado.")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al leer el archivo CSV: {str(e)}")
-
-    cursos_unicos = df['NOMBRE_CORTO_CURSO'].unique().tolist()
-    
-    try:
-        df_plantilla = obtener_plantillas_correos(cursos_unicos, usuario, contrasena, host, port, nombre_base_datos)
-    except HTTPException as e:
-        raise e
-    
-    if df_plantilla.empty:
-        raise HTTPException(status_code=404, detail="No se encontraron plantillas de correo para los cursos especificados.")
-    
-    # Transformar los datos para el envío de correos
-    estructura_correo = transformar_datos_bienvenida(df, df_plantilla, correo_matriculas, correo_envio_bienvenidas)
-    
-    return estructura_correo
