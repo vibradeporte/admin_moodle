@@ -37,8 +37,7 @@ async def csv_to_json() -> List[Dict]:
             row['NOMBRE_LARGO_CURSO'],
             row['timeend_str'],
             row['email'],
-            "P@SsW0RD123", #va a cambiar cuando se agregue la columna contraseña de usuario
-            "soporte123@soporte.com"
+            "P@SsW0RD123" #va a cambiar cuando se agregue la columna contraseña de usuario
         ]
         item = {
             "numero": str(row['phone1']),
