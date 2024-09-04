@@ -23,6 +23,7 @@ from routers.validar_cursos_certificado import validacion_cursos_certificado_rou
 from routers.duracion_curso_y_descripcion import duracion_curso_y_descripcion_router
 from routers.nombres_cursos import nombres_cursos_router
 from routers.conseguir_id_grupos import conseguir_id_grupo
+from routers.validacion_tiempo_de_matricula import validacion_tiempo_de_matricula_router
 # Validacion Secundaria
 from routers.validacion_num_wapp import validacion_numeros_whatsapp_router
 from routers.normalizacion import normalizacion_router
@@ -71,6 +72,9 @@ app.include_router(core_group_add_group_members_router)
 
 # JSON
 app.include_router(Bienvenida_wapp_estudiantes_router)
+
+#Cursos
+app.include_router(validacion_tiempo_de_matricula_router)
 
 # Correos
 app.include_router(correo_router)
