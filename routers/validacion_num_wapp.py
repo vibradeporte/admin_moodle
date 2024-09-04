@@ -41,6 +41,11 @@ async def validar_numeros_whatsapp():
             country_name = row['PAIS_DEL_MOVIL']
             print(f'NUMERO_MOVIL_WS_SIN_PAIS: {phone_number}, PAIS_DEL_MOVIL: {country_name}')
             
+            # Verificar si el número es 0, None, NaN, o Null
+            if pd.isna(phone_number) or phone_number in ['None', 'nan', '0', 'null', 'NaN']:
+                df.at[index, 'Numero_Wapp_Incorrecto'] = 'NO'
+                continue
+            
             country_code = get_country_code(country_name)
             if not country_code:
                 df.at[index, 'Numero_Wapp_Incorrecto'] = 'SI'
@@ -74,14 +79,13 @@ async def validar_numeros_whatsapp():
 
         message = (
             f"Resultados validación de números telefónicos de Whatsapp: \n"
-            f"{si_rows_count} Números telefónicos invalidos \n"
-            f"{no_rows_count} Números telefónicos validos \n"
+            f"{si_rows_count} Números telefónicos inválidos \n"
+            f"{no_rows_count} Números telefónicos válidos \n"
         )
 
         return PlainTextResponse(content=message)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Un error ocurrió: {e}")
-
 
 
 
