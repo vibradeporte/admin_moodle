@@ -12,6 +12,10 @@ contrasena = os.getenv("PASS_DB_UL_ADMIN")
 host = os.getenv("HOST_DB_ADMIN")
 nombre_base_datos = os.getenv("NAME_DB_UL_ADMIN")
 contrasena_codificada = quote_plus(contrasena)
+AUTH_KEY = os.getenv("AUTH_KEY")
+API_URL = "https://api.turbo-smtp.com/api/v2/mail/send"
+AUTH_USER_TSMTP = os.getenv("AUTH_USER_TSMTP")
+AUTH_PASS_TSMTP = os.getenv("AUTH_PASS_TSMTP")
 
 
 DATABASE_URL = f"mysql+mysqlconnector://{usuario}:{contrasena_codificada}@{host}/{nombre_base_datos}"
@@ -70,7 +74,6 @@ def estudiantes_matriculados():
     df['RES_MATRICULA'] = 'MATRICULADO'
 
     return df
-
 
 def estudiantes_no_matriculados():
     """
