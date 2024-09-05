@@ -4,7 +4,7 @@ import pandas as pd
 from urllib.parse import quote_plus
 from dotenv import load_dotenv
 import os
-
+import requests
 
 load_dotenv()
 usuario = os.getenv("USER_DB_UL_ADMIN")
@@ -13,7 +13,7 @@ host = os.getenv("HOST_DB_ADMIN")
 nombre_base_datos = os.getenv("NAME_DB_UL_ADMIN")
 contrasena_codificada = quote_plus(contrasena)
 AUTH_KEY = os.getenv("AUTH_KEY")
-API_URL = "https://api.turbo-smtp.com/api/v2/mail/send"
+API_URL_ANALYTICS = "https://pro.api.serversmtp.com/api/v2/analytics/{}"
 AUTH_USER_TSMTP = os.getenv("AUTH_USER_TSMTP")
 AUTH_PASS_TSMTP = os.getenv("AUTH_PASS_TSMTP")
 
@@ -23,7 +23,39 @@ DATABASE_URL = f"mysql+mysqlconnector://{usuario}:{contrasena_codificada}@{host}
 engine = create_engine(DATABASE_URL)
 poblar_tabla_detalle_matricula_router = APIRouter()
 
+def estatus_envio_correo():
+    df_mensajes_correo = pd.read_csv('temp_files/message_ids.csv')
+    message_ids = df_mensajes_correo['message_id'].tolist()
+    headers = {
+        'Authorization': AUTH_KEY
+    }
 
+    analytics_data = []
+    
+    # Iterar sobre la lista de message_ids
+    for message_id in message_ids:
+        analytics_url = API_URL_ANALYTICS.format(message_id)
+        
+        try:
+            # Realizar la solicitud a la API
+            response = requests.get(analytics_url, headers=headers)
+            response.raise_for_status()  # Esto levantará un error si el estatus no es 200
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching analytics for message_id {message_id}: {str(e)}")
+            continue  # Saltar al siguiente ID si hay un error
+
+        # Agregar los datos obtenidos de la API a la lista analytics_data
+        analytics_data.append(response.json())
+
+    # Si se obtuvieron datos, guardarlos en CSV
+    if analytics_data:
+        df = pd.DataFrame(analytics_data)
+        df = df[['id','status']]
+        return  df
+    else:
+        print("No se obtuvieron datos de analytics.")
+        return []  # Retornar una lista vacía si no hay datos
+    
 def estudiantes_matriculados():
     """
     Devuelve un DataFrame con los estudiantes que se han matriculado con éxito
@@ -58,8 +90,8 @@ def estudiantes_matriculados():
     })
     
     if os.path.exists('temp_files/message_ids.csv'):
-        df_mensajes_correo = pd.read_csv('temp_files/message_ids.csv')
-        df_mensajes_correo = df_mensajes_correo.rename(columns={'message_id': 'RES_CORREO_BIENVENIDA'})
+        df_mensajes_correo = estatus_envio_correo()
+        df_mensajes_correo = df_mensajes_correo.rename(columns={'status': 'RES_CORREO_BIENVENIDA'})
         df = pd.concat([df, df_mensajes_correo], axis=1)
     else:
         df['RES_CORREO_BIENVENIDA'] = 'NO ENVIADO AL CORREO'
