@@ -28,10 +28,11 @@ envio_mensajes_whatsapp_router = APIRouter()
 
 class MessageRequest(BaseModel):
     numero: str
+    plantilla: str
     parametros: List[str]
 
-@envio_mensajes_whatsapp_router.post("/envio_mensajes_whatsapp", tags=['Whatsapp'])
-async def send_messages(plantilla: str, mensajes: List[MessageRequest] = None):
+@envio_mensajes_whatsapp_router.post("/envio_mensajes_whatsapp/", tags=['Whatsapp'])
+async def send_messages(mensajes: List[MessageRequest] = None):
     """
     ## **Descripción:**
     Esta función permite enviar mensajes a whatsapp colectivamente.
@@ -74,7 +75,7 @@ async def send_messages(plantilla: str, mensajes: List[MessageRequest] = None):
             "to": mensaje.numero,
             "type": "template",
             "template": {
-                "name": plantilla,
+                "name": mensaje.plantilla,
                 "language": {
                     "code": "es"
                 },

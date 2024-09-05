@@ -17,7 +17,7 @@ from routers.validar_archivo import  verificacion_inicial_archivo
 from routers.Envio_Correo import correo_router
 from routers.verificar_correos import verificar_correos_router
 from routers.Envio_Correo_Archivo_Adjunto import correo_archivo_adjunto_router
-
+from routers.creacion_contrasena import creacion_contrasena_router
 # Cursos
 from routers.validar_cursos_certificado import validacion_cursos_certificado_router_prueba
 from routers.duracion_curso_y_descripcion import duracion_curso_y_descripcion_router
@@ -72,6 +72,8 @@ app.include_router(core_group_add_group_members_router)
 
 # JSON
 app.include_router(Bienvenida_wapp_estudiantes_router)
+#contrasena
+app.include_router(creacion_contrasena_router)
 
 #Cursos
 app.include_router(validacion_tiempo_de_matricula_router)
