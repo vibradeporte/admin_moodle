@@ -1,19 +1,13 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, FastAPI
+from fastapi import APIRouter, HTTPException, UploadFile, FastAPI
 from fastapi.responses import JSONResponse
 from io import BytesIO
 import pandas as pd
 from utils import construir_url_mysql
 from sqlalchemy import create_engine, text
 import os
-from datetime import datetime, timedelta
-from urllib.parse import quote_plus
 import re
 
 prueba_conseguir_id = APIRouter()
-
-def get_database_url(user: str, password: str, host: str, port: str, db_name: str) -> str:
-    password_encoded = quote_plus(password)
-    return f"mysql+mysqlconnector://{user}:{password_encoded}@{host}:{port}/{db_name}"
 
 WS_FUNCTION = "enrol_manual_enrol_users"
 HTTP_MESSAGES = {
@@ -27,7 +21,6 @@ HTTP_MESSAGES = {
     'COURSE_NO_EXISTE': "Course does not exist",
     'NO_MATRICULA_MANUAL': "Manual enrolment not allowed"
 }
-
 
 
 @prueba_conseguir_id.post("/prueba_conseguir_id/", tags=['Moodle'], status_code=200)
