@@ -42,7 +42,7 @@ async def validar_numeros_whatsapp():
             print(f'NUMERO_MOVIL_WS_SIN_PAIS: {phone_number}, PAIS_DEL_MOVIL: {country_name}')
             
             # Verificar si el número es 0, None, NaN, o Null
-            if pd.isna(phone_number) or phone_number in ['None', 'nan', '0', 'null', 'NaN']:
+            if pd.isna(phone_number) or phone_number in ['None', 'nan', '0', 'null', 'NaN', '']:
                 df.at[index, 'Numero_Wapp_Incorrecto'] = 'NO'
                 continue
             

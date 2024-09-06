@@ -286,6 +286,10 @@ async def core_user_update_users(moodle_url: str = Form(...), moodle_token: str 
         if USERNAME is None:
             raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'username'")
         
+        PASSWORD = row.get("password")
+        if PASSWORD is None:
+            raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'password'")
+        
         FIRSTNAME = row.get("firstname")
         if FIRSTNAME is None:
             raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'firstname'")
@@ -335,6 +339,7 @@ async def core_user_update_users(moodle_url: str = Form(...), moodle_token: str 
 
         data[f"users[{i}][id]"] = int(USERID)
         data[f"users[{i}][username]"] = USERNAME
+        data[f"users[{i}][password]"] = PASSWORD
         data[f"users[{i}][firstname]"] = FIRSTNAME
         data[f"users[{i}][lastname]"] = LASTNAME
         data[f"users[{i}][email]"] = EMAIL

@@ -67,7 +67,7 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
                 dia_anterior = timeend_dt - timedelta(days=1)
                 
                 # Formatear las fechas con el nombre del mes en español
-                timeend_str = f"{dia_anterior.day} de {meses_espanol[dia_anterior.month]} de {dia_anterior.year} 11:59 PM"
+                timeend_str = f"{dia_anterior.day} de {meses_espanol[dia_anterior.month]} de {dia_anterior.year} a las 11:59 PM hora colombiana"
 
                 
                 # Calcular enrolperiod (diferencia en días)
