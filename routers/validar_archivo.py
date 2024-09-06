@@ -13,9 +13,9 @@ required_columns = [
     'DIAS_INFORMADOS_AL_ESTUDIANTE', 'ADVERTENCIA_CURSO_CULMINADO'
 ]
 
-@verificacion_inicial_archivo.post("/Validar_archivo/", tags=['Validacion Archivo'])
-def verificar_archivo(nombre_archivo: str):
-    ruta = f'https://ulapi-production.up.railway.app/static/temp_files/{nombre_archivo}'
+@verificacion_inicial_archivo.post("/VerificarArchivo/", tags=['Validacion_Inicial'])
+async def verificar_archivo():
+    ruta = 'temp_files/validacion_archivo.xlsx'
     
     # Check if the file is an Excel file
     if not ruta.endswith(('.xlsx', '.xls')):
