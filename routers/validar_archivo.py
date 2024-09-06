@@ -1,7 +1,9 @@
-from fastapi import FastAPI, HTTPException, APIRouter
-from fastapi.responses import PlainTextResponse
-import pandas as pd
 import os
+import pandas as pd
+import requests
+from fastapi import HTTPException, APIRouter
+from fastapi.responses import PlainTextResponse
+from io import BytesIO
 
 verificacion_inicial_archivo = APIRouter()
 
@@ -13,9 +15,9 @@ required_columns = [
     'DIAS_INFORMADOS_AL_ESTUDIANTE', 'ADVERTENCIA_CURSO_CULMINADO'
 ]
 
-@verificacion_inicial_archivo.post("/VerificarArchivo/", tags=['Validacion_Inicial'])
-async def verificar_archivo():
-    ruta = 'temp_files/validacion_archivo.xlsx'
+@verificacion_inicial_archivo.post("/Validar_archivo/", tags=['Validacion Archivo'])
+def verificar_archivo(nombre_archivo: str):
+    ruta = f'https://ulapi-production.up.railway.app/static/temp_files/{nombre_archivo}'
     
     # Check if the file is an Excel file
     if not ruta.endswith(('.xlsx', '.xls')):
@@ -24,17 +26,21 @@ async def verificar_archivo():
             detail="El archivo no es un archivo Excel. Por favor, usa un archivo con extensión .xlsx o .xls."
         )
     
-    # Check if the file exists
-    if not os.path.isfile(ruta):
+    # Intentar descargar el archivo desde la URL
+    try:
+        response = requests.get(ruta)
+        response.raise_for_status()  # Verifica si hubo algún error en la solicitud
+    except requests.exceptions.RequestException as e:
         raise HTTPException(
             status_code=404,
-            detail="El archivo especificado no existe. Por favor, verifica la ruta."
+            detail=f"No se pudo descargar el archivo: {str(e)}"
         )
     
     try:
-        # Attempt to load the Excel file and the specified sheet
+        # Leer el archivo Excel descargado usando pandas
+        file_content = BytesIO(response.content)
         try:
-            df = pd.read_excel(ruta, sheet_name='ESTUDIANTES')
+            df = pd.read_excel(file_content, sheet_name='ESTUDIANTES')
         except ValueError:
             raise HTTPException(
                 status_code=422,  # Unprocessable Entity
@@ -60,13 +66,13 @@ async def verificar_archivo():
                 status_code=401,
                 detail=f"El archivo no contiene las siguientes columnas: {', '.join(missing_columns)}"
             )
-        
-        # Save the validated file
-        validated_file_path = os.path.join(os.path.dirname(ruta), 'validacion_inicial.xlsx')
+
+        # Guardar el archivo validado
+        validated_file_path = os.path.join('temp_files/', 'validacion_inicial.xlsx')  # Guardar en una ruta temporal o ajusta la ruta
         df.to_excel(validated_file_path, index=False)
 
         return PlainTextResponse(
-            f"El archivo cumple con la estructura y tipo deseado. Archivo validado guardado en: {validated_file_path}",
+            f"El archivo cumple con la estructura y tipo deseado.",
             status_code=200
         )
     
@@ -75,5 +81,3 @@ async def verificar_archivo():
             status_code=500,
             detail=f"Ocurrió un error al procesar el archivo: {str(e)}"
         )
-
-
