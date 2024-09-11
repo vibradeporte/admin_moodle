@@ -340,7 +340,7 @@ async def core_user_update_users(moodle_url: str = Form(...), moodle_token: str 
         try:
             data[f"users[{i}][id]"] = int(USERID)
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"El campo 'userid' en la fila {i} no es convertible a entero")
+            raise HTTPException(status_code=400, detail=f"El campo 'userid' con valor '{USERID}' en la fila {i} no es convertible a entero")
         data[f"users[{i}][username]"] = USERNAME
         data[f"users[{i}][password]"] = PASSWORD
         data[f"users[{i}][firstname]"] = FIRSTNAME
