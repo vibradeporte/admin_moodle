@@ -82,6 +82,7 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
                 firstname=fila['firstname'],
                 lastname=fila['lastname'],
                 username=fila['username'],
+                password=fila['password'],
                 timestart_dt=timestart_dt,
                 timeend=timeend_str,
                 enrolperiod=enrolperiod  # Usar el valor calculado de enrolperiod
