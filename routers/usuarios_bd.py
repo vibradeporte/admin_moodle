@@ -1,6 +1,6 @@
 from return_codes import *
 import os
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
 from fastapi import APIRouter, HTTPException
@@ -15,7 +15,7 @@ def get_database_url(user: str, password: str, host: str, port: str, db_name: st
 usuarios_bd_router = APIRouter()
 
 
-@usuarios_bd_router.get("/usuarios_completos_bd", tags=['Moodle'], status_code=200)
+@usuarios_bd_router.get("/usuarios_completos_bd/", tags=['Moodle'], status_code=200)
 def lista_usuarios_bd(
     usuario: str,
     contrasena: str,
@@ -66,7 +66,7 @@ def lista_usuarios_bd(
             csv_file_path = "temp_files/usuarios_completos.csv"
             df.to_csv(csv_file_path, index=False)
 
-            return FileResponse(csv_file_path, filename="usuarios_completos.csv")
+            return JSONResponse({'message': 'Registros encontrados de todos los usuarios'})
         else:
             codigo = SIN_INFORMACION
             mensaje = HTTP_MESSAGES.get(codigo)
