@@ -1,5 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
 import pandas as pd
@@ -88,12 +88,14 @@ def nombres_cursos_bd(usuario: str, contrasena: str, host: str, port: str, nombr
     datos.to_excel(ruta_archivo, index=False, engine='openpyxl')
     
     if not datos.empty:
-        message = (
-            f"Validación de nombres de cursos: \n"
-            f"{no_rows_count} Nombres de cursos correctos. \n"
-            f"{si_rows_count} Nombres de cursos no validos. \n"
-        )
-        return PlainTextResponse(content=message)
+        message = {
+            "validacion_nombres_cursos": {
+                "nombres_cursos_correctos": int(no_rows_count),
+                "nombres_cursos_no_validos": int(si_rows_count)
+            }
+        }
+
+        return JSONResponse(content=message)
     else:
         codigo = SIN_INFORMACION
         mensaje = HTTP_MESSAGES.get(codigo)

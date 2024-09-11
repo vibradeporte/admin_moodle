@@ -23,21 +23,35 @@ async def revision_matricula_cursos(mismo_curso: bool = False):
     try:
         num_cursos_unicos = df_estudiantes['NOMBRE_CORTO_CURSO'].nunique()
 
+        # Estructura del mensaje y código de estado basado en la lógica
         if mismo_curso and num_cursos_unicos == 1:
-            message = "Todos los estudiantes tienen el mismo curso."
+            response_data = {
+                "success": True,
+                "message": "Todos los estudiantes tienen el mismo curso.",
+                "num_cursos_unicos": num_cursos_unicos
+            }
             status = 200
         elif not mismo_curso and num_cursos_unicos > 1:
-            message = "Los estudiantes están en diferentes cursos."
+            response_data = {
+                "success": True,
+                "message": "Los estudiantes están en diferentes cursos.",
+                "num_cursos_unicos": num_cursos_unicos
+            }
             status = 200
         else:
-            message = "Error: La condición del curso no se cumple."
+            response_data = {
+                "success": False,
+                "message": "Error: La condición del curso no se cumple.",
+                "num_cursos_unicos": num_cursos_unicos
+            }
             status = 400
 
-        response_data = {"message": message}
+        # Devolver respuesta con JSON estructurado
         return JSONResponse(content=response_data, status_code=status)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al verificar los cursos: {str(e)}")
+
 
 
 

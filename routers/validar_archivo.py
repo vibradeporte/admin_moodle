@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import requests
 from fastapi import HTTPException, APIRouter
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse
 from io import BytesIO
 
 verificacion_inicial_archivo = APIRouter()
@@ -19,7 +19,7 @@ required_columns = [
 def verificar_archivo(nombre_archivo: str):
     ruta = f'https://ulapi-production.up.railway.app/static/temp_files/{nombre_archivo}'
     
-    # Check if the file is an Excel file
+    # Verificar si el archivo tiene la extensión correcta
     if not ruta.endswith(('.xlsx', '.xls')):
         raise HTTPException(
             status_code=415,
@@ -47,10 +47,10 @@ def verificar_archivo(nombre_archivo: str):
                 detail="El archivo no contiene la hoja ESTUDIANTES."
             )
 
-        # Remove completely empty rows
+        # Eliminar filas completamente vacías
         df = df.dropna(how='all', axis=0)
 
-        # Check if the DataFrame is empty
+        # Verificar si el DataFrame está vacío
         if df.empty:
             raise HTTPException(
                 status_code=204,  # No Content
@@ -59,7 +59,7 @@ def verificar_archivo(nombre_archivo: str):
 
         print("Columnas del archivo cargado:", df.columns.tolist())
 
-        # Check for missing columns
+        # Verificar si faltan columnas requeridas
         missing_columns = [column for column in required_columns if column not in df.columns]
         if missing_columns:
             raise HTTPException(
@@ -68,16 +68,17 @@ def verificar_archivo(nombre_archivo: str):
             )
 
         # Guardar el archivo validado
-        validated_file_path = os.path.join('temp_files/', 'validacion_inicial.xlsx')  # Guardar en una ruta temporal o ajusta la ruta
+        validated_file_path = os.path.join('temp_files/', 'validacion_inicial.xlsx')  # Ajusta la ruta si es necesario
         df.to_excel(validated_file_path, index=False)
 
-        return PlainTextResponse(
-            f"El archivo cumple con la estructura y tipo deseado.",
+        return JSONResponse(
+            content={"Exito": True, "message": "El archivo cumple con la estructura y tipo deseado."},
             status_code=200
         )
-    
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"Ocurrió un error al procesar el archivo: {str(e)}"
         )
+

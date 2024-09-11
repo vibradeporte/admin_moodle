@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, APIRouter, HTTPException
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse
 import pandas as pd
 from io import BytesIO
 import re
@@ -91,12 +91,14 @@ async def validar_nombres_apellidos():
         si_rows_count = ((df['Nombre_Invalido'] == 'SI') | (df['Apellido_Invalido'] == 'SI') | (df['estan_cruzados'] == 'SI')).sum()
         no_rows_count = ((df['Nombre_Invalido'] == 'NO') & (df['Apellido_Invalido'] == 'NO') & (df['estan_cruzados'] == 'NO')).sum()
 
-        message = (
-            f"Validación de nombres y apellidos: \n"
-            f"{no_rows_count} Nombres Y Apellidos Correctos. \n"
-            f"{si_rows_count} Nombres Y Apellidos Incorrectos. \n"
-        )
-
-        return PlainTextResponse(content=message)
+        response_data = {
+        "validacion_nombres_apellidos": {
+            "correctos": int(no_rows_count),
+            "incorrectos": int(si_rows_count)
+        }
+        }
+    
+    # Devuelve la respuesta en formato JSON
+        return JSONResponse(content=response_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Un error ocurrió: {str(e)}")

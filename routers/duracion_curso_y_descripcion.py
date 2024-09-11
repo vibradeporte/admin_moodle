@@ -16,7 +16,7 @@ def construir_url_mysql(usuario_base_datos: str, contrasena_base_datos: str, hos
     contrasena_codificada = quote_plus(contrasena_base_datos)
     return f"mysql+mysqlconnector://{usuario_base_datos}:{contrasena_codificada}@{host_base_datos}:{puerto_base_datos}/{nombre_base_datos}"
 
-@duracion_curso_y_descripcion_router.post("/duracion_curso_y_descripcion", tags=['Cursos'], status_code=200)
+@duracion_curso_y_descripcion_router.post("/duracion_curso_y_descripcion/", tags=['Cursos'], status_code=200)
 async def duracion_curso_y_descripcion(
     usuario_base_datos: str,
     contrasena_base_datos: str,

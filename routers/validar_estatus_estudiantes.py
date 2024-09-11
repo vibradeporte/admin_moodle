@@ -1,6 +1,6 @@
 import os
 from fastapi import FastAPI, APIRouter, HTTPException
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
 import pandas as pd
@@ -95,12 +95,12 @@ async def validacion_estudiantes_estatus_final(usuario: str, contrasena: str, ho
         resultado.drop(columns=columns_to_drop, inplace=True, errors='ignore')
         resultado.to_excel(validacion_inicial_file_path, index=False)
 
-        message = (
-            "Verificación de estatus Terminada\n"
-            f"{len(resultado)} estudiantes verificados\n"
-        )
+        message = {
+            "status": "Verificación de estatus Terminada",
+            "estudiantes_validados": len(resultado)
+        }
 
-        return PlainTextResponse(content=message)
+        return JSONResponse(content=message)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
 

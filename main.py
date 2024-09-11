@@ -44,7 +44,7 @@ from routers.enrol_manual_enrol_users import enrol_manual_enrol_users_router
 from routers.prueba_user_id import prueba_conseguir_id
 from routers.usuarios_bd import usuarios_bd_router
 from routers.core_user_update_users import core_user_update_users_router
-
+from routers.creacion_contrasena import creacion_contrasena_router
 # SQL
 from routers.poblar_tabla_matricula import poblar_tabla_matricula_router
 from routers.poblar_tabla_detalle_matricula import poblar_tabla_detalle_matricula_router
@@ -96,6 +96,7 @@ app.include_router(normalizacion_router)
 app.include_router(validacion_final)
 app.include_router(validacion_cursos_certificado_router_prueba)
 app.include_router(validacion_estudiantes_estatus_router)
+app.include_router(creacion_contrasena_router)
 # Moodle
 app.include_router(usuarios_bd_router)
 app.include_router(duracion_curso_y_descripcion_router)

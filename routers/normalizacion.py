@@ -122,10 +122,10 @@ async def normalizar():
         print(df)
         df.to_excel(file_path, index=False)
 
-        message = (
-            f"Normalización de ciudad y empresa completada exitosamente."
-        )
-        return PlainTextResponse(content=message)  
+        message = {
+            "message": "Normalización de ciudad y empresa completada exitosamente."
+        }
+        return JSONResponse(content=message) 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

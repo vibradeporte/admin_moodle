@@ -1,5 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse
 import pandas as pd
 import numpy as np
 import re
@@ -221,12 +221,13 @@ async def validate_students():
 
         inconsistencias = len(estudiantes_que_no_seran_matriculados)
         correctos = len(estudiantes_a_matricular)
-        message = (
-            f"Verificación de inconsistencias:\n"
-            f"{correctos} Estudiantes correctos\n"
-            f"{inconsistencias} Estudiantes con inconsistencias\n"
-        )
+        message = {
+            "verificacion": "Verificación de inconsistencias",
+            "estudiantes_correctos": correctos,
+            "estudiantes_inconsistencias": inconsistencias
+        }
 
-        return PlainTextResponse(content=message)
+        
+        return JSONResponse(content=message)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")

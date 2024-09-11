@@ -138,18 +138,21 @@ async def validar_cedula():
         no_rows_count_solicitudes = (df['Existen_Mas_Solicitudes_De_Matricula'] == 'NO').sum()
 
 
-        message = (
-            f"Validación de cédulas:\n"
-            f"cédulas correctas: {no_rows_count_cedula} \n"
-            f"cédulas incorrectas: {si_rows_count_cedula} \n"
-            f"Validación de solicitudes de matrícula:\n"
-            f"solicitudes de matrícula correctas: {no_rows_count_solicitudes}\n"
-            f"solicitudes de matrícula incorrectas: {si_rows_count_solicitudes}\n"
-        )
+        message = {
+        "validacion_cedulas": {
+            "cedulas_correctas": int(no_rows_count_cedula),
+            "cedulas_incorrectas": int(si_rows_count_cedula)
+        },
+        "validacion_solicitudes_matricula": {
+            "solicitudes_correctas": int(no_rows_count_solicitudes),
+            "solicitudes_incorrectas": int(si_rows_count_solicitudes)
+        }
+    }
 
-        return PlainTextResponse(content=message)
+        return JSONResponse(content=message)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 

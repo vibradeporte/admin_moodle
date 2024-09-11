@@ -1,6 +1,6 @@
 import os
 from fastapi import FastAPI, APIRouter, HTTPException, Query
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
 import pandas as pd
@@ -112,17 +112,20 @@ async def validate_courses(usuario: str, contrasena: str, host: str, port: str, 
         si_rows_count = (datos['ADVERTENCIA_CURSO_CULMINADO'] != 'NO').sum()
         no_rows_count = (datos['ADVERTENCIA_CURSO_CULMINADO'] == 'NO').sum()
 
-        message = (
-            f"Validación de Certificados de Cursos: \n"
-            f"{no_rows_count} Matriculas validas \n"
-            f"{si_rows_count} Matriculas redundantes \n"
-        ) if not datos.empty else "No se encontraron datos para validar."
+        if not datos.empty:
+            message = {
+                "message": "Validación de Certificados de Cursos",
+                "matriculas_validas": int(no_rows_count),
+                "matriculas_redundantes": int(si_rows_count)
+            }
+        else:
+            message = {"message": "No se encontraron datos para validar."}
 
-        return PlainTextResponse(content=message)
+        return JSONResponse(content=message)
     except KeyError as e:
-        return PlainTextResponse(content=f"Error durante la validación de cursos: {str(e)}", status_code=500)
+        return JSONResponse(content={"error": f"Error durante la validación de cursos: {str(e)}"}, status_code=500)
     except Exception as e:
-        return PlainTextResponse(content=f"Error durante la validación de cursos: {str(e)}", status_code=500)
+        return JSONResponse(content={"error": f"Error durante la validación de cursos: {str(e)}"}, status_code=500)
 
 
 

@@ -1,5 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse
 import phonenumbers
 import pandas as pd
 import pycountry
@@ -77,13 +77,13 @@ async def validar_numeros_whatsapp():
         si_rows_count = (df['Numero_Wapp_Incorrecto'] == 'SI').sum()
         no_rows_count = (df['Numero_Wapp_Incorrecto'] == 'NO').sum()
 
-        message = (
-            f"Resultados validación de números telefónicos de Whatsapp: \n"
-            f"{si_rows_count} Números telefónicos inválidos \n"
-            f"{no_rows_count} Números telefónicos válidos \n"
-        )
+        response_data = {
+            "mensaje": "Resultados validación de números telefónicos de Whatsapp",
+            "invalidos": int(si_rows_count),
+            "validos": int(no_rows_count)
+        }
 
-        return PlainTextResponse(content=message)
+        return JSONResponse(content=response_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Un error ocurrió: {e}")
 

@@ -229,8 +229,8 @@ async def verificar_correos():
     count_no = validated_df[validated_df["¿EL email es inválido?"] == "NO"].shape[0]
 
     # Mensaje de respuesta
-    message = (
-        f"Los estudiantes que pasaron exitosamente la verificación fueron: {count_no}.\n"
-        f"Los estudiantes que no pasaron exitosamente la verificación fueron: {count_si}.\n"
-    )
-    return PlainTextResponse(content=message)
+    message = {
+        "estudiantes_exitosos": int(count_no),
+        "estudiantes_no_exitosos": int(count_si)
+    }
+    return JSONResponse(content=message)
