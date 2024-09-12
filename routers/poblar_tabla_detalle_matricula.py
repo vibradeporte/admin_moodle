@@ -91,6 +91,7 @@ def estudiantes_matriculados():
     
     if os.path.exists('temp_files/message_ids.csv'):
         df_mensajes_correo = estatus_envio_correo()
+        print(df_mensajes_correo)
         df_mensajes_correo = df_mensajes_correo.rename(columns={'status': 'RES_CORREO_BIENVENIDA'})
         df = pd.concat([df, df_mensajes_correo], axis=1)
     else:
