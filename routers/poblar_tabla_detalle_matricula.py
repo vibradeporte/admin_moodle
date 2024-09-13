@@ -168,6 +168,7 @@ def estudiantes_matriculados():
     if 'id' in df.columns:
         df.drop(columns=['id'], inplace=True)
 
+    df['RES_WS_BIENVENIDA'] = df['RES_WS_BIENVENIDA'].fillna('NO SE ENVIO EL MENSAJE A WHATSAPP')
     return df
 
 
