@@ -2,7 +2,7 @@ from fastapi import FastAPI, File, UploadFile, APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 import pandas as pd
 from io import BytesIO
-import re
+import regex as re
 import unidecode
 import nltk
 from nltk.tokenize import word_tokenize
@@ -26,17 +26,20 @@ def verificar_cruzados(row):
         return 'SI'
 
 def validar_nombre_apellido(s):
-    # Verificar si la cadena es vacía
+    # Verificar si la cadena es vacía o solo contiene espacios
     if not s or not s.strip():
         return "SI"
-    # Verificar si no coincide con el patrón permitido
-    elif not re.match("^[\w\s]*$", s):
-        return "SI"
+    
     # Verificar si la longitud es menor a 3
-    elif len(s) < 3:
+    if len(s) < 3:
         return "SI"
-    else:
-        return "NO"
+    if s == 'NAN':
+        return "SI"
+    # Verificar si contiene caracteres no permitidos (todas las letras con acentuaciones)
+    if not re.match(r"^[\p{L}\s]*$", s):
+        return "SI"
+    
+    return "NO"
 
 def encontrar_similitudes(token, lista):
     return token in lista
