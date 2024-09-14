@@ -33,10 +33,13 @@ def validar_nombre_apellido(s):
     # Verificar si la longitud es menor a 3
     if len(s) < 3:
         return "SI"
-    if s == 'NAN':
+    
+    # Verificar si la cadena es 'NAN'
+    if s.upper() == 'NAN':
         return "SI"
-    # Verificar si contiene caracteres no permitidos (todas las letras con acentuaciones)
-    if not re.match(r"^[\p{L}\s]*$", s):
+    
+    # Verificar si contiene caracteres no permitidos (solo letras y espacios, incluyendo acentos)
+    if not re.match(r"^[\p{L}\s]+$", s):
         return "SI"
     
     return "NO"
