@@ -14,7 +14,7 @@ def calcular_fechas_matricula(fila):
     """
     Calcula las fechas de inicio y fin de matrícula, así como la duración de la misma, dado un registro (fila) de datos.
     """
-    semanas_de_matricula = re.sub(r'[^0-9,.-]', '', str(fila['NRO_SEMANAS_DE_MATRICULA'])).replace(',', '.')
+    semanas_de_matricula = re.sub(r'[^0-9,.]', '', str(fila['NRO_SEMANAS_DE_MATRICULA'])).replace(',', '.')
     
     if not semanas_de_matricula or semanas_de_matricula == '.':
         semanas_inscripcion = None
