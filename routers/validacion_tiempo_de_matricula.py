@@ -15,34 +15,32 @@ def calcular_fechas_matricula(fila):
     Calcula las fechas de inicio y fin de matrícula, así como la duración de la misma, dado un registro (fila) de datos.
     """
     semanas_de_matricula = re.sub(r'[^0-9,.]', '', str(fila['NRO_SEMANAS_DE_MATRICULA'])).replace(',', '.')
-    
-    if not semanas_de_matricula or semanas_de_matricula == '.':
-        semanas_inscripcion = None
-    else:
-        semanas_inscripcion = int(float(semanas_de_matricula))
+    dias_inscripcion_matricula = abs(int(float(semanas_de_matricula))) * 7
+
     if pd.isna(fila['CourseDaysDuration']) or fila['CourseDaysDuration'] in ['', None]:
         duracion_curso_dias = 0 
-        semanas_inscripcion = 0
+        dias_inscripcion_matricula = 0
     else:
         duracion_curso_dias = int(float(fila['CourseDaysDuration']))
+
+    if pd.isna(dias_inscripcion_matricula) or dias_inscripcion_matricula <= 0:
+        dias_inscripcion_matricula = 0
+
+    if dias_inscripcion_matricula == 0:
+        duracion_matricula = duracion_curso_dias
+
+    if duracion_curso_dias < dias_inscripcion_matricula:
+        duracion_matricula = dias_inscripcion_matricula
+    elif duracion_curso_dias > dias_inscripcion_matricula:
+        duracion_matricula = dias_inscripcion_matricula
     
-    if pd.isna(semanas_inscripcion) or semanas_inscripcion <= 0:
-        semanas_inscripcion = None
-
-    if semanas_inscripcion is None:
-        duracion_matricula = duracion_curso_dias
-    elif duracion_curso_dias < int(semanas_inscripcion * 7):
-        duracion_matricula = duracion_curso_dias
-    else:
-        duracion_matricula = int(semanas_inscripcion * 7)
-
     if duracion_curso_dias <= 28 and (duracion_matricula > (4 * duracion_curso_dias)):
         excede_tiempo_de_matricula = "SI"
     elif duracion_curso_dias > 28 and (duracion_matricula > (2 * duracion_curso_dias)):
         excede_tiempo_de_matricula = "SI"
     else:
         excede_tiempo_de_matricula = "NO"
-
+    print('5:',duracion_matricula)
     fecha_inicio_matricula = datetime.now().replace(hour=4, minute=0, second=0, microsecond=0)
     fecha_fin_matricula = fecha_inicio_matricula + timedelta(days=int(duracion_matricula))
     fecha_fin_matricula = fecha_fin_matricula.replace(hour=4, minute=0, second=0, microsecond=0)
