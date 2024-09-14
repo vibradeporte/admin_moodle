@@ -169,6 +169,7 @@ def estudiantes_matriculados():
         df.drop(columns=['id'], inplace=True)
 
     df['RES_WS_BIENVENIDA'] = df['RES_WS_BIENVENIDA'].fillna('NO SE ENVIO EL MENSAJE A WHATSAPP')
+    df = df.drop_duplicates(subset=['IDENTIFICACION', 'NOMBRE_CORTO_CURSO'])
     return df
 
 
@@ -257,6 +258,7 @@ def create_matricula(fid_matricula: int):
     
     # Agregar la columna 'FID_MATRICULA' a todos los registros
     df['FID_MATRICULA'] = fid_matricula
+
 
     try:
         # Intentar insertar los datos en la tabla 'DETALLE_MATRICULA'
