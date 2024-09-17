@@ -14,44 +14,47 @@ def calcular_fechas_matricula(fila):
     """
     Calcula las fechas de inicio y fin de matrícula, así como la duración de la misma, dado un registro (fila) de datos.
     """
+    # Extraer semanas de matrícula limpiando la cadena y reemplazando comas por puntos
     semanas_de_matricula = re.sub(r'[^0-9,.]', '', str(fila['NRO_SEMANAS_DE_MATRICULA'])).replace(',', '.')
+    
+    # Si no hay un valor válido, poner '0'
+    if not semanas_de_matricula:
+        semanas_de_matricula = '0'
+    
+    # Convertir semanas a días de inscripción
     dias_inscripcion_matricula = abs(int(float(semanas_de_matricula))) * 7
 
+    # Si no hay duración del curso o es inválida, poner 0
     if pd.isna(fila['CourseDaysDuration']) or fila['CourseDaysDuration'] in ['', None]:
-        duracion_curso_dias = 0 
-        dias_inscripcion_matricula = 0
+        duracion_curso_dias = 0
     else:
         duracion_curso_dias = int(float(fila['CourseDaysDuration']))
 
-    if pd.isna(dias_inscripcion_matricula) or dias_inscripcion_matricula <= 0:
-        dias_inscripcion_matricula = 0
-
+    # Si dias_inscripcion_matricula es 0, usar duracion_curso_dias
     if dias_inscripcion_matricula == 0:
         duracion_matricula = duracion_curso_dias
+    else:
+        duracion_matricula = dias_inscripcion_matricula
 
-    if duracion_curso_dias < dias_inscripcion_matricula:
-        duracion_matricula = dias_inscripcion_matricula
-    elif duracion_curso_dias > dias_inscripcion_matricula:
-        duracion_matricula = dias_inscripcion_matricula
-    
-    if duracion_curso_dias <= 28 and (duracion_matricula > (4 * duracion_curso_dias)):
+    # Verificar si excede el tiempo permitido de matrícula
+    if duracion_curso_dias <= 28 and (duracion_matricula > 4 * duracion_curso_dias):
         excede_tiempo_de_matricula = "SI"
-    elif duracion_curso_dias > 28 and (duracion_matricula > (2 * duracion_curso_dias)):
+    elif duracion_curso_dias > 28 and (duracion_matricula > 2 * duracion_curso_dias):
         excede_tiempo_de_matricula = "SI"
     else:
         excede_tiempo_de_matricula = "NO"
-    print('5:',duracion_matricula)
+
+    # Calcular las fechas de inicio y fin de la matrícula
     fecha_inicio_matricula = datetime.now().replace(hour=4, minute=0, second=0, microsecond=0)
-    fecha_fin_matricula = fecha_inicio_matricula + timedelta(days=int(duracion_matricula))
+    fecha_fin_matricula = fecha_inicio_matricula + timedelta(days=duracion_matricula)
     fecha_fin_matricula = fecha_fin_matricula.replace(hour=4, minute=0, second=0, microsecond=0)
 
-    timestart = int(fecha_inicio_matricula.timestamp())
-    timeend = int(fecha_fin_matricula.timestamp())
-    
-    timestart = max(timestart, 0)
-    timeend = max(timeend, 0)
+    # Convertir las fechas a timestamp
+    timestart = max(int(fecha_inicio_matricula.timestamp()), 0)
+    timeend = max(int(fecha_fin_matricula.timestamp()), 0)
 
-    return pd.Series([timestart, timeend, duracion_matricula, excede_tiempo_de_matricula], 
+    # Devolver los resultados en un pandas Series
+    return pd.Series([timestart, timeend, duracion_matricula, excede_tiempo_de_matricula],
                      index=['timestart', 'timeend', 'NRO_DIAS_DE_MATRICULAS', 'El tiempo de matricula es invalido'])
 
 

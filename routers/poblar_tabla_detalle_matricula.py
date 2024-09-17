@@ -173,7 +173,6 @@ def estudiantes_matriculados():
     return df
 
 
-
 def estudiantes_no_matriculados():
     """
     Devuelve un DataFrame con los estudiantes que no se han matriculado
