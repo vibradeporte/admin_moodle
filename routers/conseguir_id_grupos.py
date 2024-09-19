@@ -35,7 +35,30 @@ async def id_grupo(usuario: str, contrasena: str, host: str, port: str, nombre_b
     ids_curso = df['NOMBRE_CORTO_CURSO'].unique().tolist()
     ids_str = ', '.join([f':NOMBRE_CORTO_CURSO{i}' for i in range(len(ids_curso))])
     
-    today_str = datetime.now().strftime('%B_%d_%Y')
+
+    fecha = datetime.now().strftime('%B_%d_%Y')
+
+# Diccionario para traducir meses de inglés a español
+    meses_en_espanol = {
+        'January': 'Enero',
+        'February': 'Febrero',
+        'March': 'Marzo',
+        'April': 'Abril',
+        'May': 'Mayo',
+        'June': 'Junio',
+        'July': 'Julio',
+        'August': 'Agosto',
+        'September': 'Septiembre',
+        'October': 'Octubre',
+        'November': 'Noviembre',
+        'December': 'Diciembre'
+    }
+
+    # Extrae el nombre del mes en inglés
+    mes_ingles = datetime.now().strftime('%B')
+
+    # Reemplaza el mes en inglés con el equivalente en español
+    today_str = fecha.replace(mes_ingles, meses_en_espanol[mes_ingles])
 
     consulta_sql = text(f"""
         SELECT g.id AS groupid, g.name AS groupname, c.id AS courseid, c.shortname AS coursename
