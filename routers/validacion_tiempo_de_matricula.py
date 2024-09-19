@@ -37,7 +37,9 @@ def calcular_fechas_matricula(fila):
         duracion_matricula = dias_inscripcion_matricula
 
     # Verificar si excede el tiempo permitido de matrícula
-    if duracion_curso_dias <= 28 and (duracion_matricula > 4 * duracion_curso_dias):
+    if duracion_curso_dias == 0:
+        excede_tiempo_de_matricula = " "
+    elif duracion_curso_dias <= 28 and (duracion_matricula > 4 * duracion_curso_dias):
         excede_tiempo_de_matricula = "SI"
     elif duracion_curso_dias > 28 and (duracion_matricula > 2 * duracion_curso_dias):
         excede_tiempo_de_matricula = "SI"
@@ -45,9 +47,9 @@ def calcular_fechas_matricula(fila):
         excede_tiempo_de_matricula = "NO"
 
     # Calcular las fechas de inicio y fin de la matrícula
-    fecha_inicio_matricula = datetime.now().replace(hour=4, minute=0, second=0, microsecond=0)
+    fecha_inicio_matricula = datetime.now().replace(hour=5, minute=0, second=0, microsecond=0)
     fecha_fin_matricula = fecha_inicio_matricula + timedelta(days=duracion_matricula)
-    fecha_fin_matricula = fecha_fin_matricula.replace(hour=4, minute=0, second=0, microsecond=0)
+    fecha_fin_matricula = fecha_fin_matricula.replace(hour=5, minute=0, second=0, microsecond=0)
 
     # Convertir las fechas a timestamp
     timestart = max(int(fecha_inicio_matricula.timestamp()), 0)

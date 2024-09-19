@@ -128,6 +128,7 @@ async def validar_cedula():
         df = validar_Cedula(df)
         df = verificar_tipo_identificacion(df)
         df['¿El tipo de identificación es incorrecto?'] = df['TIPO_IDENTIFICACION'].apply(validacion_tipo_identificacion)
+        df['IDENTIFICACION'] = df['IDENTIFICACION'].fillna('SIN IDENTIFICACIÓN')
         df.to_excel(file_path, index=False)
 
         si_rows_count_cedula = (df['cedula_es_invalida'] == 'SI').sum()

@@ -56,14 +56,14 @@ def nombres_cursos_bd(usuario: str, contrasena: str, host: str, port: str, nombr
             SELECT
                 c.shortname, c.fullname, c.visible
             FROM
-                mdl_course as c
-            WHERE
-                c.visible=1;
+                mdl_course as c;
         """)
         result = connection.execute(consulta_sql)
         rows = result.fetchall()
         column_names = result.keys()
         cursos_existentes = pd.DataFrame(rows, columns=column_names)
+
+    cursos_no_activos = cursos_existentes[cursos_existentes['visible'] == 0]
 
     ruta_archivo = 'temp_files/validacion_inicial.xlsx'
     datos = pd.read_excel(ruta_archivo)
@@ -73,6 +73,10 @@ def nombres_cursos_bd(usuario: str, contrasena: str, host: str, port: str, nombr
     cursos_existentes_lista = cursos_existentes['shortname'].tolist()
     datos['nombre_De_Curso_Invalido'] = datos['NOMBRE_CORTO_CURSO'].apply(
         lambda x: "NO" if x in cursos_existentes_lista else "SI"
+    )
+    cursos_no_activos_lista = cursos_no_activos['shortname'].tolist()
+    datos['¿El Curso NO está Activo?'] = datos['NOMBRE_CORTO_CURSO'].apply(
+        lambda x: "SI" if x in cursos_no_activos_lista else "NO" if x in cursos_existentes_lista else ""
     )
 
 

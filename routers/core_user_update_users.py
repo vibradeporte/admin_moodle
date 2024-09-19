@@ -326,7 +326,7 @@ async def core_user_update_users(moodle_url: str = Form(...), moodle_token: str 
         if IDNUMBER is None:
             raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'username'")
         
-        INSTITUTION = ""
+        INSTITUTION = row.get("EMPRESA")
         DEPARTMENT = ""
         PHONE1 = row.get("phone1")
         if PHONE1 is None:
@@ -342,6 +342,7 @@ async def core_user_update_users(moodle_url: str = Form(...), moodle_token: str 
         except ValueError:
             raise HTTPException(status_code=400, detail=f"El campo 'userid' con valor '{USERID}' en la fila {i} no es convertible a entero")
         data[f"users[{i}][username]"] = USERNAME
+        data[f"users[{i}][suspended]"] = 0
         data[f"users[{i}][password]"] = PASSWORD
         data[f"users[{i}][firstname]"] = FIRSTNAME
         data[f"users[{i}][lastname]"] = LASTNAME

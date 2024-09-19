@@ -158,24 +158,22 @@ async def validate_students():
             'lastname': matriculas_aceptadas['APELLIDOS'].fillna('SIN APELLIDOS').astype(str).str.upper(),
             'timestart': matriculas_aceptadas['timestart'].fillna('SIN FECHA').astype(str),
             'timeend': matriculas_aceptadas['timeend'].fillna('SIN FECHA').astype(str),
-            'MOVIL': matriculas_aceptadas['NUMERO_MOVIL_WS_SIN_PAIS'].fillna('SIN MOVIL').astype(str).str.upper(),
-            'phone1': matriculas_aceptadas['Numero_Con_Prefijo'].apply(solo_numeros).fillna(''),
+            'PAIS_DEL_MOVIL': matriculas_aceptadas['PAIS_DEL_MOVIL'].fillna('SIN PAÍS').astype(str).str.upper(),
+            'MOVIL': matriculas_aceptadas['NUMERO_MOVIL_WS_SIN_PAIS'].apply(lambda x: str(x).replace('.0', '') if '.0' in str(x) else str(x)),
+            'phone1': matriculas_aceptadas['Numero_Con_Prefijo'].apply(solo_numeros).fillna(' '),
             'city': matriculas_aceptadas['CIUDAD'].fillna('SIN CIUDAD').astype(str).str.upper(),
             'country': matriculas_aceptadas['PAIS_DE_RESIDENCIA'].fillna('SIN PAÍS').astype(str).str.upper(),
             'address': matriculas_aceptadas.apply(lambda row: f"{row['TIPO_IDENTIFICACION']} {row['IDENTIFICACION']}" if pd.notna(row['TIPO_IDENTIFICACION']) and pd.notna(row['IDENTIFICACION']) else "SIN DIRECCIÓN", axis=1),
-            'description': matriculas_aceptadas['DESCRIPCIÓN'].fillna(''),
+            'description': matriculas_aceptadas['DESCRIPCIÓN'].fillna(' '),
             'CourseId': matriculas_aceptadas['CourseId'].fillna(''),
             'CourseDaysDuration': matriculas_aceptadas['CourseDaysDuration'].fillna(''),
-            'timestart': matriculas_aceptadas['timestart'].fillna(''),
-            'timeend': matriculas_aceptadas['timeend'].fillna(''),
-            'lastnamephonetic': matriculas_aceptadas['lastnamephonetic'].fillna(''),
-            'EMPRESA': matriculas_aceptadas['EMPRESA'].fillna(''),
+            'lastnamephonetic': matriculas_aceptadas['lastnamephonetic'].fillna(' '),
+            'EMPRESA': matriculas_aceptadas['EMPRESA'].fillna('SIN EMPRESA').astype(str).str.upper(),
             'CORREO_SOLICITANTE': matriculas_aceptadas['CORREO_SOLICITANTE'].fillna(''),
             'NRO_DIAS_DE_MATRICULAS': matriculas_aceptadas['NRO_DIAS_DE_MATRICULAS'].fillna(''),
             'NRO_SEMANAS_DE_MATRICULA': matriculas_aceptadas['NRO_SEMANAS_DE_MATRICULA'].fillna(''),
             'NOMBRE_CORTO_CURSO': matriculas_aceptadas['NOMBRE_CORTO_CURSO'].fillna('SIN NOMBRE CORTO CURSO'),
             'NOMBRE_LARGO_CURSO': matriculas_aceptadas['NOMBRE_LARGO_CURSO'].fillna('SIN NOMBRE LARGO'),
-            'NRO_DIAS_DE_MATRICULAS': matriculas_aceptadas['NRO_DIAS_DE_MATRICULAS'],
             '¿El tiempo de matricula es invalido?': matriculas_aceptadas['El tiempo de matricula es invalido'],
             '¿EL email es inválido?': matriculas_aceptadas['¿EL email es inválido?'],
             '¿EL email solicitante es inválido?': matriculas_aceptadas['¿EL email solicitante es inválido?'],
@@ -187,6 +185,7 @@ async def validate_students():
             '¿Hay apellidos y nombres invertidos?': matriculas_aceptadas['estan_cruzados'],
             '¿El número de whatsapp es invalido?': matriculas_aceptadas['Numero_Wapp_Incorrecto'],
             '¿Hay nombres inválidos de cursos?': matriculas_aceptadas['nombre_De_Curso_Invalido'],
+            '¿El Curso NO está Activo?': matriculas_aceptadas['¿El Curso NO está Activo?'],
             '¿Tiene matrícula activa?': matriculas_aceptadas['Esta_activo_estudiante'],
             '¿El campo del pais esta vacío?': matriculas_aceptadas['El campo del pais esta vacío'],
             'Advertencia de curso culminado': matriculas_aceptadas['ADVERTENCIA_CURSO_CULMINADO']
@@ -218,6 +217,23 @@ async def validate_students():
         estudiantes_que_no_seran_matriculados.to_excel('temp_files/estudiantes_invalidos.xlsx', index=False)
         if os.path.exists(validacion):
             os.remove(validacion)
+        estudiantes_que_no_seran_matriculados_correo = estudiantes_que_no_seran_matriculados.copy()
+        estudiantes_que_no_seran_matriculados_correo = estudiantes_que_no_seran_matriculados_correo.drop(columns=['timestart', 'timeend', 'lastnamephonetic', 'CourseId', 
+                      'CourseDaysDuration', 'address', 'NRO_DIAS_DE_MATRICULAS', 'phone1'])
+        estudiantes_que_no_seran_matriculados_correo = estudiantes_que_no_seran_matriculados_correo.rename(columns={
+            'email': 'CORREO',
+            'username': 'IDENTIFICACION',
+            'firstname': 'NOMBRES',
+            'lastname': 'APELLIDOS',
+            'MOVIL': 'NUMERO_MOVIL_WS_SIN_PAIS',
+            'city': 'CIUDAD',
+            'country': 'PAIS_DE_RESIDENCIA',
+            'ESTADO': 'ESTADO DEL USUARIO EN LA BASE DE DATOS',
+            'description': 'DESCRIPCIÓN'
+        })
+
+        estudiantes_que_no_seran_matriculados_correo.to_excel('temp_files/estudiantes_invalidos_correo.xlsx', index=False)
+
 
         inconsistencias = len(estudiantes_que_no_seran_matriculados)
         correctos = len(estudiantes_a_matricular)

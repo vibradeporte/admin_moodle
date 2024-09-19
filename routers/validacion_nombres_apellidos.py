@@ -92,6 +92,8 @@ async def validar_nombres_apellidos():
         df['Nombre_Invalido'] = df['NOMBRES'].apply(validar_nombre_apellido)
         df['Apellido_Invalido'] = df['APELLIDOS'].apply(validar_nombre_apellido)
         df = nuevo_estan_cruzados(df)
+        df['NOMBRES'] = df['NOMBRES'].replace('NAN', 'SIN NOMBRES')
+        df['APELLIDOS'] = df['APELLIDOS'].replace('NAN', 'SIN APELLIDOS')
         df.to_excel(file_path, index=False)
 
         si_rows_count = ((df['Nombre_Invalido'] == 'SI') | (df['Apellido_Invalido'] == 'SI') | (df['estan_cruzados'] == 'SI')).sum()

@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
 from fastapi import APIRouter, HTTPException
 import pandas as pd
-
+import unidecode
 
 def get_database_url(user: str, password: str, host: str, port: str, db_name: str) -> str:
     password_encoded = quote_plus(password)
@@ -63,6 +63,8 @@ def lista_usuarios_bd(
 
         if result_dicts:
             df = pd.DataFrame(result_dicts)
+            df['firstname'] = df['firstname'].str.strip().apply(unidecode.unidecode).str.upper()
+            df['lastname'] = df['lastname'].str.strip().apply(unidecode.unidecode).str.upper()
             csv_file_path = "temp_files/usuarios_completos.csv"
             df.to_csv(csv_file_path, index=False)
 
