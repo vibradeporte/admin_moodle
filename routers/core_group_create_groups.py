@@ -58,6 +58,30 @@ async def core_group_create_groups(
     unique_course_ids = df['CourseId'].unique()
     fecha = datetime.now().strftime('%B_%d_%Y')
 
+# Diccionario para traducir meses de inglés a español
+    meses_en_espanol = {
+        'January': 'Enero',
+        'February': 'Febrero',
+        'March': 'Marzo',
+        'April': 'Abril',
+        'May': 'Mayo',
+        'June': 'Junio',
+        'July': 'Julio',
+        'August': 'Agosto',
+        'September': 'Septiembre',
+        'October': 'Octubre',
+        'November': 'Noviembre',
+        'December': 'Diciembre'
+    }
+
+    # Extrae el nombre del mes en inglés
+    mes_ingles = datetime.now().strftime('%B')
+
+    # Reemplaza el mes en inglés con el equivalente en español
+    fecha_en_espanol = fecha.replace(mes_ingles, meses_en_espanol[mes_ingles])
+
+    
+
     successful_groups = []
     failed_groups = []
 
@@ -71,7 +95,7 @@ async def core_group_create_groups(
     for course_id in unique_course_ids:
         group_data = {
             "groups[0][courseid]": int(course_id),  # Convert numpy.int64 to int
-            "groups[0][name]": {fecha},
+            "groups[0][name]": {fecha_en_espanol},
             "groups[0][description]": f"Este grupo se compone de los estudiantes matriculados el día {fecha}"
         }
 
