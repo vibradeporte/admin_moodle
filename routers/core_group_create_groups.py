@@ -80,8 +80,6 @@ async def core_group_create_groups(
     # Reemplaza el mes en inglés con el equivalente en español
     fecha_en_espanol = fecha.replace(mes_ingles, meses_en_espanol[mes_ingles])
 
-    
-
     successful_groups = []
     failed_groups = []
 
@@ -96,7 +94,7 @@ async def core_group_create_groups(
         group_data = {
             "groups[0][courseid]": int(course_id),  # Convert numpy.int64 to int
             "groups[0][name]": {fecha_en_espanol},
-            "groups[0][description]": f"Este grupo se compone de los estudiantes matriculados el día {fecha}"
+            "groups[0][description]": f"Este grupo se compone de los estudiantes matriculados el día {fecha_en_espanol}"
         }
 
         try:
