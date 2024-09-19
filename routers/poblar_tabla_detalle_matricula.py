@@ -121,46 +121,62 @@ def estudiantes_matriculados():
 
     # Verificación de los mensajes de correo
     if os.path.exists('temp_files/message_ids.csv'):
+        # Obtener los datos de estatus de envío del correo
         df_mensajes_correo = estatus_envio_correo()
-
-        # Si df_mensajes_correo es una lista, conviértela en DataFrame
+        print(df_mensajes_correo)
+        
+        # Si es una lista, convertirla a DataFrame
         if isinstance(df_mensajes_correo, list):
-            # Si es una lista de diccionarios o una lista con estructura tabular
             df_mensajes_correo = pd.DataFrame(df_mensajes_correo)
-
-        # Ahora, renombra la columna si es un DataFrame
-        if isinstance(df_mensajes_correo, pd.DataFrame):
+        
+        # Verificar si df_mensajes_correo es un DataFrame y tiene contenido
+        if isinstance(df_mensajes_correo, pd.DataFrame) and not df_mensajes_correo.empty:
+            # Renombrar la columna 'status' a 'RES_CORREO_BIENVENIDA'
             df_mensajes_correo = df_mensajes_correo.rename(columns={'status': 'RES_CORREO_BIENVENIDA'})
+            # Concatenar los DataFrames
             df = pd.concat([df, df_mensajes_correo], axis=1)
         else:
-            print("Error: No se pudo convertir en un DataFrame.")
+            print("Error: No se pudo convertir a DataFrame o está vacío.")
+            df['RES_CORREO_BIENVENIDA'] = 'NO ENVIADO AL CORREO'
     else:
-        # En caso de que no exista el archivo o df_mensajes_correo no sea un DataFrame
+        # En caso de que no exista el archivo
         df['RES_CORREO_BIENVENIDA'] = 'NO ENVIADO AL CORREO'
+
+    # Asegurarse de llenar los valores nulos con 'NO ENVIADO AL CORREO'
+    df['RES_CORREO_BIENVENIDA'] = df['RES_CORREO_BIENVENIDA'].fillna('NO ENVIADO AL CORREO')
 
 
     # Verificación de los mensajes de WhatsApp
     if os.path.exists('temp_files/message_status_wapp.csv'):
-        # Leer el archivo CSV con solo las columnas necesarias
-        df_mensajes_wapp = pd.read_csv('temp_files/message_status_wapp.csv', usecols=['message_status', 'numero'])
+        try:
+            # Leer el archivo CSV con solo las columnas necesarias
+            df_mensajes_wapp = pd.read_csv('temp_files/message_status_wapp.csv', usecols=['message_status', 'numero'])
+            print(df_mensajes_wapp)
 
-        # Renombrar las columnas
-        df_mensajes_wapp = df_mensajes_wapp.rename(columns={'message_status': 'RES_WS_BIENVENIDA', 'numero': 'MOVIL'})
+            # Renombrar las columnas
+            df_mensajes_wapp = df_mensajes_wapp.rename(columns={'message_status': 'RES_WS_BIENVENIDA', 'numero': 'MOVIL'})
 
-        # Asegurarse de que la columna 'MOVIL' esté en formato string
-        df_mensajes_wapp['MOVIL'] = df_mensajes_wapp['MOVIL'].astype(str)
+            # Asegurarse de que la columna 'MOVIL' esté en formato string
+            df_mensajes_wapp['MOVIL'] = df_mensajes_wapp['MOVIL'].astype(str)
 
-        # Eliminar los dos primeros caracteres de la columna 'MOVIL'
-        df_mensajes_wapp['MOVIL'] = df_mensajes_wapp['MOVIL'].str.replace(r'^.{2}', '', regex=True)
+            # Eliminar los dos primeros caracteres de la columna 'MOVIL'
+            df_mensajes_wapp['MOVIL'] = df_mensajes_wapp['MOVIL'].str.replace(r'^.{2}', '', regex=True)
 
-        # Verificar si la columna 'MOVIL' existe en ambos DataFrames
-        if 'MOVIL' in df.columns and 'MOVIL' in df_mensajes_wapp.columns:
-            # Realizar la unión de los DataFrames basándote en la columna 'MOVIL'
-            df = pd.merge(df, df_mensajes_wapp, on='MOVIL', how='left')
-        else:
-            print("Error: La columna 'MOVIL' no existe en ambos DataFrames.")
+            # Verificar si la columna 'MOVIL' existe en ambos DataFrames
+            if 'MOVIL' in df.columns and 'MOVIL' in df_mensajes_wapp.columns:
+                # Realizar la unión de los DataFrames basándote en la columna 'MOVIL'
+                df = pd.merge(df, df_mensajes_wapp, on='MOVIL', how='left')
+            else:
+                print("Error: La columna 'MOVIL' no existe en ambos DataFrames.")
+                df['RES_WS_BIENVENIDA'] = 'NO ENVIADO AL WHATSAPP'
+        except ValueError as e:
+            print(f"Error al leer el archivo CSV: {e}")
+            df['RES_WS_BIENVENIDA'] = 'NO ENVIADO AL WHATSAPP'
     else:
         df['RES_WS_BIENVENIDA'] = 'NO ENVIADO AL WHATSAPP'
+
+    # Asegurarse de llenar los valores nulos con 'NO ENVIADO AL WHATSAPP'
+    df['RES_WS_BIENVENIDA'] = df['RES_WS_BIENVENIDA'].fillna('NO ENVIADO AL WHATSAPP')
     
     df['RES_MATRICULA'] = 'MATRICULADO'
     
