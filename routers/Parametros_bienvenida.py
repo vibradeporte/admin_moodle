@@ -60,7 +60,10 @@ def obtener_plantillas_wapp(usuario: str, contrasena: str, host: str, port: str,
 @Bienvenida_wapp_estudiantes_router.post("/Estructura_Wapp_Bienvenida/", tags=['Whatsapp'])
 async def csv_to_json(usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str) -> List[Dict]:
     # Leer y limpiar el archivo CSV
-    df_estudiantes = pd.read_csv('temp_files/estudiantes_validados.csv')
+    df_estudiantes = pd.read_csv('temp_files/estudiantes_validados.csv', dtype={'phone1': str})
+    df_estudiantes['phone1'] = df_estudiantes['phone1'].fillna('').astype(str)
+    df_estudiantes['phone1'] = df_estudiantes['phone1'].str.replace('\.0$', '', regex=True)
+
     df_plantilla_wapp = obtener_plantillas_wapp(usuario, contrasena, host, port, nombre_base_datos)
     df = pd.merge(df_estudiantes, df_plantilla_wapp[['NOMBRE_CORTO_CURSO', 'plantilla_whatsapp']], on='NOMBRE_CORTO_CURSO', how='left')
     # Filtrar los registros con números de teléfono válidos
