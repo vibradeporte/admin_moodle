@@ -76,29 +76,34 @@ async def validacion_estudiantes_estatus_final(usuario: str, contrasena: str, ho
 
         cursos_unicos = datos_df['NOMBRE_CORTO_CURSO'].unique().tolist()
         estudiantes_estatus_df = estudiantes_estatus(cursos_unicos, usuario, contrasena, host, port, nombre_base_datos)
+        if estudiantes_estatus_df.empty:
+            datos_df['Esta_activo_estudiante'] = 'NO'
+            datos_df.to_excel(validacion_inicial_file_path, index=False)
+            print(datos_df['Esta_activo_estudiante'])
+            return JSONResponse(status_code=200, content={"status": "Verificación de estatus Terminada"})
+        else:    
+            # Merge the dataframes
+            resultado = datos_df.merge(estudiantes_estatus_df, left_on=['IDENTIFICACION', 'NOMBRE_CORTO_CURSO'], right_on=['username', 'courseshortname'], how='left', suffixes=('', '_estatus'))
 
-        # Merge the dataframes
-        resultado = datos_df.merge(estudiantes_estatus_df, left_on=['IDENTIFICACION', 'NOMBRE_CORTO_CURSO'], right_on=['username', 'courseshortname'], how='left', suffixes=('', '_estatus'))
+            #resultado.drop_duplicates(subset=['IDENTIFICACION', 'NOMBRE_CORTO_CURSO'], keep='last', inplace=True)
+            resultado['Esta_activo_estudiante'] = resultado['ESTA_ACTIVO'].apply(lambda x: 'SI' if x == 1 else 'NO')
 
-        #resultado.drop_duplicates(subset=['IDENTIFICACION', 'NOMBRE_CORTO_CURSO'], keep='last', inplace=True)
-        resultado['Esta_activo_estudiante'] = resultado['ESTA_ACTIVO'].apply(lambda x: 'SI' if x == 1 else 'NO')
+            resultado['lastnamephonetic'] = resultado.apply(
+                lambda row: f"{row['courseshortname']}|{row['enrolment_start_date'].strftime('%d/%m/%Y')}|{row['enrolment_end_date'].strftime('%d/%m/%Y')}" if row['ESTA_ACTIVO'] == 0 else '', axis=1)
 
-        resultado['lastnamephonetic'] = resultado.apply(
-            lambda row: f"{row['courseshortname']}|{row['enrolment_start_date'].strftime('%d/%m/%Y')}|{row['enrolment_end_date'].strftime('%d/%m/%Y')}" if row['ESTA_ACTIVO'] == 0 else '', axis=1)
+            resultado = resultado.replace({pd.NA: None, float('inf'): None, float('-inf'): None})
+            print(resultado)
+            columns_to_drop = [
+                'courseshortname', 'username', 'first_name', 'last_name', 'enrolment_status',
+                'enrolment_start_date', 'enrolment_end_date', 'ESTA_ACTIVO'
+            ]
+            resultado.drop(columns=columns_to_drop, inplace=True, errors='ignore')
+            resultado.to_excel(validacion_inicial_file_path, index=False)
 
-        resultado = resultado.replace({pd.NA: None, float('inf'): None, float('-inf'): None})
-
-        columns_to_drop = [
-            'courseshortname', 'username', 'first_name', 'last_name', 'enrolment_status',
-            'enrolment_start_date', 'enrolment_end_date', 'ESTA_ACTIVO'
-        ]
-        resultado.drop(columns=columns_to_drop, inplace=True, errors='ignore')
-        resultado.to_excel(validacion_inicial_file_path, index=False)
-
-        message = {
-            "status": "Verificación de estatus Terminada",
-            "estudiantes_validados": len(resultado)
-        }
+            message = {
+                "status": "Verificación de estatus Terminada",
+                "estudiantes_validados": len(resultado)
+            }
 
         return JSONResponse(content=message)
     except Exception as e:
