@@ -78,6 +78,7 @@ async def validacion_estudiantes_estatus_final(usuario: str, contrasena: str, ho
         estudiantes_estatus_df = estudiantes_estatus(cursos_unicos, usuario, contrasena, host, port, nombre_base_datos)
         if estudiantes_estatus_df.empty:
             datos_df['Esta_activo_estudiante'] = 'NO'
+            datos_df['lastnamephonetic'] = ' '
             datos_df.to_excel(validacion_inicial_file_path, index=False)
             print(datos_df['Esta_activo_estudiante'])
             return JSONResponse(status_code=200, content={"status": "Verificación de estatus Terminada"})
