@@ -185,7 +185,10 @@ async def validate_students():
             '¿Hay apellidos y nombres invertidos?': matriculas_aceptadas['estan_cruzados'],
             '¿El número de whatsapp es invalido?': matriculas_aceptadas['Numero_Wapp_Incorrecto'],
             '¿Hay nombres inválidos de cursos?': matriculas_aceptadas['nombre_De_Curso_Invalido'],
-            '¿El Curso NO está Activo?': matriculas_aceptadas['¿El Curso NO está Activo?'],
+            '¿El curso está deshabilitado para matrículas?': matriculas_aceptadas['¿El curso está deshabilitado para matrículas?'],
+            '¿La plantilla HTML de correos de bienvenida es INVALIDA?': matriculas_aceptadas['¿La plantilla HTML de correos de bienvenida es INVALIDA?'],
+            '¿El ID de mensajes de bienvenida de Whatsapp es INVALIDO?': matriculas_aceptadas['¿El ID de mensajes de bienvenida de Whatsapp es INVALIDO?'],
+            '¿El Curso NO contiene dias de duracion de matrícula?': matriculas_aceptadas['¿El Curso NO contiene dias de duracion de matrícula?'],
             '¿Tiene matrícula activa?': matriculas_aceptadas['Esta_activo_estudiante'],
             '¿El campo del pais esta vacío?': matriculas_aceptadas['El campo del pais esta vacío'],
             'Advertencia de curso culminado': matriculas_aceptadas['ADVERTENCIA_CURSO_CULMINADO']
@@ -234,13 +237,32 @@ async def validate_students():
 
         estudiantes_que_no_seran_matriculados_correo.to_excel('temp_files/estudiantes_invalidos_correo.xlsx', index=False)
 
+        if (estudiantes_que_no_seran_matriculados_correo[['¿El curso está deshabilitado para matrículas?',
+                                                        '¿La plantilla HTML de correos de bienvenida es INVALIDA?',
+                                                        '¿El ID de mensajes de bienvenida de Whatsapp es INVALIDO?',
+                                                        '¿El Curso NO contiene dias de duracion de matrícula?']] == "SI").any().any():
+            # Si alguna columna contiene "SI", seleccionar las columnas y eliminar duplicados
+            estudiantes_que_no_seran_matriculados_curso_no_cumple_requisitos = estudiantes_que_no_seran_matriculados_correo[
+                ['NOMBRE_CORTO_CURSO', '¿El curso está deshabilitado para matrículas?',
+                '¿La plantilla HTML de correos de bienvenida es INVALIDA?',
+                '¿El ID de mensajes de bienvenida de Whatsapp es INVALIDO?',
+                '¿El Curso NO contiene dias de duracion de matrícula?']
+            ].drop_duplicates(subset='NOMBRE_CORTO_CURSO')
+            
+            # Guardar en un archivo Excel
+            estudiantes_que_no_seran_matriculados_curso_no_cumple_requisitos.to_excel('temp_files/curso_no_cumple_requisitos.xlsx', index=False)
+            
+            Curso_es_invalido = "Hay cursos que no cumplen con las validaciones para matricular estudiantes"
+        else:
+            Curso_es_invalido = "Los cursos cumplen con los requisitos para matricular estudiantes"
 
         inconsistencias = len(estudiantes_que_no_seran_matriculados)
         correctos = len(estudiantes_a_matricular)
         message = {
             "verificacion": "Verificación de inconsistencias",
             "estudiantes_correctos": correctos,
-            "estudiantes_inconsistencias": inconsistencias
+            "estudiantes_inconsistencias": inconsistencias,
+            "cursos": Curso_es_invalido
         }
 
         
