@@ -16,6 +16,90 @@ def construir_url_mysql(usuario_base_datos: str, contrasena_base_datos: str, hos
     contrasena_codificada = quote_plus(contrasena_base_datos)
     return f"mysql+mysqlconnector://{usuario_base_datos}:{contrasena_codificada}@{host_base_datos}:{puerto_base_datos}/{nombre_base_datos}"
 
+def obtener_plantillas_wapp(database_url,engine,cursos):
+    cursos_str = ','.join([f"'{curso.strip()}'" for curso in cursos])
+    consulta_sql = text(f"""
+        SELECT DISTINCT
+            c.id AS CourseId,
+            c.shortname AS NOMBRE_CORTO_CURSO,
+            SUBSTRING(
+                c.idnumber, 
+                LOCATE(':', c.idnumber, LOCATE('PWH:', c.idnumber)) + 1, 
+                LOCATE('>', c.idnumber, LOCATE('PWH:', c.idnumber)) - LOCATE(':', c.idnumber, LOCATE('PWH:', c.idnumber)) - 1
+            ) AS plantilla_whatsapp
+        FROM
+            mdl_course AS c
+        WHERE
+            c.shortname IN ({cursos_str})
+        ORDER BY
+            c.shortname;
+    """)
+
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(consulta_sql)
+            rows = result.fetchall()
+            column_names = result.keys()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error de conexión a la base de datos: {str(e)}")
+
+    # Verificar si hay resultados
+    if not rows:
+        return pd.DataFrame()
+
+    else:
+    # Convertir los resultados en un DataFrame
+        result_dicts = [dict(zip(column_names, row)) for row in rows]
+        df_plantilla = pd.DataFrame(result_dicts)
+
+        # Verificar si el campo 'plantilla_whatsapp' es inválido
+        df_plantilla['¿El ID de mensajes de bienvenida de Whatsapp es INVALIDO?'] = df_plantilla.apply(
+            lambda row: "SI" if row['plantilla_whatsapp'] is None or len(row['plantilla_whatsapp']) == 0 or len(row['plantilla_whatsapp']) <= 15 else "NO", axis=1
+        )
+
+        # Guardar el DataFrame en un archivo CSV
+        temp_dir = 'temp_files'
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
+        
+        df_plantilla.to_csv(f'{temp_dir}/plantillas_wapp.csv', index=False)
+
+    return df_plantilla
+
+def obtener_plantillas_correos(database_url,engine,cursos) -> pd.DataFrame:
+    cursos_str = ','.join([f"'{curso.strip()}'" for curso in cursos])
+
+    consulta_sql = text(f"""
+        SELECT 
+            shortname as NOMBRE_CORTO_CURSO,
+            summary as plantilla_Html
+        FROM mdl_course 
+        WHERE 
+            shortname IN ({cursos_str})
+            AND summaryformat = 1;
+        """)
+
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(consulta_sql)
+            rows = result.fetchall()
+            column_names = result.keys()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error de conexión a la base de datos: {str(e)}")
+
+    if not rows:
+        return pd.DataFrame()
+    else:
+    # Convertir los resultados en un DataFrame
+        result_dicts = [dict(zip(column_names, row)) for row in rows]
+        df_plantilla = pd.DataFrame(result_dicts)
+        df_plantilla['¿La plantilla HTML de correos de bienvenida es INVALIDA?'] = df_plantilla['plantilla_Html'].astype(str).apply(
+            lambda texto: "NO" if all(placeholder in texto for placeholder in ['{username}', '{firstname}', '{lastname}', '{password}']) else "SI"
+        )
+        df_plantilla.to_csv('temp_files/plantillas_correos.csv', index=False)
+
+    return df_plantilla
+
 @duracion_curso_y_descripcion_router.post("/duracion_curso_y_descripcion/", tags=['Cursos'], status_code=200)
 async def duracion_curso_y_descripcion(
     usuario_base_datos: str,
@@ -29,17 +113,25 @@ async def duracion_curso_y_descripcion(
     Esta función lee un archivo excel con una columna 'NOMBRE_CORTO_CURSO', realiza la búsqueda de cada curso
     en la base de datos y agrega las columnas 'CourseId' y 'CourseDaysDuration' al mismo excel.
     """
-    url_base_datos = construir_url_mysql(usuario_base_datos, contrasena_base_datos, host_base_datos, puerto_base_datos, nombre_base_datos)
-    motor_base_datos = create_engine(url_base_datos)
-
     archivo_de_entrada = 'temp_files/validacion_inicial.xlsx'
     if not os.path.exists(archivo_de_entrada):
         raise HTTPException(status_code=404, detail="El archivo estudiantes_validados.xlsx no existe.")
-
     df_estudiantes = pd.read_excel(archivo_de_entrada)
-
     if 'NOMBRE_CORTO_CURSO' not in df_estudiantes.columns:
         raise HTTPException(status_code=400, detail="El archivo Excel no contiene la columna 'NOMBRE_CORTO_CURSO'.")
+
+    cursos = df_estudiantes['NOMBRE_CORTO_CURSO'].unique().tolist()
+
+    url_base_datos = construir_url_mysql(usuario_base_datos, contrasena_base_datos, host_base_datos, puerto_base_datos, nombre_base_datos)
+    motor_base_datos = create_engine(url_base_datos)
+    df_plantlina_wapp = obtener_plantillas_wapp(url_base_datos,motor_base_datos,cursos)
+    df_plantilla_wapp = df_plantlina_wapp.drop(columns=['plantilla_whatsapp','CourseId'])
+    df_plantilla_correos = obtener_plantillas_correos(url_base_datos,motor_base_datos,cursos)
+    df_plantilla_correos = df_plantilla_correos.drop(columns=['plantilla_Html'])
+
+    df_plantillas = df_plantilla_correos.merge(df_plantilla_wapp, on='NOMBRE_CORTO_CURSO', how='left')
+    df_estudiantes = df_estudiantes.merge(df_plantillas, on='NOMBRE_CORTO_CURSO', how='left')
+
 
     course_ids = []
     course_durations = []
@@ -66,14 +158,15 @@ async def duracion_curso_y_descripcion(
                 else:
                     course_ids.append(None)
                     course_durations.append(None)
-
+        print(df_estudiantes)
         df_estudiantes['CourseId'] = course_ids
         df_estudiantes['CourseDaysDuration'] = course_durations
+        df_estudiantes['¿El Curso NO contiene dias de duracion de matrícula?'] = df_estudiantes.apply(lambda row: 'SI' if row['CourseDaysDuration'] is None or row['CourseDaysDuration'] == '' else 'NO', axis=1)
 
         # Verificar si el directorio temp_files existe
         if not os.path.exists('temp_files'):
             os.makedirs('temp_files')
-
+        print(df_estudiantes)
         df_estudiantes.to_excel(archivo_de_entrada, index=False)
 
         return JSONResponse(content='Registros encontrados y Excel actualizado.')
