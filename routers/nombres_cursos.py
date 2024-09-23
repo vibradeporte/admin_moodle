@@ -75,7 +75,7 @@ def nombres_cursos_bd(usuario: str, contrasena: str, host: str, port: str, nombr
         lambda x: "NO" if x in cursos_existentes_lista else "SI"
     )
     cursos_no_activos_lista = cursos_no_activos['shortname'].tolist()
-    datos['¿El Curso NO está Activo?'] = datos['NOMBRE_CORTO_CURSO'].apply(
+    datos['¿El curso está deshabilitado para matrículas?'] = datos['NOMBRE_CORTO_CURSO'].apply(
         lambda x: "SI" if x in cursos_no_activos_lista else "NO" if x in cursos_existentes_lista else ""
     )
 
