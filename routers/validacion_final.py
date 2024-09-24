@@ -174,6 +174,8 @@ async def validate_students():
             'NRO_SEMANAS_DE_MATRICULA': matriculas_aceptadas['NRO_SEMANAS_DE_MATRICULA'].fillna(''),
             'NOMBRE_CORTO_CURSO': matriculas_aceptadas['NOMBRE_CORTO_CURSO'].fillna('SIN NOMBRE CORTO CURSO'),
             'NOMBRE_LARGO_CURSO': matriculas_aceptadas['NOMBRE_LARGO_CURSO'].fillna('SIN NOMBRE LARGO'),
+            'FECHA-HORA_BIENVENIDAS': matriculas_aceptadas['FECHA-HORA_BIENVENIDAS'].fillna('SIN FECHA').astype(str),
+            'DIAS_INFORMADOS_AL_ESTUDIANTE': matriculas_aceptadas['DIAS_INFORMADOS_AL_ESTUDIANTE'].fillna('SIN DIAS').astype(str),
             '¿El tiempo de matricula es invalido?': matriculas_aceptadas['El tiempo de matricula es invalido'],
             '¿EL email es inválido?': matriculas_aceptadas['¿EL email es inválido?'],
             '¿EL email solicitante es inválido?': matriculas_aceptadas['¿EL email solicitante es inválido?'],
