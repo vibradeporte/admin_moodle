@@ -250,7 +250,7 @@ async def validate_students():
             ].drop_duplicates(subset='NOMBRE_CORTO_CURSO')
             
             # Guardar en un archivo Excel
-            df_estudiantes = df_estudiantes[df_estudiantes['NOMBRE_CORTO_CURSO'] != 'SINNOMBRECORTOCURSO']
+            estudiantes_que_no_seran_matriculados_curso_no_cumple_requisitos = estudiantes_que_no_seran_matriculados_curso_no_cumple_requisitos[estudiantes_que_no_seran_matriculados_curso_no_cumple_requisitos['NOMBRE_CORTO_CURSO'] != 'SINNOMBRECORTOCURSO']
             estudiantes_que_no_seran_matriculados_curso_no_cumple_requisitos.to_excel('temp_files/curso_no_cumple_requisitos.xlsx', index=False)
             
             Curso_es_invalido = "Hay cursos que no cumplen con las validaciones para matricular estudiantes"
