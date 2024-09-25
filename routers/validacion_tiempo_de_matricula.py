@@ -59,8 +59,13 @@ def calcular_fechas_matricula(fila):
     return pd.Series([timestart, timeend, duracion_matricula, excede_tiempo_de_matricula],
                      index=['timestart', 'timeend', 'NRO_DIAS_DE_MATRICULAS', 'El tiempo de matricula es invalido'])
 
-
-
+def verificar_dias_informados(x):
+    if x['DIAS_INFORMADOS_AL_ESTUDIANTE'] > x['NRO_DIAS_DE_MATRICULAS']:
+        return 'SI'
+    elif x['DIAS_INFORMADOS_AL_ESTUDIANTE'] == 0 or pd.isna(x['DIAS_INFORMADOS_AL_ESTUDIANTE']):
+        return ' '
+    else:
+        return 'NO'
 
 @validacion_tiempo_de_matricula_router.post("/validacion_tiempo_de_matricula/", tags=['Cursos'], status_code=200)
 async def validacion_tiempo_de_matricula():
@@ -83,9 +88,10 @@ async def validacion_tiempo_de_matricula():
     
     # Reemplazar valores no válidos con None para JSON
     df_estudiantes = df_estudiantes.replace({pd.NA: None, pd.NaT: None, float('inf'): None, float('-inf'): None})
-    
+    df_estudiantes['¿Dias informados a estudiante supero los días de matrícula?'] = df_estudiantes.apply(verificar_dias_informados, axis=1)
+
     # Guardar el archivo actualizado
-    try:
+    try: 
         df_estudiantes.to_excel(archivo_excel, index=False)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar el archivo Excel: {e}")

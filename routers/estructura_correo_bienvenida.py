@@ -7,73 +7,47 @@ import html
 import re
 Bienvenida_correo_estudiantes_router = APIRouter()
 
-def get_database_url(user: str, password: str, host: str, port: str, db_name: str) -> str:
-    password_encoded = quote_plus(password)
-    return f"mysql+mysqlconnector://{user}:{password_encoded}@{host}:{port}/{db_name}"
-
-def obtener_plantillas_correos(cursos: list, usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str) -> pd.DataFrame:
-    database_url = get_database_url(usuario, contrasena, host, port, nombre_base_datos)
-    engine = create_engine(database_url)
-    cursos_str = ','.join([f"'{curso.strip()}'" for curso in cursos])
-
-    consulta_sql = text(f"""
-        SELECT 
-            shortname as NOMBRE_CORTO_CURSO,
-            summary as plantilla_Html
-        FROM mdl_course 
-        WHERE 
-            shortname IN ({cursos_str})
-            AND summaryformat = 1;
-        """)
-
-    try:
-        with engine.connect() as connection:
-            result = connection.execute(consulta_sql)
-            rows = result.fetchall()
-            column_names = result.keys()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error de conexión a la base de datos: {str(e)}")
-
-    if not rows:
-        return pd.DataFrame()
-
-    # Convertir los resultados en un DataFrame
-    result_dicts = [dict(zip(column_names, row)) for row in rows]
-    df_plantilla = pd.DataFrame(result_dicts)
-    df_plantilla.to_csv('temp_files/plantillas_correos.csv', index=False)
-
-    return df_plantilla
-
-
 def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, correo_matriculas: str, correo_envio_bienvenidas: str):
     meses_espanol = {
         1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril',
         5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto',
         9: 'septiembre', 10: 'octubre', 11: 'noviembre', 12: 'diciembre'
     }
-    
+
     estructura_deseada = []
 
     # Unir los datos de los estudiantes con las plantillas de correo
     datos = datos.merge(plantilla, on='NOMBRE_CORTO_CURSO', how='left')
-    
+
     for _, fila in datos.iterrows():
         # Verifica que la plantilla HTML no esté vacía
         if pd.notna(fila['plantilla_Html']):
             try:
                 # Convertir timestamp Unix a datetime
                 timestart_dt = datetime.fromtimestamp(fila['timestart'])
-                timeend_dt = datetime.fromtimestamp(fila['timeend'])
+
+                # Verificar si 'DIAS_INFORMADOS_AL_ESTUDIANTE' es distinto de "SIN DIAS"
+                if pd.notna(fila.get('DIAS_INFORMADOS_AL_ESTUDIANTE')) and fila['DIAS_INFORMADOS_AL_ESTUDIANTE'] != 'SIN DIAS':
+                    dias_informados = int(fila['DIAS_INFORMADOS_AL_ESTUDIANTE'])  # Asegúrate de que es un entero
+                    print(f"Sumando {dias_informados} días informados al estudiante")  # LOG DE VERIFICACIÓN
+                    # Usar la fecha actual y sumarle los días informados al estudiante
+                    timeend_dt = datetime.now() + timedelta(days=dias_informados)
+                else:
+                    # Usar 'timeend' de la fila si no hay 'DIAS_INFORMADOS_AL_ESTUDIANTE'
+                    timeend_dt = datetime.fromtimestamp(fila['timeend'])
+
+                # Calcular la fecha final
                 dia_anterior = timeend_dt - timedelta(days=1)
                 
                 # Formatear las fechas con el nombre del mes en español
                 timeend_str = f"{dia_anterior.day} de {meses_espanol[dia_anterior.month]} de {dia_anterior.year} a las 11:59 PM hora colombiana"
+                print(f"Fecha calculada: {timeend_str}")  # LOG DE VERIFICACIÓN
 
-                
                 # Calcular enrolperiod (diferencia en días)
                 enrolperiod = (timeend_dt - timestart_dt).days
-                
-            except (ValueError, TypeError, OSError):  # Capturar cualquier error en la conversión
+
+            except (ValueError, TypeError, OSError) as e:  # Capturar cualquier error en la conversión
+                print(f"Error en el cálculo de fechas: {e}")  # LOG DE ERRORES
                 timeend_str = "Fecha no disponible"
                 enrolperiod = "Periodo no disponible"
 
@@ -123,8 +97,9 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
 
 
 
+
 @Bienvenida_correo_estudiantes_router.post("/Estructura_Correo_Bienvenida/", tags=['Correo'])
-async def Estructura_Correo_Bienvenida(usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str, correo_matriculas: str, correo_envio_bienvenidas: str):
+async def Estructura_Correo_Bienvenida(correo_matriculas: str, correo_envio_bienvenidas: str):
     try:
         df = pd.read_csv('temp_files/estudiantes_validados.csv')
     except FileNotFoundError:
@@ -134,11 +109,8 @@ async def Estructura_Correo_Bienvenida(usuario: str, contrasena: str, host: str,
 
     cursos_unicos = df['NOMBRE_CORTO_CURSO'].unique().tolist()
     print(df)
-    try:
-        df_plantilla = obtener_plantillas_correos(cursos_unicos, usuario, contrasena, host, port, nombre_base_datos)
-    except HTTPException as e:
-        raise e
-    
+    df_plantilla = pd.read_csv('temp_files/plantillas_correos.csv')
+
     if df_plantilla.empty:
         raise HTTPException(status_code=404, detail="No se encontraron plantillas de correo para los cursos especificados.")
     plantilla = pd.read_csv('temp_files/plantillas_correos.csv')

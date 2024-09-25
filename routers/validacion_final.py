@@ -53,6 +53,10 @@ class StringScoreCalculator:
         rabbit_score = max(1.0 - math.pow(1.2 * symmetricDifferenceCardinality / maxLength, 5.0 / math.log10(maxLength + 1)), 0)
         return rabbit_score * 100
 
+def validacion_dias_informados():
+
+    return
+
 def solo_numeros(numero):
     if pd.isna(numero):
         return ''
@@ -177,6 +181,7 @@ async def validate_students():
             'FECHA-HORA_BIENVENIDAS': matriculas_aceptadas['FECHA-HORA_BIENVENIDAS'].fillna('SIN FECHA').astype(str),
             'DIAS_INFORMADOS_AL_ESTUDIANTE': matriculas_aceptadas['DIAS_INFORMADOS_AL_ESTUDIANTE'].fillna('SIN DIAS').astype(str),
             '¿El tiempo de matricula es invalido?': matriculas_aceptadas['El tiempo de matricula es invalido'],
+            '¿Días informados a estudiante supera los días de matrícula?': matriculas_aceptadas['¿Dias informados a estudiante supero los días de matrícula?'],
             '¿EL email es inválido?': matriculas_aceptadas['¿EL email es inválido?'],
             '¿EL email solicitante es inválido?': matriculas_aceptadas['¿EL email solicitante es inválido?'],
             '¿La cédula es inválida?': matriculas_aceptadas['cedula_es_invalida'],
