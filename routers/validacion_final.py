@@ -164,7 +164,7 @@ async def validate_students():
             'timeend': matriculas_aceptadas['timeend'].fillna('SIN FECHA').astype(str),
             'PAIS_DEL_MOVIL': matriculas_aceptadas['PAIS_DEL_MOVIL'].fillna('SIN PAÍS').astype(str).str.upper(),
             'MOVIL': matriculas_aceptadas['NUMERO_MOVIL_WS_SIN_PAIS'].apply(lambda x: str(x).replace('.0', '') if '.0' in str(x) else str(x)),
-            'phone1': matriculas_aceptadas['Numero_Con_Prefijo'].apply(solo_numeros).fillna(' '),
+            'phone1': matriculas_aceptadas['Numero_Con_Prefijo'].apply(solo_numeros).fillna('SIN TELEFONO').astype(str),
             'city': matriculas_aceptadas['CIUDAD'].fillna('SIN CIUDAD').astype(str).str.upper(),
             'country': matriculas_aceptadas['PAIS_DE_RESIDENCIA'].fillna('SIN PAÍS').astype(str).str.upper(),
             'address': matriculas_aceptadas.apply(lambda row: f"{row['TIPO_IDENTIFICACION']} {row['IDENTIFICACION']}" if pd.notna(row['TIPO_IDENTIFICACION']) and pd.notna(row['IDENTIFICACION']) else "SIN DIRECCIÓN", axis=1),

@@ -271,6 +271,7 @@ async def core_user_update_users(moodle_url: str = Form(...), moodle_token: str 
     data = {}
     df = pd.read_csv('temp_files/estudiantes_validados.csv')
     df['username'] = df['username'].apply(lambda x: str(x).replace('.0', '') if '.0' in str(x) else str(x))
+    df['phone1'] = df['phone1'].apply(lambda x: str(x).replace('.0', '') if '.0' in str(x) else str(x)).apply(lambda x: str(x).replace('nan', '') if 'nan' in str(x) else str(x)).astype(str)
     df["country"] = df["country"].apply(obtener_codigo_iso_pais)
     df = df.drop_duplicates(subset=['userid'])
     if df is None:

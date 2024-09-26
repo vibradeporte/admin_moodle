@@ -969,6 +969,7 @@ async def core_user_create_users(moodle_url: str = Form(...), moodle_token: str 
     data = {}
     df_1 = pd.read_csv('temp_files/estudiantes_validados.csv')
     df_1['username'] = df_1['username'].apply(lambda x: str(x).replace('.0', '') if '.0' in str(x) else str(x))
+    df_1['phone1'] = df_1['phone1'].apply(lambda x: str(x).replace('.0', '') if '.0' in str(x) else str(x)).apply(lambda x: str(x).replace('nan', '') if 'nan' in str(x) else str(x)).astype(str)
     df = df_1[df_1['Estado'] == 'NO está en la BD esa cédula']
     df = df.drop_duplicates(subset=['username'])
     i = 0  # Inicializar el contador
