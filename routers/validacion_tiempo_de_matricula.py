@@ -47,9 +47,9 @@ def calcular_fechas_matricula(fila):
         excede_tiempo_de_matricula = "NO"
 
     # Calcular las fechas de inicio y fin de la matrícula
-    fecha_inicio_matricula = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    fecha_inicio_matricula = datetime.now().replace(hour=5, minute=0, second=0, microsecond=0)
     fecha_fin_matricula = fecha_inicio_matricula + timedelta(days=duracion_matricula)
-    fecha_fin_matricula = fecha_fin_matricula.replace(hour=0, minute=0, second=0, microsecond=0)
+    fecha_fin_matricula = fecha_fin_matricula.replace(hour=5, minute=0, second=0, microsecond=0)
 
     # Convertir las fechas a timestamp
     timestart = max(int(fecha_inicio_matricula.timestamp()), 0)
