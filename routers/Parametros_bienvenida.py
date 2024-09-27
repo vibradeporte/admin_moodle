@@ -54,6 +54,7 @@ def csv_to_json() -> List[Dict]:
     for _, row in df.iterrows():
         parametros = [
             row['firstname'],
+            row['lastname'],
             row['NOMBRE_LARGO_CURSO'],
             row['timeend_str'],
             str(row['password']) if pd.notna(row['password']) else '' # Manejo de contraseñas faltantes
