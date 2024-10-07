@@ -7,7 +7,7 @@ import html
 import re
 Bienvenida_correo_estudiantes_router = APIRouter()
 
-def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, correo_matriculas: str, correo_envio_bienvenidas: str):
+def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, correo_matriculas: str, correo_envio_bienvenidas: str, correo_envio_copia_bienvenida: str):
     meses_espanol = {
         1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril',
         5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto',
@@ -27,7 +27,7 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
                 timestart_dt = datetime.fromtimestamp(fila['timestart'])
 
                 # Verificar si 'DIAS_INFORMADOS_AL_ESTUDIANTE' es distinto de "SIN DIAS"
-                if pd.notna(fila.get('DIAS_INFORMADOS_AL_ESTUDIANTE')) and fila['DIAS_INFORMADOS_AL_ESTUDIANTE'] != 'SIN DIAS':
+                if pd.notna(fila.get('DIAS_INFORMADOS_AL_ESTUDIANTE')) and fila['DIAS_INFORMADOS_AL_ESTUDIANTE'] != 'SIN DIAS' :
                     dias_informados = int(fila['DIAS_INFORMADOS_AL_ESTUDIANTE'])  # Asegúrate de que es un entero
                     print(f"Sumando {dias_informados} días informados al estudiante")  # LOG DE VERIFICACIÓN
                     # Usar la fecha actual y sumarle los días informados al estudiante
@@ -79,17 +79,22 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
                 "from_e": correo_envio_bienvenidas,
                 "to": fila['email'],
                 "subject": f"Bienvenida al Curso {fila['NOMBRE_LARGO_CURSO']}",
-                "cc": correo_matriculas,  # Valor predeterminado en caso de que no haya 'CORREO_SOLICITANTE'
+                "cc": [correo_matriculas, correo_envio_copia_bienvenida],  # Lista con valor predeterminado
                 "html_content": html_content,
-                "content": ""
+                "content": "",
+                #"send_time": datetime.now().isoformat()  # Convertir a cadena compatible con JSON
             }
 
             # Verifica si existe 'CORREO_SOLICITANTE' y no es nulo
             if pd.notna(fila.get('CORREO_SOLICITANTE')):
-                item['cc'] = f"{fila['CORREO_SOLICITANTE']}, {correo_matriculas}"
+                item['cc'].append(fila['CORREO_SOLICITANTE'])
+
+            # Convertir la lista de correos en una cadena separada por comas
+            item['cc'] = ', '.join(item['cc'])
 
             # Añadir a la lista estructura_deseada
             estructura_deseada.append(item)
+
 
     return estructura_deseada
 
@@ -99,7 +104,7 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
 
 
 @Bienvenida_correo_estudiantes_router.post("/Estructura_Correo_Bienvenida/", tags=['Correo'])
-async def Estructura_Correo_Bienvenida(correo_matriculas: str, correo_envio_bienvenidas: str):
+async def Estructura_Correo_Bienvenida(correo_matriculas: str, correo_envio_bienvenidas: str,correo_envio_copia_bienvenida: str):
     try:
         df = pd.read_csv('temp_files/estudiantes_validados.csv')
     except FileNotFoundError:
@@ -115,6 +120,6 @@ async def Estructura_Correo_Bienvenida(correo_matriculas: str, correo_envio_bien
         raise HTTPException(status_code=404, detail="No se encontraron plantillas de correo para los cursos especificados.")
     plantilla = pd.read_csv('temp_files/plantillas_correos.csv')
     # Transformar los datos para el envío de correos
-    estructura_correo = transformar_datos_bienvenida(df, plantilla, correo_matriculas, correo_envio_bienvenidas)
+    estructura_correo = transformar_datos_bienvenida(df, plantilla, correo_matriculas, correo_envio_bienvenidas,correo_envio_copia_bienvenida)
     
     return estructura_correo
