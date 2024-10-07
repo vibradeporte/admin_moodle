@@ -16,7 +16,7 @@ nombre_base_datos = os.getenv("NAME_DB_UL_ADMIN")
 contrasena_codificada = quote_plus(contrasena)
 
 DATABASE_URL = f"mysql+mysqlconnector://{usuario}:{contrasena_codificada}@{host}/{nombre_base_datos}"
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
 poblar_tabla_matricula_router = APIRouter()
 

@@ -20,7 +20,7 @@ AUTH_PASS_TSMTP = os.getenv("AUTH_PASS_TSMTP")
 
 DATABASE_URL = f"mysql+mysqlconnector://{usuario}:{contrasena_codificada}@{host}/{nombre_base_datos}"
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 poblar_tabla_detalle_matricula_router = APIRouter()
 
 def estatus_envio_correo():
