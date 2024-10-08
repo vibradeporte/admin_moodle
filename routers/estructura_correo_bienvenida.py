@@ -7,7 +7,7 @@ import html
 import re
 Bienvenida_correo_estudiantes_router = APIRouter()
 
-def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, correo_matriculas: str, correo_envio_bienvenidas: str, correo_envio_copia_bienvenida: str):
+def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, correo_matriculas: str, correo_envio_bienvenidas: str, correo_envio_copia_matriculas: str):
     meses_espanol = {
         1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril',
         5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto',
@@ -104,7 +104,7 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
 
 
 @Bienvenida_correo_estudiantes_router.post("/Estructura_Correo_Bienvenida/", tags=['Correo'])
-async def Estructura_Correo_Bienvenida(correo_matriculas: str, correo_envio_bienvenidas: str,correo_envio_copia_bienvenida: str):
+async def Estructura_Correo_Bienvenida(correo_matriculas: str, correo_envio_bienvenidas: str,correo_envio_copia_matriculas: str):
     try:
         df = pd.read_csv('temp_files/estudiantes_validados.csv')
     except FileNotFoundError:
