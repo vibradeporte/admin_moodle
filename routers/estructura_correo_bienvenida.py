@@ -79,7 +79,7 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
                 "from_e": correo_envio_bienvenidas,
                 "to": fila['email'],
                 "subject": f"Bienvenida al Curso {fila['NOMBRE_LARGO_CURSO']}",
-                "cc": [correo_matriculas, correo_envio_copia_bienvenida],  # Lista con valor predeterminado
+                "cc": [correo_matriculas, correo_envio_copia_matriculas],  # Lista con valor predeterminado
                 "html_content": html_content,
                 "content": "",
                 #"send_time": datetime.now().isoformat()  # Convertir a cadena compatible con JSON
@@ -120,6 +120,6 @@ async def Estructura_Correo_Bienvenida(correo_matriculas: str, correo_envio_bien
         raise HTTPException(status_code=404, detail="No se encontraron plantillas de correo para los cursos especificados.")
     plantilla = pd.read_csv('temp_files/plantillas_correos.csv')
     # Transformar los datos para el envío de correos
-    estructura_correo = transformar_datos_bienvenida(df, plantilla, correo_matriculas, correo_envio_bienvenidas,correo_envio_copia_bienvenida)
+    estructura_correo = transformar_datos_bienvenida(df, plantilla, correo_matriculas, correo_envio_bienvenidas,correo_envio_copia_matriculas)
     
     return estructura_correo
