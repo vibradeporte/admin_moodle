@@ -69,6 +69,7 @@ def verificar_archivo(nombre_archivo: str):
 
         # Guardar el archivo validado
         validated_file_path = os.path.join('temp_files/', 'validacion_inicial.xlsx')  # Ajusta la ruta si es necesario
+        df['CORREO'] = df['CORREO'].str.lower()
         df.to_excel(validated_file_path, index=False)
 
         return JSONResponse(

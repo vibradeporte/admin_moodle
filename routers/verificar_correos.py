@@ -54,7 +54,7 @@ def limpiar_email(email):
         email = str(email)  # Asegurarse de que el correo es una cadena
         email = email.strip().replace("\xa0", "").replace("\t", "")
         email = email.replace(" ", "")  # Eliminar todos los espacios dentro del correo
-        return email.lower()
+        return email.lower()  # Convertir a minúsculas antes de retornar
     except Exception as e:
         print(f"Error occurred while cleaning email: {e}")
         return ""
@@ -93,6 +93,7 @@ async def verificar_correos():
 
     try:
         df = pd.read_excel(validacion_inicial_file_path)
+        df['CORREO'] = df['CORREO'].str.lower()
     except FileNotFoundError as e:
         return PlainTextResponse(
             content=f"El archivo en la ruta '{validacion_inicial_file_path}' no fue encontrado: {e}",
@@ -209,11 +210,6 @@ async def verificar_correos():
         lambda x: "NO" if pd.isna(x) or x.strip() == "" else ("SI" if es_email_invalido(x) else "NO")
     )
 
-
-    try:
-        os.remove(resultado_file_path)
-    except FileNotFoundError:
-        pass  # Ignorar si el archivo ya fue eliminado
 
     # Guardar el archivo actualizado con la validación
     try:
