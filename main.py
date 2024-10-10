@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Archivos
 from routers.Archivo_base64 import Archivo_base64_router
-
+from routers.validar_fecha_hora_mensaje_bienvenida import validacion_tiempo_mensaje_de_bienvenida
 # Validacion Inicial
 from routers.validacion_identidad import identificacion_usuario
 from routers.validacion_nombres_apellidos import validacion_nombres_apellidos_router
@@ -63,6 +63,7 @@ app = FastAPI(
 # Archivos
 app.include_router(Archivo_base64_router)
 app.include_router(verificacion_inicial_archivo)
+app.include_router(validacion_tiempo_mensaje_de_bienvenida)
 # SQL
 app.include_router(poblar_tabla_matricula_router)
 app.include_router(poblar_tabla_detalle_matricula_router)
