@@ -11,7 +11,7 @@ required_columns = [
     'IDENTIFICACION', 'TIPO_IDENTIFICACION', 'NOMBRES', 'APELLIDOS', 'CORREO',
     'PAIS_DEL_MOVIL', 'NUMERO_MOVIL_WS_SIN_PAIS', 'EMPRESA', 'DESCRIPCIÓN', 
     'PAIS_DE_RESIDENCIA', 'CIUDAD', 'CORREO_SOLICITANTE', 'NRO_SEMANAS_DE_MATRICULA',
-    'NOMBRE_LARGO_CURSO', 'NOMBRE_CORTO_CURSO', 'FECHA-HORA_BIENVENIDAS', 
+    'NOMBRE_LARGO_CURSO', 'NOMBRE_CORTO_CURSO','FECHA-HORA_BIENVENIDAS', 
     'DIAS_INFORMADOS_AL_ESTUDIANTE', 'ADVERTENCIA_CURSO_CULMINADO'
 ]
 
@@ -69,8 +69,8 @@ def verificar_archivo(nombre_archivo: str):
 
         # Guardar el archivo validado
         validated_file_path = os.path.join('temp_files/', 'validacion_inicial.xlsx')  # Ajusta la ruta si es necesario
-        df['CORREO SOLICITANTE'] = df['CORREO SOLICITANTE'].str.lower()
-        df['CORREO'] = df['CORREO'].str.lower()
+        df['CORREO_SOLICITANTE'] = df['CORREO_SOLICITANTE'].fillna('').str.lower()
+        df['CORREO'] = df['CORREO'].fillna('').str.lower()
         df.to_excel(validated_file_path, index=False)
 
         return JSONResponse(
