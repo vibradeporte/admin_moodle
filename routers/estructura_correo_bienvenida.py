@@ -82,7 +82,7 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
                 "cc": [correo_matriculas, correo_envio_copia_matriculas],  # Lista con valor predeterminado
                 "html_content": html_content,
                 "content": "",
-                "send_time": fila['send_time']
+                "send_time": fila['FECHA_HORA_ENVIO_BIENVENIDAS']
             }
 
             # Verifica si existe 'CORREO_SOLICITANTE' y no es nulo
