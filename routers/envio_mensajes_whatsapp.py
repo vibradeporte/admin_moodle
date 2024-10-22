@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, APIRouter
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+#from apscheduler.schedulers.background import BackgroundScheduler
+#from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from pydantic import BaseModel
 from datetime import datetime
 import requests
@@ -102,7 +102,7 @@ def enviar_mensaje_whatsapp(mensaje: WhatsAppMessageSchema):
 @envio_mensajes_whatsapp_router.post("/envio_mensajes_whatsapp/", tags=['Whatsapp'])
 def programar_mensajes(mensajes: WhatsAppBatchSchema):
     message_ids = []
-
+"""
     for mensaje in mensajes.mensajes:
         if mensaje.send_time is not None and mensaje.send_time <= datetime.now():
             raise HTTPException(status_code=400, detail="La fecha y hora deben estar en el futuro.")
@@ -120,7 +120,7 @@ def programar_mensajes(mensajes: WhatsAppBatchSchema):
             )
             print(f"Mensaje programado para {mensaje.numero} a las {mensaje.send_time}")
             message_ids.append({"numero": mensaje.numero, "job_id": job.id})
-
+"""
     return {
         "message": "Mensajes programados exitosamente.",
         "jobs": message_ids

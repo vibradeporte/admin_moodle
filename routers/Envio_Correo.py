@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, APIRouter
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+#from apscheduler.schedulers.background import BackgroundScheduler
+#from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from pydantic import BaseModel
 from datetime import datetime
 import requests
@@ -92,7 +92,7 @@ def enviar_correo(email: EmailSchema):
 @correo_router.post("/send_email", tags=['correo'], status_code=200)
 def programar_correos(batch: EmailBatchSchema):
     message_ids = [] 
-
+"""
     for email in batch.emails:
         if email.send_time is None or (isinstance(email.send_time, datetime) and email.send_time <= datetime.now()):
             response = enviar_correo(email)
@@ -107,7 +107,7 @@ def programar_correos(batch: EmailBatchSchema):
             )
             print(f"Correo programado para {email.to} a las {email.send_time}")
             message_ids.append({"email": email.to, "job_id": job.id})
-
+"""
     return {
         "message": "Correos programados exitosamente.",
         "jobs": message_ids
