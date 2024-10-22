@@ -7,11 +7,36 @@ from io import BytesIO
 
 verificacion_inicial_archivo = APIRouter()
 
+months_map = {
+    'enero': '01', 'febrero': '02', 'marzo': '03', 'abril': '04',
+    'mayo': '05', 'junio': '06', 'julio': '07', 'agosto': '08',
+    'septiembre': '09', 'octubre': '10', 'noviembre': '11', 'diciembre': '12'
+}
+
+def clean_date(date_str):
+    try:
+        if isinstance(date_str, str):
+            for month, num in months_map.items():
+                if month in date_str.lower():
+                    date_str = date_str.lower().replace(month, num)
+            date_str = date_str.split(' ')[0].replace('del', '').replace('-', '/').replace('.', '/').replace(' ', '/')
+            return pd.to_datetime(date_str, errors='coerce', dayfirst=True).date()
+        return pd.NaT
+    except:
+        return pd.NaT
+
+
+def clean_time(time_str):
+    try:
+        return pd.to_datetime(time_str, format='%H:%M:%S', errors='coerce').time()
+    except:
+        return None
+
 required_columns = [
     'IDENTIFICACION', 'TIPO_IDENTIFICACION', 'NOMBRES', 'APELLIDOS', 'CORREO',
     'PAIS_DEL_MOVIL', 'NUMERO_MOVIL_WS_SIN_PAIS', 'EMPRESA', 'DESCRIPCIÓN', 
     'PAIS_DE_RESIDENCIA', 'CIUDAD', 'CORREO_SOLICITANTE', 'NRO_SEMANAS_DE_MATRICULA',
-    'NOMBRE_LARGO_CURSO', 'NOMBRE_CORTO_CURSO','FECHA-HORA_BIENVENIDAS', 
+    'NOMBRE_LARGO_CURSO', 'NOMBRE_CORTO_CURSO', 
     'DIAS_INFORMADOS_AL_ESTUDIANTE', 'ADVERTENCIA_CURSO_CULMINADO'
 ]
 
