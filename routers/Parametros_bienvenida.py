@@ -62,7 +62,8 @@ def csv_to_json() -> List[Dict]:
         item = {
             "numero": str(row['phone1']),
             "plantilla": row['plantilla_whatsapp'].strip() if pd.notna(row['plantilla_whatsapp']) else '',
-            "parametros": parametros
+            "parametros": parametros,
+            "send_time": row['FECHA_HORA_ENVIO_BIENVENIDAS']
         }
         data.append(item)
 
