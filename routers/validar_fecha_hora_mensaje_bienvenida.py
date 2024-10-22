@@ -169,6 +169,7 @@ async def validacion_fecha_hora_mensaje_de_bienvenida():
         df['FECHA_HORA_INCOMPLETA'] = df.apply(es_fecha_hora_incompleta, axis=1)
 
         df['FECHA_HORA_COMBINADA'] = df.apply(combinar_fecha_hora, axis=1)
+        df['FECHA_HORA_COMBINADA'] = df['FECHA_HORA_COMBINADA'].apply(lambda x: None if pd.isna(x) or x == pd.NaT else x)
 
         df.replace({np.nan: None, np.inf: None, -np.inf: None}, inplace=True)
         df.to_excel('temp_files/validacion_inicial.xlsx',index = False)

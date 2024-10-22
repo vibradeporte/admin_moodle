@@ -94,7 +94,7 @@ def programar_correos(batch: EmailBatchSchema):
     message_ids = [] 
 
     for email in batch.emails:
-        if email.send_time is None or email.send_time <= datetime.now():
+        if email.send_time is None or (isinstance(email.send_time, datetime) and email.send_time <= datetime.now()):
             response = enviar_correo(email)
             message_ids.append({"email": email.to, "message_id": response.get("message_id")})
             print(f"Correo enviado inmediatamente a {email.to}")

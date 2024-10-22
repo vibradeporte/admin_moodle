@@ -104,10 +104,10 @@ def programar_mensajes(mensajes: WhatsAppBatchSchema):
     message_ids = []
 
     for mensaje in mensajes.mensajes:
-        if mensaje.send_time and mensaje.send_time <= datetime.now():
+        if mensaje.send_time is not None and mensaje.send_time <= datetime.now():
             raise HTTPException(status_code=400, detail="La fecha y hora deben estar en el futuro.")
 
-        if not mensaje.send_time:
+        if mensaje.send_time is None:
             response = enviar_mensaje_whatsapp(mensaje)
             message_ids.append({"numero": mensaje.numero, "message_id": response.get("message_id")})
             print(f"Mensaje enviado inmediatamente a {mensaje.numero}")
