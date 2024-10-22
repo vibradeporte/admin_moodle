@@ -178,8 +178,13 @@ async def validate_students():
             'NRO_SEMANAS_DE_MATRICULA': matriculas_aceptadas['NRO_SEMANAS_DE_MATRICULA'].fillna(''),
             'NOMBRE_CORTO_CURSO': matriculas_aceptadas['NOMBRE_CORTO_CURSO'].fillna('SIN NOMBRE CORTO CURSO'),
             'NOMBRE_LARGO_CURSO': matriculas_aceptadas['NOMBRE_LARGO_CURSO'].fillna('SIN NOMBRE LARGO'),
-            'FECHA-HORA_BIENVENIDAS': matriculas_aceptadas['FECHA-HORA_BIENVENIDAS'].fillna('SIN FECHA').astype(str),
+            'FECHA_MENSAJE_BIENVENIDA': matriculas_aceptadas['FECHA_MENSAJE_BIENVENIDA'].fillna('SIN FECHA').astype(str),
+            'HORA_MENSAJE_BIENVENIDAS': matriculas_aceptadas['HORA_MENSAJE_BIENVENIDAS'].fillna('SIN FECHA').astype(str),
+            'FECHA_HORA_ENVIO_BIENVENIDAS':matriculas_aceptadas['FECHA_HORA_COMBINADA'].fillna('').astype(str),
             'DIAS_INFORMADOS_AL_ESTUDIANTE': matriculas_aceptadas['DIAS_INFORMADOS_AL_ESTUDIANTE'].fillna('SIN DIAS').astype(str),
+            '¿El formato de la fecha de envio de mensajes de bienvenida es invalido?': matriculas_aceptadas['FECHA_INVALIDA'],
+            '¿El formato de la hora de envio de mensajes de bienvenida es invalido?': matriculas_aceptadas['HORA_INVALIDA'],
+            '¿Hace falta fecha u hora de envio de mensajes de bienvenida?': matriculas_aceptadas['FECHA_HORA_INCOMPLETA'],
             '¿El tiempo de matricula es invalido?': matriculas_aceptadas['El tiempo de matricula es invalido'],
             '¿Días informados a estudiante supera los días de matrícula?': matriculas_aceptadas['¿Dias informados a estudiante supero los días de matrícula?'],
             '¿EL email es inválido?': matriculas_aceptadas['¿EL email es inválido?'],
@@ -229,7 +234,7 @@ async def validate_students():
             os.remove(validacion)
         estudiantes_que_no_seran_matriculados_correo = estudiantes_que_no_seran_matriculados.copy()
         estudiantes_que_no_seran_matriculados_correo = estudiantes_que_no_seran_matriculados_correo.drop(columns=['timestart', 'timeend', 'lastnamephonetic', 'CourseId', 
-                      'CourseDaysDuration', 'address', 'NRO_DIAS_DE_MATRICULAS', 'phone1'])
+                      'CourseDaysDuration', 'address', 'NRO_DIAS_DE_MATRICULAS', 'phone1','FECHA_HORA_ENVIO_BIENVENIDAS'])
         estudiantes_que_no_seran_matriculados_correo = estudiantes_que_no_seran_matriculados_correo.rename(columns={
             'email': 'CORREO',
             'username': 'IDENTIFICACION',
