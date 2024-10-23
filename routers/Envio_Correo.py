@@ -99,12 +99,18 @@ def programar_correos(batch: EmailBatchSchema):
     message_ids = []
 
     for email in batch.emails:
+<<<<<<< HEAD
         email_dict = email.dict()  # Convertir el email a un diccionario
 
         if email.send_time is None or (isinstance(email.send_time, datetime) and email.send_time <= datetime.now()):
             # Enviar inmediatamente usando Celery
             result = enviar_correo.delay(email_dict)
             message_ids.append({"email": email.to, "task_id": result.id})
+=======
+        if email.send_time is None or email.send_time <= datetime.now():
+            response = enviar_correo(email)
+            message_ids.append({"email": email.to, "message_id": response.get("message_id")})
+>>>>>>> parent of 0b3d6e9 (Manejo de formatos Null NaT)
             print(f"Correo enviado inmediatamente a {email.to}")
         else:
             # Se programa el envío para el futuro

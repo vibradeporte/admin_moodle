@@ -180,7 +180,7 @@ async def validate_students():
             'NOMBRE_LARGO_CURSO': matriculas_aceptadas['NOMBRE_LARGO_CURSO'].fillna('SIN NOMBRE LARGO'),
             'FECHA_MENSAJE_BIENVENIDA': matriculas_aceptadas['FECHA_MENSAJE_BIENVENIDA'].fillna('SIN FECHA').astype(str),
             'HORA_MENSAJE_BIENVENIDAS': matriculas_aceptadas['HORA_MENSAJE_BIENVENIDAS'].fillna('SIN FECHA').astype(str),
-            'FECHA_HORA_ENVIO_BIENVENIDAS':matriculas_aceptadas['FECHA_HORA_COMBINADA'].replace('NaT', '').fillna('').astype(str),
+            'FECHA_HORA_ENVIO_BIENVENIDAS':matriculas_aceptadas['FECHA_HORA_COMBINADA'].fillna('').astype(str),
             'DIAS_INFORMADOS_AL_ESTUDIANTE': matriculas_aceptadas['DIAS_INFORMADOS_AL_ESTUDIANTE'].fillna('SIN DIAS').astype(str),
             '¿El formato de la fecha de envio de mensajes de bienvenida es invalido?': matriculas_aceptadas['FECHA_INVALIDA'],
             '¿El formato de la hora de envio de mensajes de bienvenida es invalido?': matriculas_aceptadas['HORA_INVALIDA'],

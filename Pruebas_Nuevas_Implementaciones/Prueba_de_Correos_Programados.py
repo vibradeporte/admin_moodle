@@ -55,12 +55,6 @@ def send_email(email: EmailSchema):
     else:
         response_data = response.json()
         return response_data.get('mid')
-        # Save message_ids to a CSV file using pandas
-    df = pd.DataFrame(message_ids, columns=["message_id"])
-    csv_file_path = "temp_files/message_ids.csv"
-    df.to_csv(csv_file_path, index=False)
-
-    return {"message": "Todos los correos fueron enviados exitosamente.", "message_ids": message_ids, "csv_file_path": csv_file_path}
 
 
 def schedule_email(email: EmailSchema):

@@ -2,11 +2,9 @@ from fastapi import FastAPI, APIRouter, HTTPException
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
 import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime , timedelta
 import html
 import re
-
 Bienvenida_correo_estudiantes_router = APIRouter()
 
 def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, correo_matriculas: str, correo_envio_bienvenidas: str, correo_envio_copia_matriculas: str):
@@ -29,8 +27,9 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
                 timestart_dt = datetime.fromtimestamp(fila['timestart'])
 
                 # Verificar si 'DIAS_INFORMADOS_AL_ESTUDIANTE' es distinto de "SIN DIAS"
-                if pd.notna(fila.get('DIAS_INFORMADOS_AL_ESTUDIANTE')) and fila['DIAS_INFORMADOS_AL_ESTUDIANTE'] != 'SIN DIAS':
-                    dias_informados = int(fila['DIAS_INFORMADOS_AL_ESTUDIANTE'])
+                if pd.notna(fila.get('DIAS_INFORMADOS_AL_ESTUDIANTE')) and fila['DIAS_INFORMADOS_AL_ESTUDIANTE'] != 'SIN DIAS' :
+                    dias_informados = int(fila['DIAS_INFORMADOS_AL_ESTUDIANTE'])  # Asegúrate de que es un entero
+                    print(f"Sumando {dias_informados} días informados al estudiante")  # LOG DE VERIFICACIÓN
                     # Usar la fecha actual y sumarle los días informados al estudiante
                     timeend_dt = datetime.now() + timedelta(days=dias_informados)
                 else:
@@ -39,9 +38,10 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
 
                 # Calcular la fecha final
                 dia_anterior = timeend_dt - timedelta(days=1)
-
+                
                 # Formatear las fechas con el nombre del mes en español
                 timeend_str = f"{dia_anterior.day} de {meses_espanol[dia_anterior.month]} de {dia_anterior.year} a las 11:59 PM hora colombiana"
+                print(f"Fecha calculada: {timeend_str}")  # LOG DE VERIFICACIÓN
 
                 # Calcular enrolperiod (diferencia en días)
                 enrolperiod = (timeend_dt - timestart_dt).days
@@ -79,10 +79,10 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
                 "from_e": correo_envio_bienvenidas,
                 "to": fila['email'],
                 "subject": f"Bienvenida al Curso {fila['NOMBRE_LARGO_CURSO']}",
-                "cc": [correo_matriculas, correo_envio_copia_matriculas],
+                "cc": [correo_matriculas, correo_envio_copia_matriculas],  # Lista con valor predeterminado
                 "html_content": html_content,
                 "content": "",
-                "send_time": fila['FECHA_HORA_ENVIO_BIENVENIDAS'] if fila['FECHA_HORA_ENVIO_BIENVENIDAS'] != '' else None
+                "send_time": fila['FECHA_HORA_ENVIO_BIENVENIDAS']
             }
 
             # Verifica si existe 'CORREO_SOLICITANTE' y no es nulo
@@ -95,11 +95,16 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
             # Añadir a la lista estructura_deseada
             estructura_deseada.append(item)
 
+
     return estructura_deseada
 
 
+
+
+
+
 @Bienvenida_correo_estudiantes_router.post("/Estructura_Correo_Bienvenida/", tags=['Correo'])
-async def Estructura_Correo_Bienvenida(correo_matriculas: str, correo_envio_bienvenidas: str, correo_envio_copia_matriculas: str):
+async def Estructura_Correo_Bienvenida(correo_matriculas: str, correo_envio_bienvenidas: str,correo_envio_copia_matriculas: str):
     try:
         df = pd.read_csv('temp_files/estudiantes_validados.csv')
     except FileNotFoundError:
@@ -107,31 +112,14 @@ async def Estructura_Correo_Bienvenida(correo_matriculas: str, correo_envio_bien
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al leer el archivo CSV: {str(e)}")
 
-    # Leer el archivo de plantillas
-    try:
-        df_plantilla = pd.read_csv('temp_files/plantillas_correos.csv')
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail="El archivo 'plantillas_correos.csv' no fue encontrado.")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al leer el archivo de plantillas: {str(e)}")
+    cursos_unicos = df['NOMBRE_CORTO_CURSO'].unique().tolist()
+    print(df)
+    df_plantilla = pd.read_csv('temp_files/plantillas_correos.csv')
 
     if df_plantilla.empty:
         raise HTTPException(status_code=404, detail="No se encontraron plantillas de correo para los cursos especificados.")
-
-    df['FECHA_HORA_ENVIO_BIENVENIDAS'] = df['FECHA_HORA_ENVIO_BIENVENIDAS'].replace('NaT', np.nan)
-
-    # Convertir los valores de 'FECHA_HORA_ENVIO_BIENVENIDAS' a datetime, errores se convierten en NaT
-    df['FECHA_HORA_ENVIO_BIENVENIDAS'] = pd.to_datetime(df['FECHA_HORA_ENVIO_BIENVENIDAS'], errors='coerce')
-
-    # Convertir toda la columna a cadenas (str), incluyendo los valores NaT
-    df['FECHA_HORA_ENVIO_BIENVENIDAS'] = df['FECHA_HORA_ENVIO_BIENVENIDAS'].astype(str)
-
-    # Reemplazar los valores 'NaT' con una cadena vacía
-    df['FECHA_HORA_ENVIO_BIENVENIDAS'] = df['FECHA_HORA_ENVIO_BIENVENIDAS'].replace('NaT', '')
-    df['FECHA_HORA_ENVIO_BIENVENIDAS'] = df['FECHA_HORA_ENVIO_BIENVENIDAS'].replace('', "None")
-    print(df['FECHA_HORA_ENVIO_BIENVENIDAS'])
+    plantilla = pd.read_csv('temp_files/plantillas_correos.csv')
     # Transformar los datos para el envío de correos
-    estructura_correo = transformar_datos_bienvenida(df, df_plantilla, correo_matriculas, correo_envio_bienvenidas, correo_envio_copia_matriculas)
-
+    estructura_correo = transformar_datos_bienvenida(df, plantilla, correo_matriculas, correo_envio_bienvenidas,correo_envio_copia_matriculas)
+    
     return estructura_correo
-
