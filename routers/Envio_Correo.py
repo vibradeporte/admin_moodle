@@ -1,15 +1,15 @@
 from fastapi import FastAPI, HTTPException, APIRouter
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from pydantic import BaseModel
 from datetime import datetime
+import requests
 from typing import List, Optional
 from urllib.parse import quote_plus
-import requests
 import csv
-from celery import Celery
 from dotenv import load_dotenv
 import os
 
-# Cargar variables de entorno
 load_dotenv()
 usuario = os.getenv("USER_DB_UL_ADMIN")
 contrasena = os.getenv("PASS_DB_UL_ADMIN")
@@ -21,27 +21,24 @@ AUTH_PASS_TSMTP = os.getenv("AUTH_PASS_TSMTP")
 
 def get_database_url(user: str, password: str, host: str, port: str, db_name: str) -> str:
     password_encoded = quote_plus(password)
-    return f"db+mysql://{user}:{password_encoded}@{host}:{port}/{db_name}"
-
+    return f"mysql+mysqlconnector://{user}:{password_encoded}@{host}:{port}/{db_name}"
 
 # Configuración de la base de datos con SQLAlchemy (usa PostgreSQL o MySQL)
 DATABASE_URL = get_database_url(usuario, contrasena, host, '3306', nombre_base_datos)
 
-# Inicializar Celery con Redis como broker y la base de datos como backend
-celery_app = Celery(
-    'tasks',
-    broker='redis://localhost:6379/0',  # Broker: Redis
-    backend=DATABASE_URL  # Backend: Conexión a la base de datos para almacenar los resultados de las tareas
-)
+jobstores = {
+    'default': SQLAlchemyJobStore(url=DATABASE_URL) 
+}
 
-# Inicializar el router
+scheduler = BackgroundScheduler(jobstores=jobstores)
+scheduler.start()
 correo_router = APIRouter()
 
 class EmailSchema(BaseModel):
     from_e: str
     to: str
     subject: str
-    cc: Optional[str] = None
+    cc: str = None
     html_content: str
     content: str
     send_time: Optional[datetime] = None
@@ -49,25 +46,22 @@ class EmailSchema(BaseModel):
 class EmailBatchSchema(BaseModel):
     emails: List[EmailSchema]
 
-# Función para guardar información en CSV
 def guardar_en_csv(email: str, message_id: str):
     filename = 'temp_files/message_ids.csv'
     with open(filename, mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow([email, message_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S')])
 
-# Tarea Celery para enviar correos
-@celery_app.task
-def enviar_correo(email_dict):
+def enviar_correo(email: EmailSchema):
     data = {
         "authuser": AUTH_USER_TSMTP,
-        "authpass": AUTH_PASS_TSMTP,
-        "from": email_dict["from_e"],
-        "to": email_dict["to"],
-        "subject": email_dict["subject"],
-        "cc": email_dict["cc"],
-        "content": email_dict["content"],
-        "html_content": email_dict["html_content"]
+        "authpass": AUTH_PASS_TSMTP,  
+        "from": email.from_e,
+        "to": email.to,
+        "subject": email.subject,
+        "cc": email.cc,
+        "content": email.content,
+        "html_content": email.html_content
     }
 
     headers = {
@@ -75,40 +69,44 @@ def enviar_correo(email_dict):
     }
 
     try:
+
         response = requests.post("https://api.turbo-smtp.com/api/v2/mail/send", headers=headers, json=data)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         print(f"Error al enviar el correo: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error enviando el correo a {email_dict['to']}")
+        raise HTTPException(status_code=500, detail=f"Error enviando el correo a {email.to}")
 
     response_data = response.json()
     message_id = response_data.get('mid')
 
     if not message_id:
-        raise HTTPException(status_code=500, detail=f"No se recibió el 'message_id' para {email_dict['to']}")
+        raise HTTPException(status_code=500, detail=f"No se recibió el 'message_id' para {email.to}")
 
-    print(f"Correo enviado exitosamente a {email_dict['to']}, message_id: {message_id}")
+    print(f"Correo enviado exitosamente a {email.to}, message_id: {message_id}")
     
-    guardar_en_csv(email_dict['to'], message_id)
+    guardar_en_csv(email.to, message_id)
 
-    return {"message": "Correo enviado", "email": email_dict['to'], "message_id": message_id}
+    return {"message": "Correo enviado", "email": email.to, "message_id": message_id}
 
-# Endpoint para programar correos
+
 @correo_router.post("/send_email", tags=['correo'], status_code=200)
 def programar_correos(batch: EmailBatchSchema):
-    message_ids = []
+    message_ids = [] 
 
     for email in batch.emails:
-        if email.send_time is None or email.send_time <= datetime.now():
+        if email.send_time is None or (isinstance(email.send_time, datetime) and email.send_time <= datetime.now()):
             response = enviar_correo(email)
             message_ids.append({"email": email.to, "message_id": response.get("message_id")})
             print(f"Correo enviado inmediatamente a {email.to}")
         else:
-            # Se programa el envío para el futuro
-            eta = email.send_time
-            result = enviar_correo.apply_async((email_dict,), eta=eta)
-            message_ids.append({"email": email.to, "task_id": result.id})
+            job = scheduler.add_job(
+                enviar_correo, 
+                'date', 
+                run_date=email.send_time, 
+                args=[email]
+            )
             print(f"Correo programado para {email.to} a las {email.send_time}")
+            message_ids.append({"email": email.to, "job_id": job.id})
 
     return {
         "message": "Correos programados exitosamente.",
