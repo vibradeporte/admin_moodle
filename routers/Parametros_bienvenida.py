@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-import numpy as np
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import create_engine, text
 from datetime import timedelta, datetime
@@ -29,15 +28,7 @@ def csv_to_json() -> List[Dict]:
     # Filtrar los registros con números de teléfono válidos
     df = df.dropna(subset=['phone1'])
     df = df[df['phone1'].apply(lambda x: str(x).isdigit() and x not in ["none", "null"])]
-    df['FECHA_HORA_ENVIO_BIENVENIDAS'] = df['FECHA_HORA_ENVIO_BIENVENIDAS'].replace('NaT', np.nan)
 
-    # Convertir los valores de 'FECHA_HORA_ENVIO_BIENVENIDAS' a datetime, errores se convierten en NaT
-    df['FECHA_HORA_ENVIO_BIENVENIDAS'] = pd.to_datetime(df['FECHA_HORA_ENVIO_BIENVENIDAS'], errors='coerce')
-    # Convertir toda la columna a cadenas (str), incluyendo los valores NaT
-    df['FECHA_HORA_ENVIO_BIENVENIDAS'] = df['FECHA_HORA_ENVIO_BIENVENIDAS'].astype(str)
-    # Reemplazar los valores 'NaT' con una cadena vacía
-    df['FECHA_HORA_ENVIO_BIENVENIDAS'] = df['FECHA_HORA_ENVIO_BIENVENIDAS'].replace('NaT', '')
-    df['FECHA_HORA_ENVIO_BIENVENIDAS'] = df['FECHA_HORA_ENVIO_BIENVENIDAS'].replace('', None)
     # Calcular timeend y dia_anterior
     def calcular_fechas(row):
         if pd.notna(row['DIAS_INFORMADOS_AL_ESTUDIANTE']) and row['DIAS_INFORMADOS_AL_ESTUDIANTE'] != 'SIN DIAS':
@@ -71,8 +62,7 @@ def csv_to_json() -> List[Dict]:
         item = {
             "numero": str(row['phone1']),
             "plantilla": row['plantilla_whatsapp'].strip() if pd.notna(row['plantilla_whatsapp']) else '',
-            "parametros": parametros,
-            "send_time": row['FECHA_HORA_ENVIO_BIENVENIDAS']
+            "parametros": parametros
         }
         data.append(item)
 

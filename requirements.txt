@@ -34,4 +34,3 @@ phonenumbers
 pycountry
 pydantic==2.2.1 
 pydantic[email]
-APScheduler==3.10.4
