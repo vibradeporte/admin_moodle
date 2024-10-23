@@ -71,4 +71,4 @@ def enviar_correos(batch: EmailBatchSchema):
     csv_file_path = "temp_files/message_ids.csv"
     df.to_csv(csv_file_path, index=False)
 
-    return {"message": "Todos los correos fueron enviados exitosamente.", "message_ids": message_ids, "csv_file_path": csv_file_path}
+    return {"message": "Todos los correos fueron enviados exitosamente.", "message_ids": message_ids, "csv_file_path": csv_file_path} 
