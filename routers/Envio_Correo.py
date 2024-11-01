@@ -10,7 +10,7 @@ from datetime import datetime
 from jwt_manager import JWTBearer
 from typing import List, Optional
 from urllib.parse import quote_plus
-
+import time
 
 # Cargar variables de entorno
 load_dotenv()
@@ -84,12 +84,26 @@ class EmailBatchSchema(BaseModel):
 
 
 def estatus_envio_correo(dict_mensajes_correo):
+    """
+    Obtiene el estatus de un correo electrónico enviado a través de TurboSMTP 
+    y actualiza el diccionario de datos con el estatus.
+
+    Args:
+        dict_mensajes_correo (dict): Diccionario con los datos del correo electrónico 
+            a consultar.
+
+    Returns:
+        dict or list: Si el estatus se obtiene correctamente, se devuelve el diccionario 
+            actualizado. De lo contrario, se devuelve una lista vacía.
+    """
+    # Esperar 10 segundos antes de ejecutar la solicitud
+    time.sleep(10)
     # Asegurarse de que el message_id no tenga espacios u otros caracteres problemáticos
     message_id = str(dict_mensajes_correo['ID_CORREO_BIENVENIDA']).strip()
     message_id_encoded = quote_plus(message_id)
 
     # Construcción segura de la URL
-    analytics_url = f"https://pro.api.serversmtp.com/api/v2/analytics/{message_id_encoded}"
+    analytics_url = f"http://pro.api.serversmtp.com/api/v2/analytics/{message_id_encoded}"
     print(f"Fetching analytics for URL: {analytics_url}")  # Depuración: Imprimir la URL que se está consultando
 
     headers = {
