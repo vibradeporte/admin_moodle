@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, UploadFile, FastAPI
+from fastapi import APIRouter, HTTPException, UploadFile, FastAPI,Depends
 from fastapi.responses import JSONResponse
 from io import BytesIO
 import pandas as pd
 from utils import construir_url_mysql
 from sqlalchemy import create_engine, text
+from jwt_manager import JWTBearer
 import os
 import re
 
@@ -23,7 +24,7 @@ HTTP_MESSAGES = {
 }
 
 
-@prueba_conseguir_id.post("/prueba_conseguir_id/", tags=['Moodle'], status_code=200)
+@prueba_conseguir_id.post("/prueba_conseguir_id/", tags=['Moodle'], status_code=200,dependencies=[Depends(JWTBearer())])
 async def id_estudiante(usuario: str,contrasena: str,host: str,port: str,nombre_base_datos: str):
     database_url = construir_url_mysql(usuario, contrasena, host, port, nombre_base_datos)
     engine = create_engine(database_url)

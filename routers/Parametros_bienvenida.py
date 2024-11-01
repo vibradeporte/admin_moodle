@@ -1,7 +1,8 @@
 import os
 import pandas as pd
 import numpy as np
-from fastapi import APIRouter, HTTPException
+from jwt_manager import JWTBearer
+from fastapi import APIRouter, HTTPException,Depends
 from sqlalchemy import create_engine, text
 from datetime import timedelta, datetime
 from typing import List, Dict
@@ -16,7 +17,7 @@ meses_espanol = {
     9: 'septiembre', 10: 'octubre', 11: 'noviembre', 12: 'diciembre'
 }
 
-@Bienvenida_wapp_estudiantes_router.post("/Estructura_Wapp_Bienvenida/", tags=['Whatsapp'])
+@Bienvenida_wapp_estudiantes_router.post("/Estructura_Wapp_Bienvenida/", tags=['Whatsapp'],dependencies=[Depends(JWTBearer())])
 def csv_to_json() -> List[Dict]:
     # Leer y limpiar el archivo CSV
     df_estudiantes = pd.read_csv('temp_files/estudiantes_validados.csv', dtype={'phone1': str})
@@ -72,7 +73,10 @@ def csv_to_json() -> List[Dict]:
             "numero": str(row['phone1']),
             "plantilla": row['plantilla_whatsapp'].strip() if pd.notna(row['plantilla_whatsapp']) else '',
             "parametros": parametros,
-            "send_time": row['FECHA_HORA_ENVIO_BIENVENIDAS']
+            "send_time": row['FECHA_HORA_ENVIO_BIENVENIDAS'],
+            "identificacion": str(row['username']),
+            "nombre_corto_curso": str(row['NOMBRE_CORTO_CURSO']),
+            "numero_sin_prefijo": str(row['MOVIL'])
         }
         data.append(item)
 

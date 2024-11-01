@@ -1,25 +1,38 @@
-from fastapi import FastAPI, HTTPException, APIRouter, Query
+from fastapi import Depends, HTTPException, APIRouter, Body
+from jwt_manager import JWTBearer
 import base64
 import os
 
-Archivo_base64_router = APIRouter()
+# Definir el enrutador para la API de archivo base64
+archivo_base64_router = APIRouter()
 
-@Archivo_base64_router.get("/ArchivoBase64/", tags = ['Archivos'])
-async def get_file_base64(file_path: str = Query(..., description="Path to the file")):
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found")
+@archivo_base64_router.post("/ArchivoBase64/", tags=['Archivos'], dependencies=[Depends(JWTBearer())])
+async def generar_base64_desde_archivo(ruta_archivo: str = Body(..., embed=True, description="Ruta al archivo")) -> dict:
+    """
+    Genera una representación base64 de un archivo localizado en la ruta especificada.
+
+    Argumentos:
+    ruta_archivo (str): La ruta del archivo que se quiere convertir en base64.
+
+    Retorna:
+    dict: Un diccionario con el contenido base64 del archivo, su nombre y tipo.
+    """
+    if not os.path.exists(ruta_archivo):
+        raise HTTPException(status_code=404, detail="Archivo no encontrado")
     
-    with open(file_path, 'rb') as file:
-        file_content = file.read()
-        base64_encoded = base64.b64encode(file_content).decode('utf-8')
+    with open(ruta_archivo, 'rb') as archivo:
+        contenido_binario = archivo.read()
+        contenido_base64 = base64.b64encode(contenido_binario).decode('utf-8')
     
-    file_name = os.path.basename(file_path)
-    file_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" if file_name.endswith(".xlsx") else "application/octet-stream"
+    nombre_archivo = os.path.basename(ruta_archivo)
+    tipo_archivo = ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    if nombre_archivo.endswith(".xlsx") else "application/octet-stream")
     
-    response = {
-        "content": base64_encoded,
-        "name": file_name,
-        "type": file_type
+    respuesta_archivo = {
+        "content": contenido_base64,
+        "name": nombre_archivo,
+        "type": tipo_archivo
     }
     
-    return response
+    return respuesta_archivo
+

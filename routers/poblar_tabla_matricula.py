@@ -1,9 +1,10 @@
-from fastapi import FastAPI, HTTPException, APIRouter
+from fastapi import FastAPI, HTTPException, APIRouter,Depends
 from pydantic import BaseModel
 from sqlalchemy import create_engine, text
 import pandas as pd
 from datetime import datetime
 from urllib.parse import quote_plus
+from jwt_manager import JWTBearer
 from dotenv import load_dotenv
 import os
 
@@ -21,7 +22,7 @@ engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 poblar_tabla_matricula_router = APIRouter()
 
 
-@poblar_tabla_matricula_router.post("/poblar_tabla_matricula_router/{fid_usuario}", response_model=int,tags=['Base de Datos'])
+@poblar_tabla_matricula_router.post("/poblar_tabla_matricula_router/{fid_usuario}", response_model=int,tags=['Base de Datos'],dependencies=[Depends(JWTBearer())])
 def create_matricula(fid_usuario: int):
 
     data = {

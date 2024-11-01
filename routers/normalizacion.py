@@ -1,5 +1,6 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException,Depends
 from fastapi.responses import JSONResponse,PlainTextResponse
+from jwt_manager import JWTBearer
 import pandas as pd
 import os
 from fuzzywuzzy import process
@@ -101,7 +102,7 @@ def validar_pais(pais):
         return 'SI'
     return 'NO'
 
-@normalizacion_router.post("/Normalizacion/", tags=['Validacion_Secundaria'])
+@normalizacion_router.post("/Normalizacion/", tags=['Validacion_Secundaria'],dependencies=[Depends(JWTBearer())])
 async def normalizar():
     try:
         file_path = 'temp_files/validacion_inicial.xlsx'

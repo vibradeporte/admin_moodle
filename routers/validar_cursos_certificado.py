@@ -1,22 +1,42 @@
 import os
-from fastapi import FastAPI, APIRouter, HTTPException, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
 import pandas as pd
 from datetime import datetime
-
+from jwt_manager import JWTBearer
 
 validacion_inicial_file_path = 'temp_files/validacion_inicial.xlsx'
-
 
 validacion_cursos_certificado_router_prueba = APIRouter()
 
 def get_database_url(user: str, password: str, host: str, port: str, db_name: str) -> str:
+    """
+    Genera la URL de conexión para la base de datos.
+
+    :param user: Usuario de la base de datos.
+    :param password: Contraseña del usuario de la base de datos.
+    :param host: Host de la base de datos.
+    :param port: Puerto de conexión a la base de datos.
+    :param db_name: Nombre de la base de datos.
+    :return: URL de conexión para la base de datos.
+    """
     password_encoded = quote_plus(password)
     return f"mysql+mysqlconnector://{user}:{password_encoded}@{host}:{port}/{db_name}"
 
-def estudiantes_matriculados_con_certificados(cursos: list, usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str) -> pd.DataFrame:
+def obtener_estudiantes_matriculados_con_certificados(cursos: list, usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str) -> pd.DataFrame:
+    """
+    Obtiene información de los estudiantes matriculados con certificados emitidos para los cursos especificados.
+
+    :param cursos: Lista de cursos para verificar los certificados.
+    :param usuario: Usuario de la base de datos.
+    :param contrasena: Contraseña del usuario de la base de datos.
+    :param host: Host de la base de datos.
+    :param port: Puerto de conexión a la base de datos.
+    :param nombre_base_datos: Nombre de la base de datos.
+    :return: DataFrame con la información de los estudiantes y sus certificados.
+    """
     database_url = get_database_url(usuario, contrasena, host, port, nombre_base_datos)
     engine = create_engine(database_url)
 
@@ -51,7 +71,7 @@ def estudiantes_matriculados_con_certificados(cursos: list, usuario: str, contra
             rows = result.fetchall()
             column_names = result.keys()
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Error de conxión a la base de datos.")
+        raise HTTPException(status_code=500, detail="Error de conexión a la base de datos.")
 
     if not rows:
         return pd.DataFrame()
@@ -68,26 +88,36 @@ def estudiantes_matriculados_con_certificados(cursos: list, usuario: str, contra
     return pd.DataFrame(result_dicts)
 
 def validar_existencia_certificado_cursos(datos: pd.DataFrame, usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str) -> pd.DataFrame:
+    """
+    Valida la existencia de certificados para los cursos y estudiantes especificados.
 
+    :param datos: DataFrame con los datos de los estudiantes y cursos.
+    :param usuario: Usuario de la base de datos.
+    :param contrasena: Contraseña del usuario de la base de datos.
+    :param host: Host de la base de datos.
+    :param port: Puerto de conexión a la base de datos.
+    :param nombre_base_datos: Nombre de la base de datos.
+    :return: DataFrame actualizado con la columna 'ADVERTENCIA_CURSO_CULMINADO'.
+    """
     datos['IDENTIFICACION'] = datos['IDENTIFICACION'].astype(str)
     datos['NOMBRE_CORTO_CURSO'] = datos['NOMBRE_CORTO_CURSO'].astype(str)
 
     cursos_unicos = datos['NOMBRE_CORTO_CURSO'].unique().tolist()
-    cursos_certificado = estudiantes_matriculados_con_certificados(cursos_unicos, usuario, contrasena, host, port, nombre_base_datos)
+    cursos_certificado_df = obtener_estudiantes_matriculados_con_certificados(cursos_unicos, usuario, contrasena, host, port, nombre_base_datos)
     
-    if cursos_certificado.empty:
+    if cursos_certificado_df.empty:
         return datos.assign(ADVERTENCIA_CURSO_CULMINADO='NO')
 
     expected_columns = ['UserCedula', 'CourseShortName', 'CertificadoFechaEmision']
     for col in expected_columns:
-        if col not in cursos_certificado.columns:
-            raise HTTPException(status_code=500, detail=f"Column '{col}' not found in the result from the database.")
+        if col not in cursos_certificado_df.columns:
+            raise HTTPException(status_code=500, detail=f"La columna '{col}' no se encontró en el resultado de la base de datos.")
 
-    cursos_certificado = cursos_certificado.dropna(subset=["UserCedula"])
-    cursos_certificado['UserCedula'] = cursos_certificado['UserCedula'].astype(str)
-    cursos_certificado['CourseShortName'] = cursos_certificado['CourseShortName'].astype(str)
+    cursos_certificado_df = cursos_certificado_df.dropna(subset=["UserCedula"])
+    cursos_certificado_df['UserCedula'] = cursos_certificado_df['UserCedula'].astype(str)
+    cursos_certificado_df['CourseShortName'] = cursos_certificado_df['CourseShortName'].astype(str)
 
-    resultado = pd.merge(datos, cursos_certificado, left_on=['IDENTIFICACION', 'NOMBRE_CORTO_CURSO'], right_on=['UserCedula', 'CourseShortName'], how='left')
+    resultado = pd.merge(datos, cursos_certificado_df, left_on=['IDENTIFICACION', 'NOMBRE_CORTO_CURSO'], right_on=['UserCedula', 'CourseShortName'], how='left')
     resultado['ADVERTENCIA_CURSO_CULMINADO'] = resultado.apply(
         lambda row: f"{row['CourseShortName']},{row['UserCedula']},{row['CertificadoFechaEmision']}" 
         if pd.notna(row['UserCedula']) else 'NO', axis=1
@@ -95,24 +125,32 @@ def validar_existencia_certificado_cursos(datos: pd.DataFrame, usuario: str, con
 
     return resultado
 
-@validacion_cursos_certificado_router_prueba.post("/validar_cursos_certificado/", tags=['Cursos'])
-async def validate_courses(usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str):
+@validacion_cursos_certificado_router_prueba.post("/validar_cursos_certificado/", tags=['Cursos'], dependencies=[Depends(JWTBearer())])
+async def validar_cursos_certificado(usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str):
+    """
+    Valida la existencia de certificados para los cursos y estudiantes especificados.
+
+    :param usuario: Usuario de la base de datos.
+    :param contrasena: Contraseña del usuario de la base de datos.
+    :param host: Host de la base de datos.
+    :param port: Puerto de conexión a la base de datos.
+    :param nombre_base_datos: Nombre de la base de datos.
+    :return: JSONResponse con el resultado de la validación.
+    """
     try:
         if not os.path.exists(validacion_inicial_file_path):
             raise HTTPException(status_code=404, detail="El archivo de validación no se encontró.")
         
         validated_df = pd.read_excel(validacion_inicial_file_path)
-        if validated_df.empty:
-            return PlainTextResponse(content="El archivo de validación está vacío.")
 
-        datos = validar_existencia_certificado_cursos(validated_df, usuario, contrasena, host, port, nombre_base_datos)
-        datos.drop(columns=['CourseFullName', 'UserNombre', 'UserApellido', 'CertificadoFechaEmision', 'CertificadoCodigo', 'CourseShortName', 'UserCedula'], inplace=True, errors='ignore')
-        datos.to_excel(validacion_inicial_file_path, index=False)
+        datos_actualizados = validar_existencia_certificado_cursos(validated_df, usuario, contrasena, host, port, nombre_base_datos)
+        datos_actualizados.drop(columns=['CourseFullName', 'UserNombre', 'UserApellido', 'CertificadoFechaEmision', 'CertificadoCodigo', 'CourseShortName', 'UserCedula'], inplace=True, errors='ignore')
+        datos_actualizados.to_excel(validacion_inicial_file_path, index=False)
 
-        si_rows_count = (datos['ADVERTENCIA_CURSO_CULMINADO'] != 'NO').sum()
-        no_rows_count = (datos['ADVERTENCIA_CURSO_CULMINADO'] == 'NO').sum()
+        si_rows_count = (datos_actualizados['ADVERTENCIA_CURSO_CULMINADO'] != 'NO').sum()
+        no_rows_count = (datos_actualizados['ADVERTENCIA_CURSO_CULMINADO'] == 'NO').sum()
 
-        if not datos.empty:
+        if not datos_actualizados.empty:
             message = {
                 "message": "Validación de Certificados de Cursos",
                 "matriculas_validas": int(no_rows_count),
@@ -126,6 +164,7 @@ async def validate_courses(usuario: str, contrasena: str, host: str, port: str, 
         return JSONResponse(content={"error": f"Error durante la validación de cursos: {str(e)}"}, status_code=500)
     except Exception as e:
         return JSONResponse(content={"error": f"Error durante la validación de cursos: {str(e)}"}, status_code=500)
+
 
 
 

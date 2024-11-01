@@ -1,44 +1,71 @@
-from fastapi import APIRouter, HTTPException, FastAPI
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
+from jwt_manager import JWTBearer
 import pandas as pd
 from sqlalchemy import create_engine, text
 import os
 from datetime import datetime
 from urllib.parse import quote_plus
 
+# Definir el enrutador para la API de conseguir ID de grupo
 conseguir_id_grupo = APIRouter()
 
 def get_database_url(user: str, password: str, host: str, port: str, db_name: str) -> str:
+    """
+    Genera la URL de conexión a la base de datos.
+
+    Argumentos:
+    user (str): Nombre de usuario de la base de datos.
+    password (str): Contraseña del usuario de la base de datos.
+    host (str): Host de la base de datos.
+    port (str): Puerto de la base de datos.
+    db_name (str): Nombre de la base de datos.
+
+    Retorna:
+    str: URL de conexión a la base de datos.
+    """
     password_encoded = quote_plus(password)
     return f"mysql+mysqlconnector://{user}:{password_encoded}@{host}:{port}/{db_name}"
 
-@conseguir_id_grupo.post("/conseguir_id_grupo/", tags=['Moodle'], status_code=200)
+@conseguir_id_grupo.post("/conseguir_id_grupo/", tags=['Moodle'], status_code=200, dependencies=[Depends(JWTBearer())])
 async def id_grupo(usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str):
+    """
+    Obtiene el ID de grupo para los cursos dados desde la base de datos Moodle.
+
+    Argumentos:
+    usuario (str): Nombre de usuario para la base de datos.
+    contrasena (str): Contraseña del usuario de la base de datos.
+    host (str): Host de la base de datos.
+    port (str): Puerto de la base de datos.
+    nombre_base_datos (str): Nombre de la base de datos.
+
+    Retorna:
+    JSONResponse: Respuesta en formato JSON con los IDs de los grupos.
+    """
     database_url = get_database_url(usuario, contrasena, host, port, nombre_base_datos)
     engine = create_engine(database_url)
     
     file_path = 'temp_files/estudiantes_validados.csv'
     
-    # Check if the file exists
+    # Verificar si el archivo existe
     if not os.path.exists(file_path):
-        raise HTTPException(status_code=400, detail="File not found")
+        raise HTTPException(status_code=400, detail="Archivo no encontrado")
     
     try:
         df = pd.read_csv(file_path)
         df = df.astype(str)
     except Exception as e:
-        raise HTTPException(status_code=400, detail="Invalid file format or content")
+        raise HTTPException(status_code=400, detail="Formato de archivo inválido o contenido incorrecto")
 
     if 'username' not in df.columns or 'NOMBRE_CORTO_CURSO' not in df.columns:
-        raise HTTPException(status_code=400, detail="Missing 'username' or 'NOMBRE_CORTO_CURSO' column in CSV")
+        raise HTTPException(status_code=400, detail="Falta la columna 'username' o 'NOMBRE_CORTO_CURSO' en el CSV")
 
     ids_curso = df['NOMBRE_CORTO_CURSO'].unique().tolist()
     ids_str = ', '.join([f':NOMBRE_CORTO_CURSO{i}' for i in range(len(ids_curso))])
     
-
     fecha = datetime.now().strftime('%B_%d_%Y')
 
-# Diccionario para traducir meses de inglés a español
+    # Diccionario para traducir meses de inglés a español
     meses_en_espanol = {
         'January': 'Enero',
         'February': 'Febrero',
@@ -54,10 +81,8 @@ async def id_grupo(usuario: str, contrasena: str, host: str, port: str, nombre_b
         'December': 'Diciembre'
     }
 
-    # Extrae el nombre del mes en inglés
+    # Extrae el nombre del mes en inglés y reemplaza con el equivalente en español
     mes_ingles = datetime.now().strftime('%B')
-
-    # Reemplaza el mes en inglés con el equivalente en español
     today_str = fecha.replace(mes_ingles, meses_en_espanol[mes_ingles])
 
     consulta_sql = text(f"""
@@ -82,7 +107,7 @@ async def id_grupo(usuario: str, contrasena: str, host: str, port: str, nombre_b
             for curso in df['NOMBRE_CORTO_CURSO']:
                 group_ids.append(course_groups.get(curso, ''))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database query failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error en la consulta a la base de datos: {str(e)}")
 
     df['groupid'] = group_ids
 
@@ -90,13 +115,11 @@ async def id_grupo(usuario: str, contrasena: str, host: str, port: str, nombre_b
         df_cleaned = df.replace({pd.NA: None, pd.NaT: None, float('inf'): None, float('-inf'): None})
         df_cleaned.to_csv(file_path, index=False)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to clean and save the DataFrame: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al limpiar y guardar el DataFrame: {str(e)}")
 
     try:
         json_response = df_cleaned.to_dict(orient='records')
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Error converting DataFrame to JSON: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error al convertir el DataFrame a JSON: {str(e)}")
 
     return JSONResponse(content=json_response)
-
-

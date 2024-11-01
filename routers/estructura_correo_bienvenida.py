@@ -1,4 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, Depends
+from jwt_manager import JWTBearer
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
 import pandas as pd
@@ -10,6 +11,20 @@ import re
 Bienvenida_correo_estudiantes_router = APIRouter()
 
 def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, correo_matriculas: str, correo_envio_bienvenidas: str, correo_envio_copia_matriculas: str):
+    """
+    Transforma los datos de bienvenida de los estudiantes para enviar correos electrónicos.
+
+    Parameters:
+    datos (pd.DataFrame): DataFrame que contiene información de estudiantes y sus cursos.
+    plantilla (pd.DataFrame): DataFrame que contiene las plantillas de correo asociadas a los cursos.
+    correo_matriculas (str): Dirección de correo para enviar copias de las matriculaciones.
+    correo_envio_bienvenidas (str): Dirección de correo desde la cual se envían las bienvenidas.
+    correo_envio_copia_matriculas (str): Dirección de correo para enviar copias de las bienvenidas.
+
+    Returns:
+    List[Dict]: Lista de diccionarios que representan la estructura de los correos a enviar.
+    Cada diccionario contiene información como el remitente, destinatario, asunto, contenido HTML, y tiempo de envío.
+    """
     meses_espanol = {
         1: 'enero', 2: 'febrero', 3: 'marzo', 4: 'abril',
         5: 'mayo', 6: 'junio', 7: 'julio', 8: 'agosto',
@@ -81,7 +96,7 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
                 "subject": f"Bienvenida al Curso {fila['NOMBRE_LARGO_CURSO']}",
                 "cc": [correo_matriculas, correo_envio_copia_matriculas],
                 "html_content": html_content,
-                "content": "",
+                "content": f"{fila['NOMBRE_CORTO_CURSO']}-{fila['username']}",
                 "send_time": fila['FECHA_HORA_ENVIO_BIENVENIDAS'] if fila['FECHA_HORA_ENVIO_BIENVENIDAS'] != '' else None
             }
 
@@ -98,8 +113,22 @@ def transformar_datos_bienvenida(datos: pd.DataFrame, plantilla: pd.DataFrame, c
     return estructura_deseada
 
 
-@Bienvenida_correo_estudiantes_router.post("/Estructura_Correo_Bienvenida/", tags=['Correo'])
+@Bienvenida_correo_estudiantes_router.post("/Estructura_Correo_Bienvenida/", tags=['Correo'],dependencies=[Depends(JWTBearer())])
 async def Estructura_Correo_Bienvenida(correo_matriculas: str, correo_envio_bienvenidas: str, correo_envio_copia_matriculas: str):
+    """
+    Estructura_Correo_Bienvenida
+
+    Se encarga de transformar los datos de los estudiantes validados en una estructura para enviar correos de bienvenida
+    con la información de los cursos.
+
+    Parámetros:
+    correo_matriculas (str): Correo electrónico para enviar copias de los correos de bienvenida.
+    correo_envio_bienvenidas (str): Correo electrónico desde el cual se enviarán los correos de bienvenida.
+    correo_envio_copia_matriculas (str): Correo electrónico para enviar copias de los correos de bienvenida.
+
+    Retorna:
+    estructura_correo (list of dict): Lista de diccionarios con la estructura para enviar correos de bienvenida.
+    """
     try:
         df = pd.read_csv('temp_files/estudiantes_validados.csv')
     except FileNotFoundError:
@@ -130,5 +159,4 @@ async def Estructura_Correo_Bienvenida(correo_matriculas: str, correo_envio_bien
     # Transformar los datos para el envío de correos
     estructura_correo = transformar_datos_bienvenida(df, df_plantilla, correo_matriculas, correo_envio_bienvenidas, correo_envio_copia_matriculas)
 
-    return estructura_correo
-
+    return estructura_correo 

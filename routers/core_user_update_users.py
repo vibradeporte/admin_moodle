@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Form
+from fastapi import APIRouter, HTTPException, Form,Depends
+from jwt_manager import JWTBearer
 from pydantic import BaseModel
 import requests
 import pandas as pd
@@ -262,106 +263,71 @@ iso_paises = {
     "ZIMBABUE": "ZW"
 }
 def obtener_codigo_iso_pais(nombre_pais: str) -> str:
+    """
+    Devuelve el código ISO del país correspondiente al nombre proporcionado.
+
+    Parameters:
+    nombre_pais (str): Nombre del país en español.
+
+    Returns:
+    str: Código ISO del país si se encuentra, de lo contrario 'SIN PAIS'.
+    """
     return iso_paises.get(nombre_pais.upper(), 'SIN PAIS')
 
-
-@core_user_update_users_router.post("/core_user_update_users/", tags=['Moodle'], status_code=200)
+@core_user_update_users_router.post("/core_user_update_users/", tags=['Moodle'], status_code=200, dependencies=[Depends(JWTBearer())])
 async def core_user_update_users(moodle_url: str = Form(...), moodle_token: str = Form(...)):
+    """
+    ## **Descripción:**
+    Actualiza la información de usuarios en Moodle.
 
+    ## **Parámetros obligatorios:**
+        - moodle_url -> URL del servidor Moodle.
+        - moodle_token -> Token de autenticación del servidor Moodle.
+    """
     data = {}
-    df = pd.read_csv('temp_files/estudiantes_validados.csv')
+    try:
+        df = pd.read_csv('temp_files/estudiantes_validados.csv')
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Error al leer el archivo CSV")
+
     df['username'] = df['username'].apply(lambda x: str(x).replace('.0', '') if '.0' in str(x) else str(x))
     df['phone1'] = df['phone1'].apply(lambda x: str(x).replace('.0', '') if '.0' in str(x) else str(x)).apply(lambda x: str(x).replace('nan', '') if 'nan' in str(x) else str(x)).astype(str)
     df["country"] = df["country"].apply(obtener_codigo_iso_pais)
     df = df.drop_duplicates(subset=['userid'])
+
     if df is None:
-        raise HTTPException(status_code=400, detail="No se encontr  el archivo 'temp_files/estudiantes_validados.csv'")
+        raise HTTPException(status_code=400, detail="No se encontró el archivo 'temp_files/estudiantes_validados.csv'")
 
     for i, row in df.iterrows():
-        USERID = row.get("userid")
-
-        if USERID is None:
+        user_id = row.get("userid")
+        if user_id is None:
             raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'userid'")
-        
-        USERNAME = row.get("username")
-        if USERNAME is None:
-            raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'username'")
-        
-        PASSWORD = row.get("password")
-        if PASSWORD is None:
-            raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'password'")
-        
-        FIRSTNAME = row.get("firstname")
-        if FIRSTNAME is None:
-            raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'firstname'")
-        
-        LASTNAME = row.get("lastname")
-        if LASTNAME is None:
-            raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'lastname'")
-        
-        EMAIL = row.get("email")
-        if EMAIL is None:
-            raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'email'")
-        
-        CITY = row.get("city")
-        if CITY is None:
-            raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'city'")
-        
-        COUNTRY = row.get("country")
-        if COUNTRY is None:
-            raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'country'")
-        
-        DESCRIPTION = row.get("description")
-        if DESCRIPTION is None:
-            raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'description'")
-        
-        FIRSTNAMEPHONETIC = ""
-        LASTNAMEPHONETIC = row.get("lastnamephonetic")
-        if LASTNAMEPHONETIC is None:
-            raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'lastnamephonetic'")
-        
-        MIDDLENAME = ""
-        ALTERNATENAME = ""
-        INTERESTS = ""
-        IDNUMBER = row.get("username")
-        if IDNUMBER is None:
-            raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'username'")
-        
-        INSTITUTION = row.get("EMPRESA")
-        DEPARTMENT = ""
-        PHONE1 = row.get("phone1")
-        if PHONE1 is None:
-            raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'phone1'")
-        
-        PHONE2 = ""
-        ADDRESS = row.get("address")
-        if ADDRESS is None:
-            raise HTTPException(status_code=400, detail="El archivo 'temp_files/estudiantes_validados.csv' no tiene la columna 'address'")
 
         try:
-            data[f"users[{i}][id]"] = int(USERID)
+            data[f"users[{i}][id]"] = int(user_id)
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"El campo 'userid' con valor '{USERID}' en la fila {i} no es convertible a entero")
-        data[f"users[{i}][username]"] = USERNAME
+            raise HTTPException(status_code=400, detail=f"El campo 'userid' con valor '{user_id}' en la fila {i} no es convertible a entero")
+
+        data[f"users[{i}][username]"] = row.get("username", "")
         data[f"users[{i}][suspended]"] = 0
-        data[f"users[{i}][password]"] = PASSWORD
-        data[f"users[{i}][firstname]"] = FIRSTNAME
-        data[f"users[{i}][lastname]"] = LASTNAME
-        data[f"users[{i}][email]"] = EMAIL
-        data[f"users[{i}][city]"] = CITY
-        data[f"users[{i}][country]"] = COUNTRY
-        data[f"users[{i}][description]"] = DESCRIPTION
-        data[f"users[{i}][firstnamephonetic]"] = FIRSTNAMEPHONETIC
-        data[f"users[{i}][lastnamephonetic]"] = LASTNAMEPHONETIC
-        data[f"users[{i}][middlename]"] = MIDDLENAME
-        data[f"users[{i}][alternatename]"] = ALTERNATENAME
-        data[f"users[{i}][interests]"] = INTERESTS
-        data[f"users[{i}][idnumber]"] = IDNUMBER
-        data[f"users[{i}][institution]"] = INSTITUTION
-        data[f"users[{i}][department]"] = DEPARTMENT
-        data[f"users[{i}][phone1]"] = PHONE1
-        data[f"users[{i}][phone2]"] = PHONE2
-        data[f"users[{i}][address]"] = ADDRESS
+        data[f"users[{i}][password]"] = row.get("password", "")
+        data[f"users[{i}][firstname]"] = row.get("firstname", "")
+        data[f"users[{i}][lastname]"] = row.get("lastname", "")
+        data[f"users[{i}][email]"] = row.get("email", "")
+        data[f"users[{i}][city]"] = row.get("city", "")
+        data[f"users[{i}][country]"] = row.get("country", "")
+        data[f"users[{i}][description]"] = row.get("description", "")
+        data[f"users[{i}][firstnamephonetic]"] = ""
+        data[f"users[{i}][lastnamephonetic]"] = row.get("lastnamephonetic", "")
+        data[f"users[{i}][middlename]"] = ""
+        data[f"users[{i}][alternatename]"] = ""
+        data[f"users[{i}][interests]"] = ""
+        data[f"users[{i}][idnumber]"] = row.get("username", "")
+        data[f"users[{i}][institution]"] = row.get("EMPRESA", "")
+        data[f"users[{i}][department]"] = ""
+        data[f"users[{i}][phone1]"] = row.get("phone1", "")
+        data[f"users[{i}][phone2]"] = ""
+        data[f"users[{i}][address]"] = row.get("address", "")
 
     url = f"{moodle_url}/webservice/rest/server.php"
     params = {
@@ -376,4 +342,3 @@ async def core_user_update_users(moodle_url: str = Form(...), moodle_token: str 
         raise HTTPException(status_code=response.status_code, detail=response.text)
 
     return {"output": response.json()}
-
