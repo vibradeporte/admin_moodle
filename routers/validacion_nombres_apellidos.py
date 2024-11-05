@@ -4,11 +4,8 @@ import pandas as pd
 from io import BytesIO
 import regex as re
 import unidecode
-from transformers import AutoTokenizer
 import os
 from jwt_manager import JWTBearer
-
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 
 validacion_nombres_apellidos_router = APIRouter()
 
@@ -88,7 +85,7 @@ def nuevo_estan_cruzados(datos: pd.DataFrame) -> pd.DataFrame:
 
     # Normalizar nombres y apellidos
     datos['NOMBRES'] = datos["NOMBRES"].str.strip().apply(unidecode.unidecode).str.upper()
-    datos['vector_nombres'] = datos['NOMBRES'].apply(lambda x: tokenizer.tokenize(x))
+    datos['vector_nombres'] = datos['NOMBRES'].str.split()
     datos['primer_nombre'] = datos['vector_nombres'].map(lambda x: x[0] if len(x) > 0 else None)
     datos['primer_nombre_es_apellido'] = datos['primer_nombre'].apply(lambda x: encontrar_similitudes(x, df_nombres_apellidos['Apellido'].tolist()))
 
@@ -96,7 +93,7 @@ def nuevo_estan_cruzados(datos: pd.DataFrame) -> pd.DataFrame:
     datos['segundo_nombre_es_apellido'] = datos['segundo_nombre'].apply(lambda x: encontrar_similitudes(x, df_nombres_apellidos['Apellido'].tolist()))
 
     datos['APELLIDOS'] = datos["APELLIDOS"].str.strip().apply(unidecode.unidecode).str.upper()
-    datos['vector_apellidos'] = datos['APELLIDOS'].apply(lambda x: tokenizer.tokenize(x))
+    datos['vector_apellidos'] = datos['APELLIDOS'].str.split()
     datos['primer_apellido'] = datos['vector_apellidos'].map(lambda x: x[0] if len(x) > 0 else None)
     datos['primer_apellido_es_nombre'] = datos['primer_apellido'].apply(lambda x: encontrar_similitudes(x, df_nombres_apellidos['Nombre'].tolist()))
 
