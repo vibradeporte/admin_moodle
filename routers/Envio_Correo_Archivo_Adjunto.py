@@ -8,7 +8,7 @@ from jwt_manager import JWTBearer
 
 # Cargar variables de entorno
 load_dotenv()
-AUTH_KEY = os.getenv("AUTH_KEY")
+AUTH_KEY = os.getenv("AUTH_KEY_TSMTP")
 API_URL = "https://api.turbo-smtp.com/api/v2/mail/send"
 AUTH_USER_TSMTP = os.getenv("AUTH_USER_TSMTP")
 AUTH_PASS_TSMTP = os.getenv("AUTH_PASS_TSMTP")
