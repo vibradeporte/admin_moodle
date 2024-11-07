@@ -111,7 +111,8 @@ def actualizar_estado_mensaje(database_url, valores_actualizar):
         where_conditions = [
             detalle_matricula.c.NOMBRE_CORTO_CURSO == condiciones_actualizar_tabla['NOMBRE_CORTO_CURSO'],
             detalle_matricula.c.IDENTIFICACION == condiciones_actualizar_tabla['IDENTIFICACION'],
-            detalle_matricula.c.MOVIL == condiciones_actualizar_tabla['MOVIL']
+            detalle_matricula.c.MOVIL == condiciones_actualizar_tabla['MOVIL'],
+            detalle_matricula.c.RES_MATRICULA == 'MATRICULADO'
         ]
 
         # Si FECHA_HORA_PROGRAMADA tiene un valor, agregar la condición al WHERE
