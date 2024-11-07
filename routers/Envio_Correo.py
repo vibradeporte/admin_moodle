@@ -165,7 +165,8 @@ def actualizar_estado_mensaje(database_url, valores_actualizar):
         where_conditions = [
             detalle_matricula.c.NOMBRE_CORTO_CURSO == condiciones_actualizar_tabla['NOMBRE_CORTO_CURSO'],
             detalle_matricula.c.IDENTIFICACION == condiciones_actualizar_tabla['IDENTIFICACION'],
-            detalle_matricula.c.CORREO == condiciones_actualizar_tabla['CORREO']
+            detalle_matricula.c.CORREO == condiciones_actualizar_tabla['CORREO'],
+            detalle_matricula.c.RES_MATRICULA == 'MATRICULADO'
         ]
 
         # Si FECHA_HORA_PROGRAMADA tiene un valor, agregar la condición al WHERE
@@ -173,6 +174,7 @@ def actualizar_estado_mensaje(database_url, valores_actualizar):
         if fecha_hora_programada is not None:
             where_conditions.append(detalle_matricula.c.FECHA_HORA_PROGRAMADA == fecha_hora_programada)
 
+        
         # Consulta con todas las condiciones, ordenando por ID para obtener el registro más nuevo
         print("Condiciones WHERE antes de la consulta:", where_conditions)
         select_query = detalle_matricula.select().where(*where_conditions).order_by(desc(detalle_matricula.c.ID_DETALLE_MATRICULA)).limit(1)
