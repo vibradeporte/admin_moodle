@@ -62,13 +62,17 @@ def limpiar_fecha(fecha: str) -> date:
 
     return None
 
+from datetime import datetime, time, timedelta
+import pandas as pd
+import re
+
 def limpiar_hora(hora: str) -> time:
     """
-    Limpia y normaliza una hora para convertirla a un objeto de tipo time.
+    Limpia y normaliza una hora para convertirla a un objeto de tipo time y sumar 5 horas.
 
     :param hora: La hora en formato cadena.
     :type hora: str
-    :return: La hora limpia en formato time o None si no es válida.
+    :return: La hora limpia en formato time con 5 horas añadidas, o None si no es válida.
     :rtype: time
     """
     if pd.isna(hora):
@@ -81,19 +85,24 @@ def limpiar_hora(hora: str) -> time:
     # Remover caracteres no deseados
     hora = re.sub(r'[^0-9:]', '', hora).strip()
 
-    # Tratar de convertir a datetime.time
+    # Tratar de convertir a datetime.time y sumar 5 horas
     formatos = ['%H:%M:%S', '%H:%M']
     for formato in formatos:
         try:
-            return datetime.strptime(hora, formato).time()
+            hora_datetime = datetime.strptime(hora, formato)
+            #se le suma 5 horas a la hora de envio para que concuerde con el horario del servidor
+            hora_cuadra_con_servidor = hora_datetime + timedelta(hours=5)
+            return hora_cuadra_con_servidor.time()
         except ValueError:
             continue
 
     return None
 
+
 # Definición de horarios válidos
-hora_inicio_valida = time(6, 0, 0)
-hora_fin_valida = time(18, 0, 0)
+#se le añade 5 horas ya que el servidor esta a 5 horas adelante
+hora_inicio_valida = time(11, 0, 0)
+hora_fin_valida = time(23, 0, 0)
 
 def es_fecha_invalida(fila: pd.Series) -> str:
     """
