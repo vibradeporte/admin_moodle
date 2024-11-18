@@ -1,6 +1,7 @@
 from return_codes import *
 from fastapi import FastAPI, Depends, HTTPException, APIRouter
 from fastapi.responses import JSONResponse
+from jwt_manager import JWTBearer
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound, OperationalError, ProgrammingError
 from urllib.parse import quote_plus
@@ -25,7 +26,7 @@ def get_db():
     finally:
         engine.dispose()
 
-@identificacion_usuario.get("/user/{user_id}", tags=['Validacion_Usuario'])
+@identificacion_usuario.get("/api2/user/{user_id}", tags=['Validacion_Usuario'], dependencies=[Depends(JWTBearer())])
 def encontrar_usuario(user_id: int, db = Depends(get_db)):
     query = text("""
         SELECT

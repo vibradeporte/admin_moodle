@@ -1,14 +1,24 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException,Depends
 from fastapi.responses import JSONResponse
+from jwt_manager import JWTBearer
 import pandas as pd
 import os
 
 revision_matricula_cursos_router = APIRouter()
 
-@revision_matricula_cursos_router.post("/revision_matricula_cursos/", tags=['Cursos'], status_code=200)
+@revision_matricula_cursos_router.post("/api2/revision_matricula_cursos/", tags=['Cursos'], status_code=200,dependencies=[Depends(JWTBearer())])
 async def revision_matricula_cursos(mismo_curso: bool = False):
 
     # Verificar que el archivo de Excel existe
+    """
+    Verifica que todos los estudiantes estén en el mismo curso, o que cada estudiante esté en un curso diferente.
+
+    Args:
+        mismo_curso (bool, optional): Indica si todos los estudiantes deben estar en el mismo curso. Defaults to False.
+
+    Returns:
+        JSONResponse: Un objeto JSON con información sobre el estado de la verificación.
+    """
     archivo_excel = 'temp_files/validacion_inicial.xlsx'
     if not os.path.exists(archivo_excel):
         raise HTTPException(status_code=404, detail="El archivo de validación inicial no se encuentra.")

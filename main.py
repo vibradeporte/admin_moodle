@@ -2,15 +2,13 @@ import requests
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
-
+from routers.userlog import userlog_router
 
 # Archivos
-from routers.Archivo_base64 import Archivo_base64_router
+from routers.Archivo_base64 import archivo_base64_router
 from routers.validar_fecha_hora_mensaje_bienvenida import validacion_tiempo_mensaje_de_bienvenida
 # Validacion Inicial
-from routers.validacion_identidad import identificacion_usuario
 from routers.validacion_nombres_apellidos import validacion_nombres_apellidos_router
-from routers.subir_archivo import subida_de_archivo_router
 from routers.validacion_cedula import validacion_cedula_router
 from routers.validar_archivo import  verificacion_inicial_archivo
 # Correos
@@ -54,14 +52,17 @@ from routers.envio_mensajes_whatsapp import envio_mensajes_whatsapp_router
 
 app = FastAPI(
     title="Universal Learning ADMIN MOODLE API",
-    version="0.0.1"
+    version="0.0.2",
+    docs_url="/api2/docs",
+    redoc_url="/api2/redoc",
+    openapi_url="/api2/openapi.json"
 )
 
-
+app.include_router(userlog_router)
 
 # Including routers
 # Archivos
-app.include_router(Archivo_base64_router)
+app.include_router(archivo_base64_router)
 app.include_router(verificacion_inicial_archivo)
 app.include_router(validacion_tiempo_mensaje_de_bienvenida)
 # SQL
@@ -86,10 +87,8 @@ app.include_router(correo_archivo_adjunto_router)
 # Estudiantes
 app.include_router(enrol_manual_enrol_users_router)
 app.include_router(core_user_create_users_router)
-app.include_router(identificacion_usuario)
 app.include_router(prueba_conseguir_id)
 app.include_router(validacion_cedula_router)
-app.include_router(subida_de_archivo_router)
 app.include_router(validacion_nombres_apellidos_router)
 app.include_router(verificar_correos_router)
 app.include_router(validacion_numeros_whatsapp_router)
@@ -118,7 +117,5 @@ app.add_middleware(
 
 @app.get('/', tags=['home'])
 def message():
-    response = requests.get('https://ipinfo.io/ip')
-    ip_address = response.text.strip()
-    return HTMLResponse(f'<h1>Universal Learning ADMIN MOODLE API</h1><p>Client IP: {ip_address}</p>')
+    return HTMLResponse(f'<h1>Universal Learning ADMIN MOODLE API</h1>')
 

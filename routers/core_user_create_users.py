@@ -5,12 +5,13 @@ import pandas as pd
 from return_codes import *
 from io import StringIO
 import re
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form,Depends
+from jwt_manager import JWTBearer
 
 core_user_create_users_router = APIRouter()
 WS_FUNCTION = "core_user_create_users"
 
-@core_user_create_users_router.post("/core_user_create_users/", tags=['Moodle'])
+@core_user_create_users_router.post("/api2/core_user_create_users/", tags=['Moodle'],dependencies=[Depends(JWTBearer())])
 async def core_user_create_users(moodle_url: str = Form(...), moodle_token: str = Form(...)):
     """
     ## **Descripción:**

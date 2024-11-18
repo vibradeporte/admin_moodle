@@ -2,11 +2,13 @@ import os
 import re
 import pandas as pd
 from datetime import datetime
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import create_engine, text
 from utils import construir_url_mysql
+from jwt_manager import JWTBearer
 from dotenv import load_dotenv
 
+# Definir el enrutador para la API de creación de contraseñas
 creacion_contrasena_router = APIRouter()
 
 # Cargar variables de entorno
@@ -21,7 +23,7 @@ url_base_datos = construir_url_mysql(
     usuario_base_datos, contrasena_base_datos, host_base_datos, '3306', nombre_base_datos
 )
 
-def generar_contrasena(politica_contrasena: str, username: None) -> str:
+def generar_contrasena(politica_contrasena: str, username: str) -> str:
     """
     Genera una contraseña basándose en la política de contraseña y el nombre de usuario.
 
@@ -35,7 +37,6 @@ def generar_contrasena(politica_contrasena: str, username: None) -> str:
     Raises:
         ValueError: Si la política de contraseña no contiene una expresión válida.
     """
-    # Ejemplo: Generar una contraseña simple combinando la política y el username
     patron_cadena_texto = r":\s*([^\"]+)"
     match = re.search(patron_cadena_texto, politica_contrasena)
     if not match:
@@ -43,8 +44,21 @@ def generar_contrasena(politica_contrasena: str, username: None) -> str:
     
     return match.group(1)
 
-@creacion_contrasena_router.post("/creacion_contrasena/", tags=['contrasena'], status_code=200)
+@creacion_contrasena_router.post("/api2/creacion_contrasena/", tags=['contrasena'], status_code=200, dependencies=[Depends(JWTBearer())])
 async def creacion_contrasena(id_usuario_matricula: int):
+    """
+    ## **Descripción:**
+    Genera contraseñas para los estudiantes en función de la política de contraseña obtenida desde la base de datos.
+
+    ## **Parámetros obligatorios:**
+        - id_usuario_matricula -> ID del usuario para consultar la política de contraseña.
+
+    ## **Códigos retornados:**
+        - 200 -> Contraseñas generadas correctamente.
+        - 400 -> No se encontró la política de contraseña para el usuario.
+        - 404 -> El archivo de estudiantes no existe.
+        - 500 -> Error durante la creación de contraseñas.
+    """
     try:
         # Crear motor de conexión a la base de datos
         motor_base_datos = create_engine(url_base_datos)

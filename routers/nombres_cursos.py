@@ -1,4 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException,Depends
+from jwt_manager import JWTBearer
 from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
@@ -26,7 +27,7 @@ def limpiar_texto(texto: str) -> str:
     texto_limpio = re.sub(r'[^\w_-]', '', str(texto))
     return texto_limpio.upper()
 
-@nombres_cursos_router.get("/nombres_cursos", tags=['Cursos'], status_code=200)
+@nombres_cursos_router.get("/api2/nombres_cursos", tags=['Cursos'], status_code=200,dependencies=[Depends(JWTBearer())])
 def nombres_cursos_bd(usuario: str, contrasena: str, host: str, port: str, nombre_base_datos: str):
     """
     ## **Descripción:**

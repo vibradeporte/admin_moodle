@@ -6,13 +6,19 @@ from urllib.parse import quote_plus
 from datetime import datetime, timedelta
 from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine, text
-from fastapi import APIRouter, HTTPException, FastAPI
+from fastapi import APIRouter, HTTPException, FastAPI, Depends
+from jwt_manager import JWTBearer
 
 validacion_tiempo_de_matricula_router = APIRouter()
 
-def calcular_fechas_matricula(fila):
+def calcular_fechas_matricula(fila: pd.Series) -> pd.Series:
     """
-    Calcula las fechas de inicio y fin de matrícula, así como la duración de la misma, dado un registro (fila) de datos.
+    Calcula las fechas de inicio y fin de matrícula, así como la duración de la misma.
+
+    :param fila: Fila del DataFrame que contiene la información del estudiante.
+    :type fila: pd.Series
+    :return: Serie con las fechas de inicio, fin de matrícula, número de días de matrícula y si el tiempo de matrícula es inválido.
+    :rtype: pd.Series
     """
     # Extraer semanas de matrícula limpiando la cadena y reemplazando comas por puntos
     semanas_de_matricula = re.sub(r'[^0-9,.]', '', str(fila['NRO_SEMANAS_DE_MATRICULA'])).replace(',', '.')
@@ -30,7 +36,7 @@ def calcular_fechas_matricula(fila):
     else:
         duracion_curso_dias = int(float(fila['CourseDaysDuration']))
 
-    # Si dias_inscripcion_matricula es 0, usar duracion_curso_dias
+    # Determinar la duración de la matrícula
     if dias_inscripcion_matricula == 0:
         duracion_matricula = duracion_curso_dias
     else:
@@ -59,16 +65,30 @@ def calcular_fechas_matricula(fila):
     return pd.Series([timestart, timeend, duracion_matricula, excede_tiempo_de_matricula],
                      index=['timestart', 'timeend', 'NRO_DIAS_DE_MATRICULAS', 'El tiempo de matricula es invalido'])
 
-def verificar_dias_informados(x):
-    if x['DIAS_INFORMADOS_AL_ESTUDIANTE'] > x['NRO_DIAS_DE_MATRICULAS']:
+def verificar_dias_informados(fila: pd.Series) -> str:
+    """
+    Verifica si los días informados al estudiante superan los días de matrícula.
+
+    :param fila: Fila del DataFrame que contiene la información del estudiante.
+    :type fila: pd.Series
+    :return: 'SI' si los días informados superan los días de matrícula, 'NO' en caso contrario, o vacío si no hay información suficiente.
+    :rtype: str
+    """
+    if fila['DIAS_INFORMADOS_AL_ESTUDIANTE'] > fila['NRO_DIAS_DE_MATRICULAS']:
         return 'SI'
-    elif x['DIAS_INFORMADOS_AL_ESTUDIANTE'] == 0 or pd.isna(x['DIAS_INFORMADOS_AL_ESTUDIANTE']):
+    elif fila['DIAS_INFORMADOS_AL_ESTUDIANTE'] == 0 or pd.isna(fila['DIAS_INFORMADOS_AL_ESTUDIANTE']):
         return ' '
     else:
         return 'NO'
 
-@validacion_tiempo_de_matricula_router.post("/validacion_tiempo_de_matricula/", tags=['Cursos'], status_code=200)
+@validacion_tiempo_de_matricula_router.post("/api2/validacion_tiempo_de_matricula/", tags=['Cursos'], status_code=200, dependencies=[Depends(JWTBearer())])
 async def validacion_tiempo_de_matricula():
+    """
+    Realiza la validación de tiempo de matrícula en el archivo de matrículas y actualiza la información.
+
+    :return: JSONResponse indicando que la validación de tiempo de matrícula se realizó con éxito.
+    :rtype: JSONResponse
+    """
     # Verificar que el archivo de Excel existe
     archivo_excel = 'temp_files/validacion_inicial.xlsx'
     if not os.path.exists(archivo_excel):
@@ -94,6 +114,7 @@ async def validacion_tiempo_de_matricula():
     try: 
         df_estudiantes.to_excel(archivo_excel, index=False)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al guardar el archivo Excel: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al guardar el archivo Excel: {str(e)}")
 
     return JSONResponse(content='Se realizó la validación de tiempo de matricula en el archivo de Matriculas', status_code=200)
+

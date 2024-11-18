@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Form, Depends
+from jwt_manager import JWTBearer
 import requests
 import pandas as pd
 from datetime import datetime
-from typing import Dict, List
 
+# Definir el enrutador para la API de crear grupos
 core_group_create_groups_router = APIRouter()
 WS_FUNCTION = "core_group_create_groups"
 
@@ -20,7 +21,7 @@ HTTP_MESSAGES = {
     482: "El grupo ya existe en ese curso."
 }
 
-@core_group_create_groups_router.post("/core_group_create_groups/", tags=['Grupos'])
+@core_group_create_groups_router.post("/api2/core_group_create_groups/", tags=['Grupos'], dependencies=[Depends(JWTBearer())])
 async def core_group_create_groups(
     moodle_url: str = Form(...),
     moodle_token: str = Form(...)
@@ -58,7 +59,7 @@ async def core_group_create_groups(
     unique_course_ids = df['CourseId'].unique()
     fecha = datetime.now().strftime('%B_%d_%Y')
 
-# Diccionario para traducir meses de inglés a español
+    # Diccionario para traducir meses de inglés a español
     meses_en_espanol = {
         'January': 'Enero',
         'February': 'Febrero',
@@ -74,10 +75,8 @@ async def core_group_create_groups(
         'December': 'Diciembre'
     }
 
-    # Extrae el nombre del mes en inglés
+    # Extrae el nombre del mes en inglés y lo reemplaza por el equivalente en español
     mes_ingles = datetime.now().strftime('%B')
-
-    # Reemplaza el mes en inglés con el equivalente en español
     fecha_en_espanol = fecha.replace(mes_ingles, meses_en_espanol[mes_ingles])
 
     successful_groups = []
@@ -92,7 +91,7 @@ async def core_group_create_groups(
 
     for course_id in unique_course_ids:
         group_data = {
-            "groups[0][courseid]": int(course_id),  # Convert numpy.int64 to int
+            "groups[0][courseid]": int(course_id),
             "groups[0][name]": {fecha_en_espanol},
             "groups[0][description]": f"Este grupo se compone de los estudiantes matriculados el día {fecha_en_espanol}"
         }
@@ -105,7 +104,7 @@ async def core_group_create_groups(
             if 'exception' in response_dict:
                 errorcode = response_dict.get('errorcode')
                 if errorcode == "500" in response_dict.get('message', ''):
-                    continue 
+                    continue
                 elif errorcode in HTTP_MESSAGES:
                     raise HTTPException(status_code=477, detail=HTTP_MESSAGES.get(errorcode))
             else:

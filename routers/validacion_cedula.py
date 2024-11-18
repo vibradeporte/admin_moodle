@@ -1,5 +1,6 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException,Depends
 from fastapi.responses import JSONResponse,PlainTextResponse
+from jwt_manager import JWTBearer
 import pandas as pd
 import openpyxl
 import os
@@ -18,6 +19,13 @@ def verificar_tipo_identificacion(df: pd.DataFrame) -> pd.DataFrame:
     :return: pd.DataFrame
     """
     def limpiar_tipo_identificacion(tipo_identificacion):
+        """
+        Limpia el tipo de identificación quitando espacios y caracteres no alfabéticos,
+        y quitando el punto al final si lo hay.
+
+        :param tipo_identificacion: str
+        :return: str o None
+        """
         if not tipo_identificacion:
             return None
 
@@ -43,6 +51,17 @@ def validacion_tipo_identificacion(tipo_identificacion):
     return "SI" if tipo_identificacion not in tipos_permitidos else "NO"
 
 def validacion_cedula(datos):
+    """
+    Valida la cédula de los estudiantes en la columna 'IDENTIFICACION' en el DataFrame 'datos'.
+    
+    La validación consiste en verificar que la cédula tenga entre 4 y 20 caracteres y no contenga
+    caracteres no numéricos.
+    
+    Agrega una columna 'cedula_es_invalida' al DataFrame con el resultado de la validación.
+    
+    :param datos: pd.DataFrame
+    :return: pd.DataFrame
+    """
     datos['IDENTIFICACION'] = datos['IDENTIFICACION'].astype(str)
     datos['IDENTIFICACION'] = datos['IDENTIFICACION'].str.replace(r'\D', '', regex=True)
     datos['cedula_es_invalida'] = ""
@@ -115,7 +134,7 @@ def validar_Cedula(datos):
 
 
 
-@validacion_cedula_router.post("/validar_cedula/", tags=['Validacion_Inicial'])
+@validacion_cedula_router.post("/api2/validar_cedula/", tags=['Validacion_Inicial'],dependencies=[Depends(JWTBearer())])
 async def validar_cedula():
     try:
         file_path = 'temp_files/validacion_inicial.xlsx'

@@ -1,5 +1,6 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException,Depends
 from fastapi.responses import JSONResponse
+from jwt_manager import JWTBearer
 import pandas as pd
 import numpy as np
 import re
@@ -10,9 +11,29 @@ validacion_final = APIRouter()
 
 class StringScoreCalculator:
     def __init__(self):
+        """
+        Inicializa el objeto StringScoreCalculator.
+
+        Crea un arreglo bidimensional de ceros de tama o 256x256, donde cada
+        elemento en la posici n [i][j] representa la cantidad de veces que se
+        observ  el bigrama formado por el byte i y el byte j en el conjunto de
+        datos de entrenamiento.
+        """
         self.bag = np.zeros((256, 256))
 
     def calculate_similarity_score(self, array1, array2):
+        """Calcula la similitud entre dos strings.
+
+        Si los strings no son de tipo str, devuelve 0.0.
+
+        Convierte los strings a bytes y llama a _calculate_similarity_score
+        para calcular la similitud.
+
+        :param array1: primer string
+        :param array2: segundo string
+        :return: similitud entre los dos strings
+        :rtype: float
+        """
         if not isinstance(array1, str) or not isinstance(array2, str):
             return 0.0
 
@@ -22,6 +43,20 @@ class StringScoreCalculator:
         return self._calculate_similarity_score(byte_array1, byte_array2)
 
     def _calculate_similarity_score(self, byte_array1, byte_array2):
+        """
+        Calcula la similitud entre dos arrays de bytes.
+
+        La similitud se calcula como la cardinalidad de la diferencia sim trica
+        entre los bigramas de los dos arrays de bytes. Primero, se cuentan los
+        bigramas en cada array y se almacenan en el arreglo self.bag. Luego, se
+        resta la cantidad de bigramas en com n entre los dos arrays y se
+        devuelve el resultado como un porcentaje.
+
+        :param byte_array1: primer array de bytes
+        :param byte_array2: segundo array de bytes
+        :return: similitud entre los dos arrays de bytes
+        :rtype: float
+        """
         length1 = len(byte_array1)
         length2 = len(byte_array2)
         minLength = min(length1, length2)
@@ -53,17 +88,31 @@ class StringScoreCalculator:
         rabbit_score = max(1.0 - math.pow(1.2 * symmetricDifferenceCardinality / maxLength, 5.0 / math.log10(maxLength + 1)), 0)
         return rabbit_score * 100
 
-def validacion_dias_informados():
-
-    return
 
 def solo_numeros(numero):
+    """
+    Limpia un string de todos los caracteres que no sean n meros.
+
+    :param numero: string a limpiar
+    :return: string con solo n meros
+    """
     if pd.isna(numero):
         return ''
     numero_str = str(numero)
     return re.sub(r'\D', '', numero_str)
 
 def sonMuyParecidos(nombre1, nombre2, threshold=80):
+    """
+    Compara la similitud entre dos nombres y determina si son 
+    suficientemente parecidos según un umbral dado.
+
+    :param nombre1: Primer nombre a comparar
+    :param nombre2: Segundo nombre a comparar
+    :param threshold: Umbral de similitud mínimo para considerar 
+                      que los nombres son parecidos (por defecto es 80)
+    :return: True si la similitud es mayor o igual al umbral, de lo 
+             contrario False
+    """
     calculator = StringScoreCalculator()
     nombre1 = str(nombre1).strip()
     nombre2 = str(nombre2).strip()
@@ -71,6 +120,13 @@ def sonMuyParecidos(nombre1, nombre2, threshold=80):
     return similarity >= threshold
 
 def buscarCedula(cedula, df):
+    """
+    Busca una c dula en un DataFrame ordenado por la columna 'username'.
+    
+    :param cedula: c dula a buscar
+    :param df: DataFrame ordenado por la columna 'username'
+    :return: la fila en la que se encuentra la c dula si se encuentra, -1 si no se encuentra
+    """
     cedula = str(cedula)
     limiteInferior = 0
     limiteSuperior = len(df) - 1
@@ -86,6 +142,16 @@ def buscarCedula(cedula, df):
     return -1
 
 def buscarPorNombresApellidosCorreo(nombre, apellido, correo, bd_usuarios):
+    """
+    Busca un usuario en un DataFrame de usuarios por su nombre, apellido y correo
+    electr nico.
+
+    :param nombre: nombre del usuario a buscar
+    :param apellido: apellido del usuario a buscar
+    :param correo: correo electr nico del usuario a buscar
+    :param bd_usuarios: DataFrame de usuarios
+    :return: la fila en la que se encuentra el usuario si se encuentra, -1 si no se encuentra
+    """
     for index, row in bd_usuarios.iterrows():
         if (sonMuyParecidos(row['firstname'], nombre) and
             sonMuyParecidos(row['lastname'], apellido) and
@@ -94,6 +160,15 @@ def buscarPorNombresApellidosCorreo(nombre, apellido, correo, bd_usuarios):
     return -1
 
 def buscarPorNombresApellidosTelefono(nombre, apellido, telefono, bd_usuarios):
+    """
+    Busca un usuario en un DataFrame de usuarios por su nombre, apellido y telfono.
+    
+    :param nombre: nombre del usuario a buscar
+    :param apellido: apellido del usuario a buscar
+    :param telefono: telfono del usuario a buscar
+    :param bd_usuarios: DataFrame de usuarios
+    :return: la fila en la que se encuentra el usuario si se encuentra, -1 si no se encuentra
+    """
     for index, row in bd_usuarios.iterrows():
         if (sonMuyParecidos(row['firstname'], nombre) and
             sonMuyParecidos(row['lastname'], apellido) and
@@ -102,6 +177,24 @@ def buscarPorNombresApellidosTelefono(nombre, apellido, telefono, bd_usuarios):
     return -1
 
 def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
+    """
+    Procesa un DataFrame de estudiantes para determinar su estado de matriculación 
+    en base a una base de datos de usuarios existente.
+
+    El estado se asigna a cada estudiante en función de la similitud de sus datos 
+    personales (nombre, apellido, correo, teléfono) con los datos en la base de 
+    datos de usuarios. Los estados posibles incluyen 'Existe en la BD', 
+    'Apellido SIMILAR y nombre DIFERENTE', 'Apellido DIFERENTE', y 
+    'NO está en la BD esa cédula'.
+
+    :param estudiantes_matricular: DataFrame con los datos de los estudiantes a 
+                                   matricular, incluyendo las columnas 'username', 
+                                   'lastname', 'firstname', 'email', y 'phone1'.
+    :param BD_USUARIOS: DataFrame que representa la base de datos de usuarios 
+                        existente, ordenado por la columna 'username'.
+    :return: DataFrame actualizado con una columna 'Estado' que indica el estado 
+             de matriculación de cada estudiante.
+    """
     estudiantes_matricular['Estado'] = ''
     
     for index, row in estudiantes_matricular.iterrows():
@@ -142,8 +235,26 @@ def procesar_matriculas(estudiantes_matricular, BD_USUARIOS):
     return estudiantes_matricular
 
 
-@validacion_final.post("/validacion_final/", tags=['Moodle'])
+@validacion_final.post("/api2/validacion_final/", tags=['Moodle'],dependencies=[Depends(JWTBearer())])
 async def validate_students():
+    """
+    Valida los estudiantes que se van a matricular en el curso.
+    Toma un archivo Excel con los estudiantes y sus datos,
+    y verifica que no haya inconsistencias en los datos
+    (como cédulas repetidas, correos inválidos, etc).
+    Guarda los estudiantes que no presentan inconsistencias
+    en un archivo Excel, y los que presentan inconsistencias
+    en otro archivo Excel.
+    Además, verifica que el curso no tenga inconsistencias
+    en la información de bienvenida (como plantilla HTML
+    inválida, ID de mensajes de bienvenida inválido, etc).
+    Si el curso no cumple con los requisitos, se guardan
+    los cursos que no cumplen con los requisitos en un
+    archivo Excel.
+    Devuelve un JSON con la cantidad de estudiantes correctos,
+    la cantidad de estudiantes con inconsistencias y un mensaje
+    que indica si el curso cumple con los requisitos o no.
+    """
     try:
         validacion = 'temp_files/validacion_inicial.xlsx'
         matriculas_aceptadas = pd.read_excel(validacion)
